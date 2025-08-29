@@ -2,8 +2,8 @@ package io.goorm.team02.core.payments.domain;
 
 import io.goorm.team02.core.common.domain.BaseEntity;
 import io.goorm.team02.core.orders.domain.Order;
-import io.goorm.team02.core.payments.domain.enmus.PaymentMethod;
-import io.goorm.team02.core.payments.domain.enmus.PaymentStatus;
+import io.goorm.team02.core.payments.domain.enums.PaymentMethod;
+import io.goorm.team02.core.payments.domain.enums.PaymentStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
