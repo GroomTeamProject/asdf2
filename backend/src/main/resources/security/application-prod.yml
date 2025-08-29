@@ -6,3 +6,6 @@ spring:
     url: ${DB_URL_PROD}
     username: ${DB_USERNAME_PROD}
     password: ${DB_PASSWORD_PROD}
+
+cors:
+  allowed-origins: ${ORIGIN_URL_PROD}
