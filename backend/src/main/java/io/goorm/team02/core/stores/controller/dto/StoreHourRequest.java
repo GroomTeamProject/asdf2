@@ -1,6 +1,5 @@
 package io.goorm.team02.core.stores.controller.dto;
 
-
 import java.time.LocalTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,26 +14,4 @@ public class StoreHourRequest {
     private LocalTime openTime;
     private LocalTime closeTime;
     private Boolean isClosed;
-
-    /**
-     * 휴무일 설정용 생성자
-     */
-    public static StoreHourRequest createClosedDay(Integer dayOfWeek) {
-        StoreHourRequest request = new StoreHourRequest();
-        request.dayOfWeek = dayOfWeek;
-        request.isClosed = true;
-        return request;
-    }
-
-    /**
-     * 영업일 설정용 생성자
-     */
-    public static StoreHourRequest createOpenDay(Integer dayOfWeek, LocalTime openTime, LocalTime closeTime) {
-        StoreHourRequest request = new StoreHourRequest();
-        request.dayOfWeek = dayOfWeek;
-        request.openTime = openTime;
-        request.closeTime = closeTime;
-        request.isClosed = false;
-        return request;
-    }
 }
