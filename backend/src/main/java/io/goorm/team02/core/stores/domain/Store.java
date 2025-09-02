@@ -19,8 +19,12 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
+@Setter
+@Getter
 @Table(name = "stores")
 public class Store extends BaseEntity {
 
@@ -50,10 +54,10 @@ public class Store extends BaseEntity {
 	@Column(name = "detail_address", length = 100)
 	private String detailAddress;
 
-	@Column(precision = 10, scale = 8)
+	@Column(precision = 15, scale = 8)
 	private BigDecimal latitude;
 
-	@Column(precision = 11, scale = 8)
+	@Column(precision = 15, scale = 8)
 	private BigDecimal longitude;
 
 	@Enumerated(EnumType.STRING)
