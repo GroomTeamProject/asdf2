@@ -1,9 +1,15 @@
+// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
-import Home from '../pages/Home.vue'
+import MainPage from '../pages/Home.vue'
+import CustomerPage from '../pages/customerMain.vue'
+import CartPage from '../pages/cartPage.vue'
+import PaymentPage from '../pages/paymentPage.vue'
 
-// 라우트 경로 추가
 const routes = [
-  { path: '/', component: Home },
+  { path: '/', name: 'Main', component: MainPage },
+  { path: '/customer', name: 'Customer', component: CustomerPage },
+  { path: '/cart', component: CartPage },
+  { path: '/payment', component: PaymentPage },
 ]
 
 const router = createRouter({

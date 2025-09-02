@@ -12,5 +12,10 @@ import Footer from './layouts/Footer.vue'
     </main>
 
     <Footer />
+    <router-view />
   </div>
 </template>
+
+<script>
+export default {}
+</script>
