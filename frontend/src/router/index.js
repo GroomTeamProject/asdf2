@@ -1,3 +1,4 @@
+// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../pages/Home.vue'
 import Signup from '../pages/auth/Signup.vue'
@@ -12,8 +13,9 @@ import DriverMain from '../pages/driver/DriverMain.vue'
 import DefaultLayout from '../layouts/DefaultLayout.vue'
 
 import { customerRoutes } from './customerRoutes.js'
+import CartPage from '../pages/cartPage.vue'
+import PaymentPage from '../pages/paymentPage.vue'
 
-// 라우트 경로 추가
 const routes = [
   {
     path: '/',
@@ -30,6 +32,8 @@ const routes = [
     ],
   },
   ...customerRoutes,
+  { path: '/cart', component: CartPage },
+  { path: '/payment', component: PaymentPage },
 ]
 
 const router = createRouter({
