@@ -9,10 +9,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "user_addresses")
+@Getter
+@Setter
 public class UserAddress extends BaseEntity {
 
 	@Id
@@ -24,24 +29,24 @@ public class UserAddress extends BaseEntity {
 	private User user;
 
 	@Column(name = "address_name", length = 50)
-	private String addressName;
+	private String addressName;   // 집, 회사
 
-	@Column(nullable = false, length = 200)
+	@Column(nullable = false, length = 200)  // 실제 주소지 적음
 	private String address;
 
 	@Column(name = "detail_address", length = 100)
-	private String detailAddress;
+	private String detailAddress;   // 동, 호수
 
 	@Column(length = 10)
-	private String zipcode;
+	private String zipcode;   // 우편번호
 
 	@Column(precision = 10, scale = 8)
-	private BigDecimal latitude;
-
+	private BigDecimal latitude;    // 위도 경도
+ 
 	@Column(precision = 11, scale = 8)
 	private BigDecimal longitude;
 
 	@Column(nullable = false)
-	private Boolean isDefault = false;
+	private Boolean isDefault = false;   // 기본 배송지 여부(false로 기본설정)
 
 }
