@@ -1,4 +1,4 @@
-package io.goorm.team02.core.users.runner;
+/*package io.goorm.team02.core.users.runner;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -50,4 +50,4 @@ public class UserTestRunner implements CommandLineRunner {
             System.out.println("UserType: " + u.getUserType());
         });
     }
-}
+}*/
