@@ -1,6 +1,8 @@
 package io.goorm.team02.core.stores.service;
 
+import io.goorm.team02.core.stores.controller.dto.StoreContactRequest;
 import io.goorm.team02.core.stores.controller.dto.StoreCreateRequest;
+import io.goorm.team02.core.stores.controller.dto.StoreDeliveryRequest;
 import io.goorm.team02.core.stores.controller.dto.StoreUpdateRequest;
 import io.goorm.team02.core.stores.domain.Store;
 import io.goorm.team02.core.users.domain.User;
@@ -158,5 +160,23 @@ public class StoreService {
         // TODO: Spring Security Context에서 현재 사용자 ID 조회
         // 임시로 1L 반환
         return 1L;
+    }
+
+    @Transactional
+    public Store updateContact(StoreContactRequest request) {
+        log.info("가게 연락처 변경");
+        Store store = getMyStore();
+        store.setPhone(request.getPhone());
+        return store;
+    }
+
+    public Store updateDelivery(StoreDeliveryRequest request) {
+        log.info("배달비/최소주문금액 변경");
+        Store store = getMyStore();
+        store.setDeliveryFee(request.getDeliveryFee());
+        store.setMinOrderAmount(request.getMinOrderAmount());
+        store.setDeliveryTimeMin(request.getDeliveryTimeMin());
+        store.setDeliveryTimeMax(request.getDeliveryTimeMax());
+        return store;
     }
 }
