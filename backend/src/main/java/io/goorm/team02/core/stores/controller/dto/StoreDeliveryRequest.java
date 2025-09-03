@@ -14,5 +14,5 @@ public class StoreDeliveryRequest {
     private BigDecimal minOrderAmount;
     private Integer deliveryTimeMin;
     private Integer deliveryTimeMax;
-    private BigDecimal deliveryRadius;
+    //private BigDecimal deliveryRadius;
 }

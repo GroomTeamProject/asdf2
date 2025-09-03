@@ -10,6 +10,5 @@ import lombok.Setter;
 public class StoreContactRequest {
 
     private String phone;
-    private String email;
-    private String contactPerson;
+
 }
