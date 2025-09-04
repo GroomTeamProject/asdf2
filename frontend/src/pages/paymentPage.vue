@@ -57,42 +57,105 @@ const goBack = () => router.push("/cart");
 </script>
 
 <template>
-    <div class="min-h-screen p-4 bg-gray-100">
-        <header class="flex items-center gap-4 p-4 bg-white border-b">
-            <button @click="goBack" class="flex items-center gap-2 px-2 py-1 border rounded hover:bg-gray-200">
-                <ArrowLeft class="w-4 h-4" /> 돌아가기
-            </button>
-            <h1 class="text-xl font-bold">결제 페이지</h1>
-        </header>
+    <div class="max-w-md mx-auto p-4">
+        <h1 class="text-2xl font-bold mb-4">주문 결제</h1>
 
-        <main class="mt-4 max-w-lg mx-auto bg-white p-6 rounded shadow space-y-4">
-            <h2 class="text-lg font-semibold">주문 금액: {{ totalPrice.toLocaleString() }}원</h2>
+        <!-- 배달 주소 -->
+        <div class="mb-4">
+            <label class="block font-semibold mb-1">배달 주소</label>
+            <input v-model="deliveryAddress" type="text" placeholder="도로명 주소"
+                class="w-full border px-3 py-2 rounded mb-2" />
+            <input v-model="detailAddress" type="text" placeholder="상세 주소" class="w-full border px-3 py-2 rounded" />
+        </div>
 
-            <div class="space-y-2">
-                <label>이름</label>
-                <input v-model="name" type="text" class="w-full border rounded px-2 py-1" />
-            </div>
+        <!-- 전화번호 -->
+        <div class="mb-4">
+            <label class="block font-semibold mb-1">전화번호</label>
+            <input v-model="phone" type="tel" placeholder="010-1234-5678" class="w-full border px-3 py-2 rounded" />
+        </div>
 
-            <div class="space-y-2">
-                <label>카드 번호</label>
-                <input v-model="cardNumber" type="text" placeholder="1234-5678-9012-3456"
-                    class="w-full border rounded px-2 py-1" />
-            </div>
+        <!-- 주문 메모 -->
+        <div class="mb-4">
+            <label class="block font-semibold mb-1">주문 메모</label>
+            <textarea v-model="orderMemo" placeholder="예: 매운맛 빼주세요" class="w-full border px-3 py-2 rounded"></textarea>
+        </div>
 
-            <div class="flex gap-2">
-                <div class="flex-1 space-y-2">
-                    <label>유효기간</label>
-                    <input v-model="expiry" type="text" placeholder="MM/YY" class="w-full border rounded px-2 py-1" />
-                </div>
-                <div class="flex-1 space-y-2">
-                    <label>CVC</label>
-                    <input v-model="cvc" type="text" placeholder="123" class="w-full border rounded px-2 py-1" />
-                </div>
-            </div>
+        <!-- 주문 상품 요약 -->
+        <div class="mb-4">
+            <h2 class="font-semibold mb-2">주문 상품</h2>
+            <h2 class="font-semibold mb-2">주문 상품</h2>
+            <ul>
+                <li v-for="item in items" :key="item.id" class="flex justify-between mb-1">
+                    <span>{{ item.menu_name }} x {{ item.quantity }}</span>
+                    <span>{{ item.total_price.toLocaleString() }}원</span>
+                </li>
+            </ul>
+            <p class="text-right font-bold mt-2">총 {{ totalAmount.toLocaleString() }}원</p>
+        </div>
 
-            <button @click="placeOrder" class="w-full py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                결제하기
-            </button>
-        </main>
+        <!-- 주문 버튼 -->
+        <button @click="placeOrder" class="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600">
+            주문하기
+        </button>
     </div>
 </template>
+
+<script>
+import axios from "axios";
+
+export default {
+    name: "OrderCheckout",
+    props: {
+        items: {
+            type: Array,
+            required: true, // 메뉴 정보는 부모 컴포넌트에서 받아옴
+        },
+    },
+    data() {
+        return {
+            deliveryAddress: "",
+            detailAddress: "",
+            phone: "",
+            orderMemo: "",
+        };
+    },
+    computed: {
+        totalAmount() {
+            return this.items.reduce((sum, item) => sum + item.total_price, 0);
+        },
+    },
+    methods: {
+        placeOrder() {
+            if (!this.deliveryAddress || !this.phone) {
+                alert("주소와 전화번호는 필수입니다.");
+                return;
+            }
+
+            const orderData = {
+                delivery_address: this.deliveryAddress,
+                delivery_detail_address: this.detailAddress,
+                phone: this.phone,
+                order_memo: this.orderMemo,
+                total_amount: this.totalAmount,
+                items: this.items.map((i) => ({
+                    menu_id: i.id,
+                    quantity: i.quantity,
+                    total_price: i.total_price,
+                    options: i.options || [],
+                })),
+            };
+
+            // 백엔드 API 호출
+            axios.post("http://localhost:8080/api/orders", orderData)
+                .then(res => {
+                    alert("주문이 완료되었습니다!");
+                    // 결제 완료 후 페이지 이동 등 처리
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("주문 중 오류가 발생했습니다.");
+                });
+        },
+    },
+};
+</script>

@@ -32,6 +32,7 @@ const goCart = () => router.push('/cart')
     <div class="p-4 space-y-4">
         <h1 class="text-2xl font-bold">상품 목록</h1>
 
+
         <button @click="goCart" class="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
             <ShoppingCart class="w-5 h-5" /> 장바구니
         </button>

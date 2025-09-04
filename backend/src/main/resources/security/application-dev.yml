@@ -3,9 +3,9 @@ server:
 spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: ${DB_URL_DEV}
-    username: ${DB_USERNAME_DEV}
-    password: ${DB_PASSWORD_DEV}
+    url: jdbc:mariadb://dev-db-server:8080/quickdeliver?serverTimezone=UTC
+    username: root
+    password: Wnsrns3224!
   flyway:
     enabled: true
     baseline-on-migrate: true

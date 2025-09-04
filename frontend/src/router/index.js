@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import MainPage from '../pages/Home.vue'
 import CustomerPage from '../pages/customerMain.vue'
 import CartPage from '../pages/cartPage.vue'
-import PaymentPage from '../pages/paymentPage.vue'
+import PaymentPage from '../pages/Payment.vue'
 
 const routes = [
   { path: '/', name: 'Main', component: MainPage },

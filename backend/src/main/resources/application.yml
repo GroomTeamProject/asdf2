@@ -2,26 +2,18 @@ spring:
   application:
     name: team02core
 
----
+  datasource:
+    url: jdbc:mariadb://localhost:8080/quickdeliver?serverTimezone=UTC
+    username: root
+    password: Wnsrns3224!
+    driver-class-name: org.mariadb.jdbc.Driver
 
-spring:
-  config:
-    import: classpath:security/application-local.yml
-    activate:
-      on-profile: local
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
 
----
+  # CORS 허용 origins 추가
 
-spring:
-  config:
-    import: classpath:security/application-dev.yml
-    activate:
-      on-profile: dev
-
----
-
-spring:
-  config:
-    import: classpath:security/application-prod.yml
-    activate:
-      on-profile: prod
+cors:
+  allowed-origins: "*"
