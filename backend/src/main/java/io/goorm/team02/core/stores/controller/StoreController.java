@@ -4,6 +4,7 @@ import io.goorm.team02.core.stores.controller.dto.StoreContactRequest;
 import io.goorm.team02.core.stores.controller.dto.StoreCreateRequest;
 import io.goorm.team02.core.stores.controller.dto.StoreDeliveryRequest;
 import io.goorm.team02.core.stores.controller.dto.StoreHolidayRequest;
+import io.goorm.team02.core.stores.controller.dto.StoreHolidayResponse;
 import io.goorm.team02.core.stores.controller.dto.StoreHourRequest;
 import io.goorm.team02.core.stores.controller.dto.StoreHourResponse;
 import io.goorm.team02.core.stores.controller.dto.StoreLocationRequest;
@@ -244,52 +245,55 @@ public class StoreController {
         return storeService.updateStoreHours(requests);
     }
 
-//    /**
-//     * 휴무일 등록
-//     */
-//    @PostMapping("/holidays")
-//    @Operation(summary = "휴무일 등록", description = "특정 날짜를 휴무일로 등록합니다")
-//    @Tag(name = "Store Holiday Management")
-//    @ApiResponses({
-//        @ApiResponse(responseCode = "200", description = "휴무일 등록 성공"),
-//        @ApiResponse(responseCode = "400", description = "잘못된 날짜 형식"),
-//        @ApiResponse(responseCode = "409", description = "이미 등록된 휴무일")
-//    })
-//    public void createHoliday(
-//        @Parameter(description = "휴무일 등록 정보", required = true)
-//        @RequestBody StoreHolidayRequest request) {
-//        storeService.createHoliday(request);
-//    }
-//
-//    /**
-//     * 휴무일 목록 조회
-//     */
-//    @GetMapping("/holidays")
-//    @Operation(summary = "휴무일 목록 조회", description = "등록된 휴무일 목록을 조회합니다")
-//    @Tag(name = "Store Holiday Management")
-//    @ApiResponses({
-//        @ApiResponse(responseCode = "200", description = "휴무일 목록 조회 성공"),
-//        @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
-//    })
-//    public List<StoreHolidayRequest> getHolidays() {
-//        return storeService.getHolidays();
-//    }
-//
-//    /**
-//     * 휴무일 삭제
-//     */
-//    @DeleteMapping("/holidays/{id}")
-//    @Operation(summary = "휴무일 삭제", description = "등록된 휴무일을 삭제합니다")
-//    @Tag(name = "Store Holiday Management")
-//    @ApiResponses({
-//        @ApiResponse(responseCode = "200", description = "휴무일 삭제 성공"),
-//        @ApiResponse(responseCode = "404", description = "휴무일을 찾을 수 없음")
-//    })
-//    public void deleteHoliday(
-//        @Parameter(description = "삭제할 휴무일 ID", required = true, example = "1")
-//        @PathVariable Long id) {
-//        storeService.deleteHoliday(id);
-//    }
+    /**
+     * 휴무일 등록
+     */
+    @PostMapping("/holidays")
+    @Operation(summary = "휴무일 등록", description = "특정 날짜를 휴무일로 등록합니다")
+    @Tag(name = "Store Holiday Management")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "휴무일 등록 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+        @ApiResponse(responseCode = "409", description = "이미 등록된 휴무일"),
+        @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    public ResponseEntity<String> createHoliday(
+        @Parameter(description = "휴무일 등록 정보", required = true)
+        @RequestBody StoreHolidayRequest request) {
+        return storeService.createHoliday(request);
+    }
+
+    /**
+     * 휴무일 목록 조회
+     */
+    @GetMapping("/holidays")
+    @Operation(summary = "휴무일 목록 조회", description = "등록된 휴무일 목록을 조회합니다")
+    @Tag(name = "Store Holiday Management")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "휴무일 목록 조회 성공"),
+        @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
+    })
+    public List<StoreHolidayResponse> getHolidays() {
+        return storeService.getHolidays();
+    }
+
+    /**
+     * 휴무일 삭제
+     */
+    @DeleteMapping("/holidays/{id}")
+    @Operation(summary = "휴무일 삭제", description = "등록된 휴무일을 삭제합니다")
+    @Tag(name = "Store Holiday Management")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "휴무일 삭제 성공"),
+        @ApiResponse(responseCode = "400", description = "존재하지 않는 휴무일"),
+        @ApiResponse(responseCode = "403", description = "삭제 권한이 없음"),
+        @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    public ResponseEntity<String> deleteHoliday(
+        @Parameter(description = "삭제할 휴무일 ID", required = true, example = "1")
+        @PathVariable Long id) {
+        return storeService.deleteHoliday(id);
+    }
 //
 //    // ================================
 //    // 2.4 영업 상태 관리
