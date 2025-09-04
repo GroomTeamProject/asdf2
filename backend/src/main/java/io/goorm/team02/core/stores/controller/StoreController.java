@@ -8,6 +8,7 @@ import io.goorm.team02.core.stores.controller.dto.StoreHolidayResponse;
 import io.goorm.team02.core.stores.controller.dto.StoreHourRequest;
 import io.goorm.team02.core.stores.controller.dto.StoreHourResponse;
 import io.goorm.team02.core.stores.controller.dto.StoreLocationRequest;
+import io.goorm.team02.core.stores.controller.dto.StoreResponse;
 import io.goorm.team02.core.stores.controller.dto.StoreStatusRequest;
 import io.goorm.team02.core.stores.controller.dto.StoreUpdateRequest;
 import io.goorm.team02.core.stores.domain.Store;
@@ -75,12 +76,9 @@ public class StoreController {
     @GetMapping
     @Operation(summary = "내 가게 정보 조회", description = "현재 사용자의 가게 정보를 조회합니다")
     @Tag(name = "Store Basic Info")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "조회 성공"),
-        @ApiResponse(responseCode = "404", description = "등록된 가게가 없음")
-    })
-    public Store getMyStore() {
-        return storeService.getMyStore();
+    public StoreResponse getMyStore() {
+        Store store = storeService.getMyStore();
+        return StoreResponse.from(store);
     }
 
     /**
@@ -94,10 +92,11 @@ public class StoreController {
         @ApiResponse(responseCode = "400", description = "잘못된 요청"),
         @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
-    public Store updateStore(
+    public ResponseEntity<StoreResponse> updateStore(
         @Parameter(description = "가게 수정 요청 정보", required = true)
         @RequestBody StoreUpdateRequest request) {
-        return storeService.updateStore(request);
+        Store updatedStore = storeService.updateStore(request);
+        return ResponseEntity.ok(StoreResponse.from(updatedStore));
     }
 
     /**
@@ -110,13 +109,14 @@ public class StoreController {
         @ApiResponse(responseCode = "200", description = "삭제 성공"),
         @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
-    public void deleteStore() {
+    public ResponseEntity<Void> deleteStore() {
         storeService.deleteStore();
+        return ResponseEntity.ok().build();
     }
 
-    // ================================
-    // 2.2 가게 상세 설정
-    // ================================
+// ================================
+// 2.2 가게 상세 설정
+// ================================
 
     /**
      * 연락처 정보 수정
@@ -129,10 +129,11 @@ public class StoreController {
         @ApiResponse(responseCode = "400", description = "잘못된 연락처 형식"),
         @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
-    public Store updateContact(
+    public ResponseEntity<StoreResponse> updateContact(
         @Parameter(description = "연락처 수정 요청 정보", required = true)
         @RequestBody StoreContactRequest request) {
-        return storeService.updateContact(request);
+        Store updatedStore = storeService.updateContact(request);
+        return ResponseEntity.ok(StoreResponse.from(updatedStore));
     }
 
     /**
@@ -146,10 +147,11 @@ public class StoreController {
         @ApiResponse(responseCode = "400", description = "잘못된 배달 설정 값"),
         @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
-    public Store updateDelivery(
+    public ResponseEntity<StoreResponse> updateDelivery(
         @Parameter(description = "배달 설정 요청 정보", required = true)
         @RequestBody StoreDeliveryRequest request) {
-        return storeService.updateDelivery(request);
+        Store updatedStore = storeService.updateDelivery(request);
+        return ResponseEntity.ok(StoreResponse.from(updatedStore));
     }
 
     /**
@@ -163,10 +165,11 @@ public class StoreController {
         @ApiResponse(responseCode = "400", description = "잘못된 주소 정보"),
         @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
-    public Store updateLocation(
+    public ResponseEntity<StoreResponse> updateLocation(
         @Parameter(description = "위치 정보 요청", required = true)
         @RequestBody StoreLocationRequest request) {
-        return storeService.updateLocation(request);
+        Store updatedStore = storeService.updateLocation(request);
+        return ResponseEntity.ok(StoreResponse.from(updatedStore));
     }
 
     /**
@@ -224,8 +227,12 @@ public class StoreController {
         @ApiResponse(responseCode = "200", description = "운영시간 조회 성공"),
         @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
-    public List<StoreHour> getStoreHours() {
-        return storeService.getStoreHours();
+    public ResponseEntity<List<StoreHourResponse>> getStoreHours() {
+        List<StoreHour> storeHours = storeService.getStoreHours();
+        List<StoreHourResponse> response = storeHours.stream()
+            .map(StoreHourResponse::from)
+            .toList();
+        return ResponseEntity.ok(response);
     }
 
     /**

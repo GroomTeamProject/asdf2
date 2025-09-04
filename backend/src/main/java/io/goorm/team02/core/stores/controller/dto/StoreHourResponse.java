@@ -21,7 +21,7 @@ public class StoreHourResponse {
     // Entity -> DTO 변환
     public static StoreHourResponse from(StoreHour storeHour) {
         return StoreHourResponse.builder()
-            .id(storeHour.getStore().getId())
+            .id(storeHour.getId()) // StoreHour의 ID로 변경
             .dayOfWeek(storeHour.getDayOfWeek())
             .openTime(storeHour.getOpenTime())
             .closeTime(storeHour.getCloseTime())

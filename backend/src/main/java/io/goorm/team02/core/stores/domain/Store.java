@@ -4,7 +4,7 @@ import io.goorm.team02.core.common.domain.BaseEntity;
 import io.goorm.team02.core.menus.domain.MenuCategory;
 import io.goorm.team02.core.stores.domain.enums.StoreCategory;
 import io.goorm.team02.core.stores.domain.enums.StoreStatus;
-import io.goorm.team02.core.users.domain.User;
+import io.goorm.team02.core.stores.domain.TempUser;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -34,7 +34,7 @@ public class Store extends BaseEntity {
 
 	@ManyToOne
 	@JoinColumn(name = "owner_id", nullable = false)
-	private User owner;
+	private TempUser owner;
 
 	@Column(name = "business_number", nullable = false, length = 20, unique = true)
 	private String businessNumber;

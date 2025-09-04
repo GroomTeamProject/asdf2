@@ -14,9 +14,9 @@ import io.goorm.team02.core.stores.domain.StoreHoliday;
 import io.goorm.team02.core.stores.domain.StoreHour;
 import io.goorm.team02.core.stores.repository.StoreHolidayRepository;
 import io.goorm.team02.core.stores.repository.StoreHourRepository;
-import io.goorm.team02.core.users.domain.User;
+import io.goorm.team02.core.stores.domain.TempUser;
 import io.goorm.team02.core.stores.repository.StoreRepository;
-import io.goorm.team02.core.users.repository.UserRepository;
+import io.goorm.team02.core.stores.repository.UserRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -72,7 +72,7 @@ public class StoreService {
 
         // 사용자 조회 및 검증
         log.info("사용자 조회 중...");
-        User owner = userRepository.findById(currentUserId)
+        TempUser owner = userRepository.findById(currentUserId)
             .orElseThrow(() -> {
                 log.error("사용자를 찾을 수 없습니다. ID: {}", currentUserId);
                 return new RuntimeException("사용자를 찾을 수 없습니다");
