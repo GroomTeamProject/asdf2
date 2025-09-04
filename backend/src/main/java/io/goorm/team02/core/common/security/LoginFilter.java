@@ -60,7 +60,13 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
                                             FilterChain chain, Authentication authentication)
             throws IOException, ServletException {
 
-        
+        // 인증 성공 시 JWT 발급
+        String token = jwtTokenProvider.generateToken(authentication);
+
+        // 응답 헤더에 JWT 추가
+        response.setHeader("Authorization", "Bearer " + token);
+        response.setContentType("application/json");
+        response.getWriter().write(objectMapper.writeValueAsString(Map.of("token", token)));
     }
 
     /**
@@ -71,8 +77,10 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
                                               AuthenticationException failed)
             throws IOException, ServletException {
 
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.getWriter().write(objectMapper.writeValueAsString(Map.of("error", "Login failed")));
 
-                
             }
 }
 

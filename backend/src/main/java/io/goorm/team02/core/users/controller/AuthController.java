@@ -1,10 +1,13 @@
 package io.goorm.team02.core.users.controller;
 
 import io.goorm.team02.core.users.controller.dto.LoginRequest;
+import io.goorm.team02.core.users.controller.dto.LoginResponse;
 import io.goorm.team02.core.users.controller.dto.SignupRequest;
 import io.goorm.team02.core.users.service.AuthService;
 import io.goorm.team02.core.users.service.UserService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,7 +31,12 @@ public class AuthController {
     // ✅ 로그인 API
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        String token = authService.login(request);
-        return ResponseEntity.ok(Map.of("token", token));
+        try {
+            String token = authService.login(request.getEmail(), request.getPassword());
+            return ResponseEntity.ok(Map.of("token", token));
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                .body(Map.of("error", ex.getMessage()));
+        }
     }
 }
