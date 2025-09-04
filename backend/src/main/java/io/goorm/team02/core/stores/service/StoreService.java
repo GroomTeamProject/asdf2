@@ -3,6 +3,7 @@ package io.goorm.team02.core.stores.service;
 import io.goorm.team02.core.stores.controller.dto.StoreContactRequest;
 import io.goorm.team02.core.stores.controller.dto.StoreCreateRequest;
 import io.goorm.team02.core.stores.controller.dto.StoreDeliveryRequest;
+import io.goorm.team02.core.stores.controller.dto.StoreLocationRequest;
 import io.goorm.team02.core.stores.controller.dto.StoreUpdateRequest;
 import io.goorm.team02.core.stores.domain.Store;
 import io.goorm.team02.core.users.domain.User;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j; // 추가
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -170,6 +172,7 @@ public class StoreService {
         return store;
     }
 
+    @Transactional
     public Store updateDelivery(StoreDeliveryRequest request) {
         log.info("배달비/최소주문금액 변경");
         Store store = getMyStore();
@@ -178,5 +181,33 @@ public class StoreService {
         store.setDeliveryTimeMin(request.getDeliveryTimeMin());
         store.setDeliveryTimeMax(request.getDeliveryTimeMax());
         return store;
+    }
+
+    @Transactional
+    public Store updateLocation(StoreLocationRequest request) {
+        log.info("가게 위치 정보 변경");
+        Store store = getMyStore();
+        store.setAddress(request.getAddress());
+        store.setDetailAddress(request.getDetailAddress());
+        //store.setLatitude(request.getLatitude());
+        //store.setLongitude(request.getLongitude());
+        return store;
+    }
+
+    @Transactional
+    public String uploadImage(MultipartFile file) {
+        log.info("가게 이미지 수정");
+        Store store = getMyStore();
+        //S3 url 로직 필요
+        store.setImageUrl(file.getOriginalFilename());
+        return storeRepository.save(store).getImageUrl();
+    }
+
+    @Transactional
+    public Store deleteImage(Long id) {
+        log.info("가게 이미지 삭제");
+        Store store = getMyStore();
+        store.setImageUrl(null);
+        return storeRepository.save(store);
     }
 }

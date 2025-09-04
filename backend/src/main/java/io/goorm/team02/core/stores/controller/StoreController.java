@@ -23,6 +23,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/api/owner/store")
@@ -30,6 +34,11 @@ import org.springframework.web.multipart.MultipartFile;
 public class StoreController {
 
     private final StoreService storeService;
+
+    @GetMapping("/test")
+    public String test() {
+        return "StoreController is working!";
+    }
 
     // ================================
     // 2.1 가게 기본 정보
@@ -70,7 +79,6 @@ public class StoreController {
     // ================================
     // 2.2 가게 상세 설정
     // ================================
-
     /**
      * 연락처 정보 수정
      */
@@ -79,7 +87,7 @@ public class StoreController {
         return storeService.updateContact(request);
     }
 
-    /**
+     /**
      * 배달 설정 (배달비, 최소주문금액)
      */
     @PutMapping("/delivery")
@@ -98,9 +106,18 @@ public class StoreController {
     /**
      * 가게 이미지 업로드
      */
-    @PostMapping("/images")
-    public String uploadImage(@RequestParam("file") MultipartFile file) {
-        return storeService.uploadImage(file);
+    @PostMapping(value = "/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "가게 이미지 업로드", description = "가게 대표 이미지를 업로드합니다")
+    public ResponseEntity<String> uploadImage(
+        @Parameter(description = "업로드할 이미지 파일", required = true)
+        @RequestParam("file") MultipartFile file) {
+
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("파일이 비어있습니다");
+        }
+
+        String imageUrl = storeService.uploadImage(file);
+        return ResponseEntity.ok(imageUrl);
     }
 
     /**
@@ -111,83 +128,83 @@ public class StoreController {
         storeService.deleteImage(id);
     }
 
-    // ================================
-    // 2.3 운영시간 관리
-    // ================================
-
-    /**
-     * 운영시간 조회
-     */
-    @GetMapping("/hours")
-    public List<StoreHour> getStoreHours() {
-        return storeService.getStoreHours();
-    }
-
-    /**
-     * 운영시간 설정 (요일별 일괄)
-     */
-    @PutMapping("/hours")
-    public List<StoreHour> updateStoreHours(@RequestBody List<StoreHourRequest> requests) {
-        return storeService.updateStoreHours(requests);
-    }
-
-    /**
-     * 특정 요일 운영시간 수정
-     */
-    @PutMapping("/hours/{day}")
-    public StoreHour updateStoreHour(@PathVariable Integer day, @RequestBody StoreHourRequest request) {
-        return storeService.updateStoreHour(day, request);
-    }
-
-    /**
-     * 휴무일 등록
-     */
-    @PostMapping("/holidays")
-    public void createHoliday(@RequestBody StoreHolidayRequest request) {
-        storeService.createHoliday(request);
-    }
-
-    /**
-     * 휴무일 목록 조회
-     */
-    @GetMapping("/holidays")
-    public List<StoreHolidayRequest> getHolidays() {
-        return storeService.getHolidays();
-    }
-
-    /**
-     * 휴무일 삭제
-     */
-    @DeleteMapping("/holidays/{id}")
-    public void deleteHoliday(@PathVariable Long id) {
-        storeService.deleteHoliday(id);
-    }
-
-    // ================================
-    // 2.4 영업 상태 관리
-    // ================================
-
-    /**
-     * 현재 영업 상태 조회
-     */
-    @GetMapping("/status")
-    public Store getStoreStatus() {
-        return storeService.getStoreStatus();
-    }
-
-    /**
-     * 영업 상태 변경
-     */
-    @PutMapping("/status")
-    public Store updateStoreStatus(@RequestBody StoreStatusRequest request) {
-        return storeService.updateStoreStatus(request);
-    }
-
-    /**
-     * 영업 상태 변경 이력
-     */
-    @GetMapping("/status/history")
-    public List<String> getStatusHistory() {
-        return storeService.getStatusHistory();
-    }
+//    // ================================
+//    // 2.3 운영시간 관리
+//    // ================================
+//
+//    /**
+//     * 운영시간 조회
+//     */
+//    @GetMapping("/hours")
+//    public List<StoreHour> getStoreHours() {
+//        return storeService.getStoreHours();
+//    }
+//
+//    /**
+//     * 운영시간 설정 (요일별 일괄)
+//     */
+//    @PutMapping("/hours")
+//    public List<StoreHour> updateStoreHours(@RequestBody List<StoreHourRequest> requests) {
+//        return storeService.updateStoreHours(requests);
+//    }
+//
+//    /**
+//     * 특정 요일 운영시간 수정
+//     */
+//    @PutMapping("/hours/{day}")
+//    public StoreHour updateStoreHour(@PathVariable Integer day, @RequestBody StoreHourRequest request) {
+//        return storeService.updateStoreHour(day, request);
+//    }
+//
+//    /**
+//     * 휴무일 등록
+//     */
+//    @PostMapping("/holidays")
+//    public void createHoliday(@RequestBody StoreHolidayRequest request) {
+//        storeService.createHoliday(request);
+//    }
+//
+//    /**
+//     * 휴무일 목록 조회
+//     */
+//    @GetMapping("/holidays")
+//    public List<StoreHolidayRequest> getHolidays() {
+//        return storeService.getHolidays();
+//    }
+//
+//    /**
+//     * 휴무일 삭제
+//     */
+//    @DeleteMapping("/holidays/{id}")
+//    public void deleteHoliday(@PathVariable Long id) {
+//        storeService.deleteHoliday(id);
+//    }
+//
+//    // ================================
+//    // 2.4 영업 상태 관리
+//    // ================================
+//
+//    /**
+//     * 현재 영업 상태 조회
+//     */
+//    @GetMapping("/status")
+//    public Store getStoreStatus() {
+//        return storeService.getStoreStatus();
+//    }
+//
+//    /**
+//     * 영업 상태 변경
+//     */
+//    @PutMapping("/status")
+//    public Store updateStoreStatus(@RequestBody StoreStatusRequest request) {
+//        return storeService.updateStoreStatus(request);
+//    }
+//
+//    /**
+//     * 영업 상태 변경 이력
+//     */
+//    @GetMapping("/status/history")
+//    public List<String> getStatusHistory() {
+//        return storeService.getStatusHistory();
+//    }
 }
