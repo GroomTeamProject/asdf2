@@ -14,7 +14,7 @@ public class StoreLocationRequest {
 
     private String address;
     private String detailAddress;
-    private BigDecimal latitude;
-    private BigDecimal longitude;
-    private List<String> deliveryAreas;
+    //private BigDecimal latitude;
+    //private BigDecimal longitude;
+    //private List<String> deliveryAreas;
 }
