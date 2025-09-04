@@ -3,12 +3,19 @@ package io.goorm.team02.core.stores.service;
 import io.goorm.team02.core.stores.controller.dto.StoreContactRequest;
 import io.goorm.team02.core.stores.controller.dto.StoreCreateRequest;
 import io.goorm.team02.core.stores.controller.dto.StoreDeliveryRequest;
+import io.goorm.team02.core.stores.controller.dto.StoreHourRequest;
+import io.goorm.team02.core.stores.controller.dto.StoreHourResponse;
 import io.goorm.team02.core.stores.controller.dto.StoreLocationRequest;
 import io.goorm.team02.core.stores.controller.dto.StoreUpdateRequest;
 import io.goorm.team02.core.stores.domain.Store;
+import io.goorm.team02.core.stores.domain.StoreHour;
+import io.goorm.team02.core.stores.repository.StoreHourRepository;
 import io.goorm.team02.core.users.domain.User;
 import io.goorm.team02.core.stores.repository.StoreRepository;
 import io.goorm.team02.core.users.repository.UserRepository;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j; // 추가
 import org.springframework.stereotype.Service;
@@ -23,6 +30,7 @@ public class StoreService {
 
     private final StoreRepository storeRepository;
     private final UserRepository userRepository;
+    private final StoreHourRepository storeHourRepository;
 
     /**
      * 가게 등록 (최초 1회)
@@ -210,4 +218,60 @@ public class StoreService {
         store.setImageUrl(null);
         return storeRepository.save(store);
     }
+
+    public List<StoreHour> getStoreHours() {
+        log.info("가게 운영 시간 조회");
+        return getMyStore().getStoreHours();
+    }
+
+    public List<StoreHourResponse> updateStoreHours(List<StoreHourRequest> requests) {
+        log.info("가게 운영 시간 설정");
+        Store store = getMyStore();
+
+        // 1️⃣ DB에서 기존 운영시간 완전 삭제
+        storeHourRepository.deleteByStoreId(store.getId());
+
+        // 2️⃣ 메모리에서도 삭제
+        store.getStoreHours().clear();
+
+        // 3️⃣ 새로운 운영시간 설정
+        List<StoreHour> updatedHours = new ArrayList<>();
+
+        for (StoreHourRequest request : requests) {
+            // dayOfWeek가 7이면 일주일 모든 요일에 적용 (0~6)
+            if (request.getDayOfWeek() == 7) {
+                for (int day = 0; day <= 6; day++) {
+                    StoreHour storeHour = StoreHour.builder()
+                        .store(store)
+                        .dayOfWeek(day)
+                        .openTime(request.getOpenTime())
+                        .closeTime(request.getCloseTime())
+                        .isClosed(request.getIsClosed())
+                        .build();
+
+                    updatedHours.add(storeHour);
+                }
+            } else {
+                // 특정 요일만 설정
+                StoreHour storeHour = StoreHour.builder()
+                    .store(store)
+                    .dayOfWeek(request.getDayOfWeek())
+                    .openTime(request.getOpenTime())
+                    .closeTime(request.getCloseTime())
+                    .isClosed(request.getIsClosed())
+                    .build();
+
+                updatedHours.add(storeHour);
+            }
+        }
+
+        // 4️⃣ 새로운 운영시간들을 DB에 저장
+        List<StoreHour> savedHours = storeHourRepository.saveAll(updatedHours);
+
+        // 5️⃣ DTO로 변환해서 리턴
+        return savedHours.stream()
+            .map(StoreHourResponse::from)
+            .collect(Collectors.toList());
+    }
+
 }
