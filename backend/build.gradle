@@ -1,26 +1,23 @@
-plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.5.5'
-	id 'io.spring.dependency-management' version '1.1.7'
+plugins { id 'java' id 'org.springframework.boot' version '3.5.5' id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'io.goorm.team02'
 version = '0.0.1-SNAPSHOT' + new Date().format('yyyy-MM-dd-HHmm')
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
@@ -59,6 +56,7 @@ dependencies {
 	implementation 'software.amazon.awssdk:auth:2.20.56'
 }
 
+// JUnit 5 사용 설정
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }

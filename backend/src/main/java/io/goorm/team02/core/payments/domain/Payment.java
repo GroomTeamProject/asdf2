@@ -1,56 +1,48 @@
 package io.goorm.team02.core.payments.domain;
 
-import io.goorm.team02.core.common.domain.BaseEntity;
 import io.goorm.team02.core.orders.domain.Order;
 import io.goorm.team02.core.payments.domain.enums.PaymentMethod;
 import io.goorm.team02.core.payments.domain.enums.PaymentStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "payments")
-public class Payment extends BaseEntity {
+@Getter
+@Setter
+public class Payment {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@OneToOne
-	@JoinColumn(name = "order_id", nullable = false)
-	private Order order;
-
-	@Column(name = "payment_key", unique = true, length = 200)
 	private String paymentKey;
 
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private PaymentMethod paymentMethod;
-
-	@Column(nullable = false, precision = 10, scale = 2)
-	private BigDecimal amount;
+	private PaymentStatus status;
 
 	@Enumerated(EnumType.STRING)
-	private PaymentStatus status = PaymentStatus.PENDING;
+	private PaymentMethod method; // 필드 이름 정확히 확인! -> setPaymentMethod 호출 가능
 
-	@Column(name = "pg_provider", length = 50)
+	private BigDecimal amount;
+
 	private String pgProvider;
-
-	@Column(name = "pg_tid", length = 100)
 	private String pgTid;
 
-	private LocalDateTime approvedAt;
+	private String failedReason; // setFailedReason 호출 가능
 
-	@Column(columnDefinition = "TEXT")
-	private String failedReason;
+	// Order와 1:1 연관관계
+	@OneToOne
+	@JoinColumn(name = "order_id")
+	private Order order;
 
+	// 편의 메서드: Service에서 setOrderId(Long) 호출 가능
+	public void setOrderId(Long orderId) {
+		if (this.order == null) {
+			this.order = new Order();
+		}
+		this.order.setId(orderId);
+	}
 }

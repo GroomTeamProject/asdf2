@@ -14,7 +14,7 @@ import DefaultLayout from '../layouts/DefaultLayout.vue'
 
 import { customerRoutes } from './customerRoutes.js'
 import CartPage from '../pages/cartPage.vue'
-import PaymentPage from '../pages/paymentPage.vue'
+import PaymentPage from '../pages/Payment.vue'
 
 const routes = [
   {

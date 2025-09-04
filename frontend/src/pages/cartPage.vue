@@ -2,7 +2,6 @@
 import { ref, computed, onMounted } from "vue";
 import { ShoppingCart, Plus, Minus, ArrowLeft } from "lucide-vue-next";
 import { useRouter } from "vue-router";
-import { makePayment as apiPayment } from '../api/payment.js'; // alias 처리
 
 const router = useRouter();
 const cart = ref([]);
@@ -37,8 +36,8 @@ const placeOrder = async () => {
 
     const confirmed = confirm(`총 ${totalPrice.value.toLocaleString()}원을 주문하시겠습니까?`);
     if (confirmed) {
-        // 실제 결제 API는 PaymentPage에서 처리
-        localStorage.setItem("cartForPayment", JSON.stringify(cart.value)); // 결제 페이지에 전달
+        // 결제 페이지에서 사용할 데이터 저장
+        localStorage.setItem("cartForPayment", JSON.stringify(cart.value));
         router.push("/payment");
     }
 };
