@@ -30,7 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j; // 추가
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -40,7 +40,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-@Slf4j // 추가
+@Slf4j
 public class StoreService {
 
     private final StoreRepository storeRepository;
@@ -83,7 +83,6 @@ public class StoreService {
                 log.error("사용자를 찾을 수 없습니다. ID: {}", currentUserId);
                 return new RuntimeException("사용자를 찾을 수 없습니다");
             });
-        //log.info("사용자 조회 성공: {} ({})", owner.getName(), owner.getEmail());
 
         // 사용자가 이미 가게를 가지고 있는지 확인
         log.info("기존 가게 존재 여부 확인 중...");
@@ -139,32 +138,151 @@ public class StoreService {
     }
 
     /**
-     * 가게 기본 정보 수정
+     * 통합 가게 정보 수정 (동시성 문제 해결)
+     * 모든 가게 정보를 하나의 메소드에서 처리
      */
     @Transactional
-    public Store updateStore(StoreUpdateRequest request) {
-        log.info("가게 정보 수정 시작");
-        Store store = getMyStore();
+    public synchronized Store updateStore(StoreUpdateRequest request) {
+        log.info("=== 통합 가게 정보 수정 시작 ===");
 
-        // 필드 업데이트
-        if (request.getName() != null) {
+        Store store = getMyStore();
+        boolean hasChanges = false;
+
+        // 🏪 기본 정보 업데이트
+        if (request.getName() != null && !request.getName().equals(store.getName())) {
             log.info("가게명 변경: {} -> {}", store.getName(), request.getName());
             store.setName(request.getName());
-        }
-        if (request.getDescription() != null) {
-            log.info("설명 변경: {} -> {}", store.getDescription(), request.getDescription());
-            store.setDescription(request.getDescription());
-        }
-        if (request.getCategory() != null) {
-            log.info("카테고리 변경: {} -> {}", store.getCategory(), request.getCategory());
-            store.setCategory(request.getCategory());
-        }
-        if (request.getImageUrl() != null) {
-            log.info("이미지URL 변경: {} -> {}", store.getImageUrl(), request.getImageUrl());
-            store.setImageUrl(request.getImageUrl());
+            hasChanges = true;
         }
 
-        log.info("가게 정보 수정 완료");
+        if (request.getDescription() != null && !request.getDescription().equals(store.getDescription())) {
+            log.info("설명 변경: {} -> {}", store.getDescription(), request.getDescription());
+            store.setDescription(request.getDescription());
+            hasChanges = true;
+        }
+
+        if (request.getCategory() != null && !request.getCategory().equals(store.getCategory())) {
+            log.info("카테고리 변경: {} -> {}", store.getCategory(), request.getCategory());
+            store.setCategory(request.getCategory());
+            hasChanges = true;
+        }
+
+        if (request.getImageUrl() != null && !request.getImageUrl().equals(store.getImageUrl())) {
+            log.info("이미지URL 변경: {} -> {}", store.getImageUrl(), request.getImageUrl());
+            store.setImageUrl(request.getImageUrl());
+            hasChanges = true;
+        }
+
+        if (!hasChanges) {
+            log.info("변경된 정보가 없습니다.");
+        } else {
+            Store savedStore = storeRepository.save(store);
+            log.info("=== 통합 가게 정보 수정 완료 ===");
+            return savedStore;
+        }
+
+        return store;
+    }
+
+    /**
+     * 통합 연락처 정보 수정
+     */
+    @Transactional
+    public synchronized Store updateContact(StoreContactRequest request) {
+        log.info("=== 가게 연락처 변경 시작 ===");
+
+        Store store = getMyStore();
+        boolean hasChanges = false;
+
+        if (request.getPhone() != null && !request.getPhone().equals(store.getPhone())) {
+            log.info("연락처 변경: {} -> {}", store.getPhone(), request.getPhone());
+            store.setPhone(request.getPhone());
+            hasChanges = true;
+        }
+
+        if (hasChanges) {
+            Store savedStore = storeRepository.save(store);
+            log.info("=== 가게 연락처 변경 완료 ===");
+            return savedStore;
+        }
+
+        log.info("변경된 연락처 정보가 없습니다.");
+        return store;
+    }
+
+    /**
+     * 통합 배달 정보 수정
+     */
+    @Transactional
+    public synchronized Store updateDelivery(StoreDeliveryRequest request) {
+        log.info("=== 배달비/최소주문금액 변경 시작 ===");
+
+        Store store = getMyStore();
+        boolean hasChanges = false;
+
+        if (request.getDeliveryFee() != null && !request.getDeliveryFee().equals(store.getDeliveryFee())) {
+            log.info("배달비 변경: {} -> {}", store.getDeliveryFee(), request.getDeliveryFee());
+            store.setDeliveryFee(request.getDeliveryFee());
+            hasChanges = true;
+        }
+
+        if (request.getMinOrderAmount() != null && !request.getMinOrderAmount().equals(store.getMinOrderAmount())) {
+            log.info("최소주문금액 변경: {} -> {}", store.getMinOrderAmount(), request.getMinOrderAmount());
+            store.setMinOrderAmount(request.getMinOrderAmount());
+            hasChanges = true;
+        }
+
+        if (request.getDeliveryTimeMin() != null && !request.getDeliveryTimeMin().equals(store.getDeliveryTimeMin())) {
+            log.info("최소배달시간 변경: {}분 -> {}분", store.getDeliveryTimeMin(), request.getDeliveryTimeMin());
+            store.setDeliveryTimeMin(request.getDeliveryTimeMin());
+            hasChanges = true;
+        }
+
+        if (request.getDeliveryTimeMax() != null && !request.getDeliveryTimeMax().equals(store.getDeliveryTimeMax())) {
+            log.info("최대배달시간 변경: {}분 -> {}분", store.getDeliveryTimeMax(), request.getDeliveryTimeMax());
+            store.setDeliveryTimeMax(request.getDeliveryTimeMax());
+            hasChanges = true;
+        }
+
+        if (hasChanges) {
+            Store savedStore = storeRepository.save(store);
+            log.info("=== 배달 정보 변경 완료 ===");
+            return savedStore;
+        }
+
+        log.info("변경된 배달 정보가 없습니다.");
+        return store;
+    }
+
+    /**
+     * 통합 위치 정보 수정
+     */
+    @Transactional
+    public synchronized Store updateLocation(StoreLocationRequest request) {
+        log.info("=== 가게 위치 정보 변경 시작 ===");
+
+        Store store = getMyStore();
+        boolean hasChanges = false;
+
+        if (request.getAddress() != null && !request.getAddress().equals(store.getAddress())) {
+            log.info("주소 변경: {} -> {}", store.getAddress(), request.getAddress());
+            store.setAddress(request.getAddress());
+            hasChanges = true;
+        }
+
+        if (request.getDetailAddress() != null && !request.getDetailAddress().equals(store.getDetailAddress())) {
+            log.info("상세주소 변경: {} -> {}", store.getDetailAddress(), request.getDetailAddress());
+            store.setDetailAddress(request.getDetailAddress());
+            hasChanges = true;
+        }
+
+        if (hasChanges) {
+            Store savedStore = storeRepository.save(store);
+            log.info("=== 가게 위치 정보 변경 완료 ===");
+            return savedStore;
+        }
+
+        log.info("변경된 위치 정보가 없습니다.");
         return store;
     }
 
@@ -176,6 +294,7 @@ public class StoreService {
         log.info("가게 삭제(비활성화) 시작");
         Store store = getMyStore();
         store.setIsActive(false);
+        storeRepository.save(store);
         log.info("가게 삭제 완료 - 가게 ID: {}, 가게명: {}", store.getId(), store.getName());
     }
 
@@ -189,57 +308,42 @@ public class StoreService {
     }
 
     @Transactional
-    public Store updateContact(StoreContactRequest request) {
-        log.info("가게 연락처 변경");
-        Store store = getMyStore();
-        store.setPhone(request.getPhone());
-        return store;
-    }
-
-    @Transactional
-    public Store updateDelivery(StoreDeliveryRequest request) {
-        log.info("배달비/최소주문금액 변경");
-        Store store = getMyStore();
-        store.setDeliveryFee(request.getDeliveryFee());
-        store.setMinOrderAmount(request.getMinOrderAmount());
-        store.setDeliveryTimeMin(request.getDeliveryTimeMin());
-        store.setDeliveryTimeMax(request.getDeliveryTimeMax());
-        return store;
-    }
-
-    @Transactional
-    public Store updateLocation(StoreLocationRequest request) {
-        log.info("가게 위치 정보 변경");
-        Store store = getMyStore();
-        store.setAddress(request.getAddress());
-        store.setDetailAddress(request.getDetailAddress());
-        //store.setLatitude(request.getLatitude());
-        //store.setLongitude(request.getLongitude());
-        return store;
-    }
-
-    @Transactional
-    public String uploadImage(MultipartFile file) {
-        log.info("가게 이미지 수정");
+    public synchronized String uploadImage(MultipartFile file) {
+        log.info("=== 가게 이미지 수정 시작 ===");
         Store store = getMyStore();
         //S3 url 로직 필요
-        store.setImageUrl(file.getOriginalFilename());
-        return storeRepository.save(store).getImageUrl();
+        String newImageUrl = file.getOriginalFilename();
+
+        log.info("이미지 URL 변경: {} -> {}", store.getImageUrl(), newImageUrl);
+        store.setImageUrl(newImageUrl);
+
+        Store savedStore = storeRepository.save(store);
+        log.info("=== 가게 이미지 수정 완료 ===");
+
+        return savedStore.getImageUrl();
     }
 
     @Transactional
-    public Store deleteImage(Long id) {
-        log.info("가게 이미지 삭제");
+    public synchronized Store deleteImage(Long id) {
+        log.info("=== 가게 이미지 삭제 시작 ===");
         Store store = getMyStore();
+
+        log.info("이미지 URL 삭제: {}", store.getImageUrl());
         store.setImageUrl(null);
-        return storeRepository.save(store);
+
+        Store savedStore = storeRepository.save(store);
+        log.info("=== 가게 이미지 삭제 완료 ===");
+
+        return savedStore;
     }
 
+    // 나머지 메소드들은 기존과 동일하게 유지
     public List<StoreHour> getStoreHours() {
         log.info("가게 운영 시간 조회");
         return getMyStore().getStoreHours();
     }
 
+    @Transactional
     public List<StoreHourResponse> updateStoreHours(List<StoreHourRequest> requests) {
         log.info("가게 운영 시간 설정");
         Store store = getMyStore();
@@ -305,6 +409,7 @@ public class StoreService {
             .collect(Collectors.toList());
     }
 
+    @Transactional
     public ResponseEntity<String> createHoliday(StoreHolidayRequest request) {
         log.info("휴무일 설정");
 
@@ -498,8 +603,8 @@ public class StoreService {
     }
 
     @Transactional
-    public StoreStatusModifyResponse updateStoreStatus(StoreStatusRequest request) {
-        log.info("영업 상태 변경");
+    public synchronized StoreStatusModifyResponse updateStoreStatus(StoreStatusRequest request) {
+        log.info("=== 영업 상태 변경 시작 ===");
 
         // 유효성 검사
         if (request.getStatus() == null) {
@@ -511,7 +616,7 @@ public class StoreService {
         // 현재 상태와 동일한지 확인
         if (store.getStatus() == request.getStatus()) {
             log.info("이미 동일한 상태입니다: {}", request.getStatus());
-            return StoreStatusModifyResponse.of(store, "이미 동일한 상태입니다."); // .of 추가
+            return StoreStatusModifyResponse.of(store, "이미 동일한 상태입니다.");
         }
 
         // 상태 변경
@@ -526,6 +631,7 @@ public class StoreService {
 
         // 저장
         Store savedStore = storeRepository.save(store);
+        log.info("=== 영업 상태 변경 완료 ===");
 
         // Response 객체 반환
         return StoreStatusModifyResponse.of(savedStore, "영업 상태가 성공적으로 변경되었습니다.");
