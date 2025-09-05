@@ -9,7 +9,9 @@ import io.goorm.team02.core.stores.controller.dto.StoreHourRequest;
 import io.goorm.team02.core.stores.controller.dto.StoreHourResponse;
 import io.goorm.team02.core.stores.controller.dto.StoreLocationRequest;
 import io.goorm.team02.core.stores.controller.dto.StoreResponse;
+import io.goorm.team02.core.stores.controller.dto.StoreStatusModifyResponse;
 import io.goorm.team02.core.stores.controller.dto.StoreStatusRequest;
+import io.goorm.team02.core.stores.controller.dto.StoreStatusResponse;
 import io.goorm.team02.core.stores.controller.dto.StoreUpdateRequest;
 import io.goorm.team02.core.stores.domain.Store;
 import io.goorm.team02.core.stores.domain.StoreHour;
@@ -301,53 +303,43 @@ public class StoreController {
         @PathVariable Long id) {
         return storeService.deleteHoliday(id);
     }
-//
-//    // ================================
-//    // 2.4 영업 상태 관리
-//    // ================================
-//
-//    /**
-//     * 현재 영업 상태 조회
-//     */
-//    @GetMapping("/status")
-//    @Operation(summary = "영업 상태 조회", description = "현재 가게의 영업 상태를 조회합니다")
-//    @Tag(name = "Store Status Management")
-//    @ApiResponses({
-//        @ApiResponse(responseCode = "200", description = "영업 상태 조회 성공"),
-//        @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
-//    })
-//    public Store getStoreStatus() {
-//        return storeService.getStoreStatus();
-//    }
-//
-//    /**
-//     * 영업 상태 변경
-//     */
-//    @PutMapping("/status")
-//    @Operation(summary = "영업 상태 변경", description = "가게의 영업 상태를 변경합니다 (영업중/준비중/마감)")
-//    @Tag(name = "Store Status Management")
-//    @ApiResponses({
-//        @ApiResponse(responseCode = "200", description = "영업 상태 변경 성공"),
-//        @ApiResponse(responseCode = "400", description = "잘못된 상태 값"),
-//        @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
-//    })
-//    public Store updateStoreStatus(
-//        @Parameter(description = "영업 상태 변경 요청", required = true)
-//        @RequestBody StoreStatusRequest request) {
-//        return storeService.updateStoreStatus(request);
-//    }
-//
-//    /**
-//     * 영업 상태 변경 이력
-//     */
-//    @GetMapping("/status/history")
-//    @Operation(summary = "영업 상태 변경 이력", description = "가게의 영업 상태 변경 이력을 조회합니다")
-//    @Tag(name = "Store Status Management")
-//    @ApiResponses({
-//        @ApiResponse(responseCode = "200", description = "상태 이력 조회 성공"),
-//        @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
-//    })
-//    public List<String> getStatusHistory() {
-//        return storeService.getStatusHistory();
-//    }
+
+    // ================================
+    // 2.4 영업 상태 관리
+    // ================================
+
+    /**
+     * 가게 상태 조회
+     */
+    @GetMapping("/status")
+    @Operation(summary = "가게 상태 조회", description = "가게의 현재 운영 상태를 조회합니다")
+    @Tag(name = "Store Status")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "가게 상태 조회 성공"),
+        @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
+    })
+    public ResponseEntity<StoreStatusResponse> getStoreStatus() {
+        StoreStatusResponse response = storeService.getStoreStatus();
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 영업 상태 변경
+     */
+    @PutMapping("/status")
+    @Operation(summary = "영업 상태 변경", description = "가게의 영업 상태를 변경합니다 (영업중/준비중/마감)")
+    @Tag(name = "Store Status Management")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "영업 상태 변경 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 상태 값"),
+        @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
+    })
+    public ResponseEntity<StoreStatusModifyResponse> updateStoreStatus(
+        @Parameter(description = "영업 상태 변경 요청", required = true)
+        @RequestBody StoreStatusRequest request) {
+
+        StoreStatusModifyResponse response = storeService.updateStoreStatus(request);
+        return ResponseEntity.ok(response);
+    }
+
 }
