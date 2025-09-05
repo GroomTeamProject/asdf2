@@ -8,6 +8,9 @@ import io.goorm.team02.core.stores.controller.dto.StoreHolidayResponse;
 import io.goorm.team02.core.stores.controller.dto.StoreHourRequest;
 import io.goorm.team02.core.stores.controller.dto.StoreHourResponse;
 import io.goorm.team02.core.stores.controller.dto.StoreLocationRequest;
+import io.goorm.team02.core.stores.controller.dto.StoreStatusModifyResponse;
+import io.goorm.team02.core.stores.controller.dto.StoreStatusRequest;
+import io.goorm.team02.core.stores.controller.dto.StoreStatusResponse;
 import io.goorm.team02.core.stores.controller.dto.StoreUpdateRequest;
 import io.goorm.team02.core.stores.domain.Store;
 import io.goorm.team02.core.stores.domain.StoreHoliday;
@@ -18,9 +21,12 @@ import io.goorm.team02.core.stores.domain.TempUser;
 import io.goorm.team02.core.stores.repository.StoreRepository;
 import io.goorm.team02.core.stores.repository.UserRepository;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -404,5 +410,124 @@ public class StoreService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("휴무일 삭제 중 오류가 발생했습니다: " + e.getMessage());
         }
+    }
+
+    public StoreStatusResponse getStoreStatus() {
+        log.info("가게 상태 조회");
+        Store store = getMyStore();
+
+        // 현재 시간 기준 영업 상태 체크
+        boolean isCurrentlyOpen = checkIfCurrentlyOpen(store);
+
+        // 오늘 영업 상태 메시지 생성
+        String currentDayStatus = getCurrentDayStatusMessage(store);
+
+        return StoreStatusResponse.from(store, isCurrentlyOpen, currentDayStatus);
+    }
+
+    // 현재 영업 중인지 체크하는 헬퍼 메서드
+    private boolean checkIfCurrentlyOpen(Store store) {
+        // 가게가 비활성화되어 있으면 영업 중이 아님
+        if (!store.getIsActive()) {
+            return false;
+        }
+
+        // 가게 상태가 CLOSED이면 영업 중이 아님
+        if (store.getStatus() != null && "CLOSED".equals(store.getStatus().toString())) {
+            return false;
+        }
+
+        // 현재 시간과 영업시간 비교 로직
+        LocalDateTime now = LocalDateTime.now();
+        int currentDayOfWeek = now.getDayOfWeek().getValue(); // 1=월요일, 7=일요일
+        LocalTime currentTime = now.toLocalTime();
+
+        // 오늘의 영업시간 조회
+        Optional<StoreHour> todayHour = store.getStoreHours().stream()
+            .filter(hour -> hour.getDayOfWeek().equals(currentDayOfWeek))
+            .findFirst();
+
+        if (todayHour.isEmpty()) {
+            return false; // 오늘 영업시간 정보가 없으면 영업 중이 아님
+        }
+
+        StoreHour hour = todayHour.get();
+
+        // 오늘 휴무인지 체크
+        if (hour.getIsClosed()) {
+            return false;
+        }
+
+        // 영업시간 내인지 체크
+        LocalTime openTime = hour.getOpenTime();
+        LocalTime closeTime = hour.getCloseTime();
+
+        if (openTime != null && closeTime != null) {
+            return !currentTime.isBefore(openTime) && !currentTime.isAfter(closeTime);
+        }
+
+        return false;
+    }
+
+    // 오늘 영업 상태 메시지 생성
+    private String getCurrentDayStatusMessage(Store store) {
+        LocalDateTime now = LocalDateTime.now();
+        int currentDayOfWeek = now.getDayOfWeek().getValue();
+
+        Optional<StoreHour> todayHour = store.getStoreHours().stream()
+            .filter(hour -> hour.getDayOfWeek().equals(currentDayOfWeek))
+            .findFirst();
+
+        if (todayHour.isEmpty()) {
+            return "영업시간 정보가 없습니다";
+        }
+
+        StoreHour hour = todayHour.get();
+
+        if (hour.getIsClosed()) {
+            return "오늘은 휴무일입니다";
+        }
+
+        if (hour.getOpenTime() != null && hour.getCloseTime() != null) {
+            return String.format("영업시간: %s - %s",
+                hour.getOpenTime().toString(),
+                hour.getCloseTime().toString());
+        }
+
+        return "영업시간 정보를 확인해주세요";
+    }
+
+    @Transactional
+    public StoreStatusModifyResponse updateStoreStatus(StoreStatusRequest request) {
+        log.info("영업 상태 변경");
+
+        // 유효성 검사
+        if (request.getStatus() == null) {
+            throw new IllegalArgumentException("영업 상태는 필수입니다.");
+        }
+
+        Store store = getMyStore();
+
+        // 현재 상태와 동일한지 확인
+        if (store.getStatus() == request.getStatus()) {
+            log.info("이미 동일한 상태입니다: {}", request.getStatus());
+            return StoreStatusModifyResponse.of(store, "이미 동일한 상태입니다."); // .of 추가
+        }
+
+        // 상태 변경
+        store.setStatus(request.getStatus());
+
+        // 변경 사유 로그 기록
+        if (request.getMessage() != null && !request.getMessage().trim().isEmpty()) {
+            log.info("영업 상태 변경 사유: {}", request.getMessage());
+        }
+
+        log.info("영업 상태가 {}로 변경되었습니다.", request.getStatus());
+
+        // 저장
+        Store savedStore = storeRepository.save(store);
+
+        // Response 객체 반환
+        return StoreStatusModifyResponse.of(savedStore, "영업 상태가 성공적으로 변경되었습니다.");
     }
 }
