@@ -4,6 +4,8 @@ import io.goorm.team02.core.users.domain.User;
 import io.goorm.team02.core.users.domain.enums.UserType;
 import io.goorm.team02.core.users.controller.dto.SignupRequest;
 import io.goorm.team02.core.users.repository.UserRepository;
+import io.goorm.team02.core.users.domain.UserAddress;
+import io.goorm.team02.core.users.repository.UserAddressRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserAddressRepository userAddressRepository;
 
     public User registerUser(SignupRequest request) {
         // 이메일 중복 체크
@@ -43,6 +46,20 @@ public class UserService {
         user.setEmailVerified(false);
         user.setPhoneVerified(false);
 
-        return userRepository.save(user);
+        //return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // UserAddress 저장
+        UserAddress address = new UserAddress();
+        address.setUser(savedUser);
+        address.setAddressName(request.getAddressName());
+        address.setAddress(request.getAddress());
+        address.setDetailAddress(request.getDetailAddress());
+        address.setZipcode(request.getZipcode());
+        address.setIsDefault(request.getIsDefault());
+
+        userAddressRepository.save(address);
+
+        return savedUser;
     }
 }

@@ -13,5 +13,10 @@ public class SignupRequest {
     private String phone;
     private UserType userType;
 
-    
+    // 주소 정보
+    private String addressName;    // "집", "회사" 등
+    private String address;        // 기본 주소
+    private String detailAddress;  // 상세 주소
+    private String zipcode;
+    private Boolean isDefault = true; // 기본 배송지 여부 , 첫 주소는 기본 주소
 }
