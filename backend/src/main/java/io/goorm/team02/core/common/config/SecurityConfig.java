@@ -45,6 +45,7 @@ public class SecurityConfig {
             // 요청별 접근 권한 설정
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/error").permitAll() // 로그인/회원가입 허용
+                .requestMatchers("/api/stores/**").hasRole("CUSTOMER") // 이용자 전용
                 .anyRequest().authenticated() // 나머지 요청 인증 필요
             )
             
