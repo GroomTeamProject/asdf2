@@ -3,6 +3,7 @@ package io.goorm.team02.core.users.service;
 import io.goorm.team02.core.users.domain.User;
 import io.goorm.team02.core.users.domain.enums.UserType;
 import io.goorm.team02.core.users.controller.dto.SignupRequest;
+import io.goorm.team02.core.users.controller.dto.SignupResponse;
 import io.goorm.team02.core.users.repository.UserRepository;
 import io.goorm.team02.core.users.domain.UserAddress;
 import io.goorm.team02.core.users.repository.UserAddressRepository;
@@ -12,13 +13,14 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+// 회원가입 로직, user 정보/ user_adress 정보 각각의 db에 저장
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserAddressRepository userAddressRepository;
 
-    public User registerUser(SignupRequest request) {
+    public SignupResponse registerUser(SignupRequest request) {
         // 이메일 중복 체크
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new RuntimeException("Email already exists");
@@ -29,7 +31,7 @@ public class UserService {
             throw new RuntimeException("Phone number already exists");
         }
 
-        //  비밀번호 일치 확인
+        // 비밀번호 일치 확인
         if (!request.getPassword().equals(request.getPasswordCheck())) {
             throw new RuntimeException("비밀번호가 일치하지 않습니다.");
         }
@@ -40,13 +42,11 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setName(request.getName());
         user.setPhone(request.getPhone());
-        //user.setUserType(UserType.CUSTOMER);  // 기본값
         user.setUserType(request.getUserType());
         user.setIsActive(true);
         user.setEmailVerified(false);
         user.setPhoneVerified(false);
 
-        //return userRepository.save(user);
         User savedUser = userRepository.save(user);
 
         // UserAddress 저장
@@ -60,6 +60,8 @@ public class UserService {
 
         userAddressRepository.save(address);
 
-        return savedUser;
+        // ✅ Response DTO 반환 : email, name, user_type
+        return new SignupResponse(savedUser.getEmail(), savedUser.getName(), savedUser.getUserType());
     }
+
 }

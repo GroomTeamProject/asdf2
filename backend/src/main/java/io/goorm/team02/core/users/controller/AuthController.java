@@ -3,6 +3,7 @@ package io.goorm.team02.core.users.controller;
 import io.goorm.team02.core.users.controller.dto.LoginRequest;
 import io.goorm.team02.core.users.controller.dto.LoginResponse;
 import io.goorm.team02.core.users.controller.dto.SignupRequest;
+import io.goorm.team02.core.users.controller.dto.SignupResponse;
 import io.goorm.team02.core.users.service.AuthService;
 import io.goorm.team02.core.users.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -26,20 +27,22 @@ public class AuthController {
     //@RequestBody SignupRequest request→ 클라이언트에서 보낸 JSON 데이터를 SignupRequest 객체로 변환
     public ResponseEntity<?> signup(@RequestBody SignupRequest request) {
         // 실제 회원가입 처리 : 받은 데이터로 userservice에서 하는 회원가입처리
-        userService.registerUser(request); 
-        return ResponseEntity.ok("User registered successfully");
+        //userService.registerUser(request); 
+        //return ResponseEntity.ok("User registered successfully");
+        SignupResponse response = userService.registerUser(request);
+        return ResponseEntity.ok(response);
     }
 
     // ✅ 로그인 API
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         try {
-            // 클라이언트에서 보낸 로그인정보(이메일,비번)을 사용
-            String token = authService.login(request.getEmail(), request.getPassword());
-            return ResponseEntity.ok(Map.of("token", token));
+            LoginResponse response = authService.login(request.getEmail(), request.getPassword());
+            return ResponseEntity.ok(response);
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                                 .body(Map.of("error", ex.getMessage()));
         }
     }
+
 }
