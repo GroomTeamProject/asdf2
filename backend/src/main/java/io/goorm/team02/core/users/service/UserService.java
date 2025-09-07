@@ -26,13 +26,19 @@ public class UserService {
             throw new RuntimeException("Phone number already exists");
         }
 
+        //  비밀번호 일치 확인
+        if (!request.getPassword().equals(request.getPasswordCheck())) {
+            throw new RuntimeException("비밀번호가 일치하지 않습니다.");
+        }
+
         // User 생성
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setName(request.getName());
         user.setPhone(request.getPhone());
-        user.setUserType(UserType.CUSTOMER);  // 기본값
+        //user.setUserType(UserType.CUSTOMER);  // 기본값
+        user.setUserType(request.getUserType());
         user.setIsActive(true);
         user.setEmailVerified(false);
         user.setPhoneVerified(false);
