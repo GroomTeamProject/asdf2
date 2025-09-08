@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickDeliver - 배달원</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        :root {
+            --font-size: 14px;
+        }
+        html {
+            font-size: var(--font-size);
+        }
+
+        .tab-button {
+            @apply px-4 py-2 border border-gray-400 text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors relative;
+        }
+
+        .tab-button.active {
+            @apply bg-gray-200 border-gray-600;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+            border: 1px solid #9ca3af;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #4b5563;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border: 2px solid #9ca3af;
+            border-radius: 8px;
+            padding: 16px;
+            max-width: 300px;
+            z-index: 50;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: '#ffffff',
+                        foreground: '#030213'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-gray-100">
+    <!-- Header -->
+    <header class="bg-white border-b-2 border-gray-400 p-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i data-lucide="truck" class="w-6 h-6 text-gray-600"></i>
+                <h1 class="text-xl text-gray-800">배달원</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <label class="text-gray-700 text-sm">근무 상태</label>
+                    <label class="switch">
+                        <input type="checkbox" id="online-switch" onchange="toggleOnlineStatus()">
+                        <span class="slider"></span>
+                    </label>
+                    <span id="status-badge" class="inline-flex px-2 py-1 text-xs rounded border border-gray-400 bg-gray-200 text-gray-800">
+                        오프라인
+                    </span>
+                </div>
+                <button 
+                    onclick="goHome()" 
+                    class="border border-gray-400 text-gray-700 px-3 py-1 rounded hover:bg-gray-200"
+                >
+                    역할 변경
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Stats -->
+    <div class="max-w-6xl mx-auto p-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="border-2 border-gray-400 bg-white rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">오늘 수익</p>
+                        <p id="today-earnings" class="text-2xl text-gray-800">6,500원</p>
+                    </div>
+                    <i data-lucide="dollar-sign" class="w-8 h-8 text-gray-600"></i>
+                </div>
+            </div>
+            <div class="border-2 border-gray-400 bg-white rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">오늘 배달</p>
+                        <p id="today-deliveries" class="text-2xl text-gray-800">2건</p>
+                    </div>
+                    <i data-lucide="package" class="w-8 h-8 text-gray-600"></i>
+                </div>
+            </div>
+            <div class="border-2 border-gray-400 bg-white rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">평균 배달 시간</p>
+                        <p class="text-2xl text-gray-800">28분</p>
+                    </div>
+                    <i data-lucide="timer" class="w-8 h-8 text-gray-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="grid grid-cols-3 gap-0 bg-white border-2 border-gray-400 rounded-lg overflow-hidden mb-6">
+            <button class="tab-button active" onclick="showTab('available')" id="tab-available">
+                배달 가능
+                <span id="available-badge" class="hidden absolute -top-2 -right-2 w-5 h-5 bg-gray-600 text-white text-xs rounded-full flex items-center justify-center">0</span>
+            </button>
+            <button class="tab-button" onclick="showTab('current')" id="tab-current">
+                현재 배달
+                <span id="current-badge" class="hidden absolute -top-2 -right-2 w-2 h-2 bg-gray-600 rounded-full"></span>
+            </button>
+            <button class="tab-button" onclick="showTab('completed')" id="tab-completed">배달 완료</button>
+        </div>
+
+        <!-- Available Orders Tab -->
+        <div id="available-content" class="tab-content">
+            <div id="offline-message" class="border-2 border-gray-400 bg-white rounded-lg p-8 text-center">
+                <i data-lucide="truck" class="w-12 h-12 mx-auto text-gray-500 mb-4"></i>
+                <h3 class="mb-2 text-gray-800">오프라인 상태</h3>
+                <p class="text-gray-600 mb-4">
+                    근무 상태를 온라인으로 변경하면 새로운 주문을 받을 수 있습니다.
+                </p>
+                <button 
+                    onclick="setOnlineStatus(true)"
+                    class="border-2 border-gray-400 bg-gray-200 text-gray-800 hover:bg-gray-300 px-4 py-2 rounded"
+                >
+                    온라인으로 변경
+                </button>
+            </div>
+
+            <div id="no-orders-message" class="hidden border-2 border-gray-400 bg-white rounded-lg p-8 text-center">
+                <i data-lucide="bell" class="w-12 h-12 mx-auto text-gray-500 mb-4"></i>
+                <h3 class="mb-2 text-gray-800">새로운 주문 대기 중</h3>
+                <p class="text-gray-600">
+                    새로운 배달 주문이 들어오면 알림을 보내드립니다.
+                </p>
+            </div>
+
+            <div id="available-orders" class="space-y-4">
+                <!-- 배달 가능한 주문들이 여기에 동적으로 생성됩니다 -->
+            </div>
+        </div>
+
+        <!-- Current Order Tab -->
+        <div id="current-content" class="tab-content hidden">
+            <div id="no-current-order" class="border-2 border-gray-400 bg-white rounded-lg p-8 text-center">
+                <i data-lucide="package" class="w-12 h-12 mx-auto text-gray-500 mb-4"></i>
+                <h3 class="mb-2 text-gray-800">진행 중인 배달이 없습니다</h3>
+                <p class="text-gray-600">
+                    새로운 주문을 수락하면 여기에 표시됩니다.
+                </p>
+            </div>
+
+            <div id="current-order-details" class="hidden border-2 border-gray-400 bg-white rounded-lg">
+                <!-- 현재 배달 상세 정보가 여기에 표시됩니다 -->
+            </div>
+        </div>
+
+        <!-- Completed Deliveries Tab -->
+        <div id="completed-content" class="tab-content hidden">
+            <div id="completed-list" class="space-y-4">
+                <!-- 완료된 배달 목록이 여기에 동적으로 생성됩니다 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        <div class="flex items-start gap-3">
+            <i data-lucide="bell" class="w-5 h-5 text-gray-600 mt-1"></i>
+            <div>
+                <h4 class="text-gray-800 mb-1">새로운 배달 주문!</h4>
+                <p id="notification-text" class="text-sm text-gray-600"></p>
+                <button 
+                    onclick="hideNotification(); showTab('available')"
+                    class="text-xs bg-gray-600 text-white px-2 py-1 rounded mt-2 hover:bg-gray-700"
+                >
+                    확인
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let isOnline = false;
+        let currentOrder = null;
+        let availableOrders = [
+            {
+                id: '1',
+                restaurantName: '맛있는 치킨집',
+                restaurantAddress: '서울시 강남구 테헤란로 123',
+                customerName: '김고객',
+                customerAddress: '서울시 강남구 역삼동 456-78',
+                customerPhone: '010-1234-5678',
+                items: [
+                    { name: '후라이드 치킨', quantity: 1 },
+                    { name: '치킨무', quantity: 1 }
+                ],
+                total: 20000,
+                deliveryFee: 3000,
+                status: 'available',
+                orderTime: '2024-01-15 14:30',
+                estimatedDeliveryTime: '15:15',
+                distance: '2.3km'
+            },
+            {
+                id: '2',
+                restaurantName: '신선한 피자',
+                restaurantAddress: '서울시 강남구 강남대로 789',
+                customerName: '이고객',
+                customerAddress: '서울시 강남구 삼성동 123-45',
+                customerPhone: '010-9876-5432',
+                items: [
+                    { name: '페퍼로니 피자', quantity: 2 }
+                ],
+                total: 35000,
+                deliveryFee: 2500,
+                status: 'available',
+                orderTime: '2024-01-15 14:25',
+                estimatedDeliveryTime: '15:10',
+                distance: '1.8km'
+            }
+        ];
+
+        let completedDeliveries = [
+            {
+                id: '10',
+                restaurantName: '한식당 고향',
+                customerAddress: '서울시 강남구 논현동 789-12',
+                total: 25000,
+                deliveryFee: 3500,
+                distance: '3.1km',
+                completedTime: '2024-01-15 13:42',
+                earnings: 3500
+            },
+            {
+                id: '11',
+                restaurantName: '중국집 황금성',
+                customerAddress: '서울시 강남구 대치동 654-32',
+                total: 32000,
+                deliveryFee: 3000,
+                distance: '2.7km',
+                completedTime: '2024-01-15 13:12',
+                earnings: 3000
+            }
+        ];
+
+        let newOrderInterval;
+
+        /**
+         * 페이지 초기화
+         */
+        function initializePage() {
+            renderAvailableOrders();
+            renderCompletedDeliveries();
+            updateUI();
+            lucide.createIcons();
+        }
+
+        /**
+         * 온라인 상태 토글
+         */
+        function toggleOnlineStatus() {
+            const checkbox = document.getElementById('online-switch');
+            setOnlineStatus(checkbox.checked);
+        }
+
+        function setOnlineStatus(online) {
+            isOnline = online;
+            const checkbox = document.getElementById('online-switch');
+            const badge = document.getElementById('status-badge');
+            
+            checkbox.checked = online;
+            
+            if (online) {
+                badge.textContent = '온라인';
+                badge.className = 'inline-flex px-2 py-1 text-xs rounded border border-gray-400 bg-gray-200 text-gray-800';
+                startNewOrderSimulation();
+            } else {
+                badge.textContent = '오프라인';
+                badge.className = 'inline-flex px-2 py-1 text-xs rounded border border-gray-400 bg-gray-400 text-gray-600';
+                stopNewOrderSimulation();
+            }
+            
+            updateUI();
+        }
+
+        /**
+         * 새 주문 시뮬레이션 시작/중지
+         */
+        function startNewOrderSimulation() {
+            newOrderInterval = setInterval(() => {
+                if (Math.random() > 0.7 && availableOrders.length < 5) {
+                    const newOrder = generateRandomOrder();
+                    availableOrders.unshift(newOrder);
+                    renderAvailableOrders();
+                    updateBadges();
+                    showNotification(newOrder);
+                }
+            }, 10000);
+        }
+
+        function stopNewOrderSimulation() {
+            if (newOrderInterval) {
+                clearInterval(newOrderInterval);
+                newOrderInterval = null;
+            }
+        }
+
+        /**
+         * 랜덤 주문 생성
+         */
+        function generateRandomOrder() {
+            const restaurants = ['새로운 음식점', '맛집 델리버리', '빠른 배달'];
+            const customers = ['새고객', '단골고객', '첫고객'];
+            
+            return {
+                id: Date.now().toString(),
+                restaurantName: restaurants[Math.floor(Math.random() * restaurants.length)],
+                restaurantAddress: '서울시 강남구 테헤란로 ' + Math.floor(Math.random() * 1000),
+                customerName: customers[Math.floor(Math.random() * customers.length)],
+                customerAddress: '서울시 강남구 역삼동 ' + Math.floor(Math.random() * 1000),
+                customerPhone: '010-' + Math.floor(Math.random() * 9000 + 1000) + '-' + Math.floor(Math.random() * 9000 + 1000),
+                items: [{ name: '새로운 메뉴', quantity: 1 }],
+                total: Math.floor(Math.random() * 30000 + 10000),
+                deliveryFee: Math.floor(Math.random() * 2000 + 2000),
+                status: 'available',
+                orderTime: new Date().toLocaleString(),
+                estimatedDeliveryTime: new Date(Date.now() + 45 * 60000).toLocaleTimeString(),
+                distance: (Math.random() * 3 + 1).toFixed(1) + 'km'
+            };
+        }
+
+        /**
+         * 탭 전환
+         */
+        function showTab(tabName) {
+            // 모든 탭 버튼 비활성화
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 모든 탭 내용 숨기기
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            // 선택된 탭 버튼 활성화
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            
+            // 선택된 탭 내용 보이기
+            document.getElementById(`${tabName}-content`).classList.remove('hidden');
+        }
+
+        /**
+         * UI 업데이트
+         */
+        function updateUI() {
+            const offlineMessage = document.getElementById('offline-message');
+            const noOrdersMessage = document.getElementById('no-orders-message');
+            const availableOrdersDiv = document.getElementById('available-orders');
+
+            if (!isOnline) {
+                offlineMessage.classList.remove('hidden');
+                noOrdersMessage.classList.add('hidden');
+                availableOrdersDiv.classList.add('hidden');
+            } else if (availableOrders.length === 0) {
+                offlineMessage.classList.add('hidden');
+                noOrdersMessage.classList.remove('hidden');
+                availableOrdersDiv.classList.add('hidden');
+            } else {
+                offlineMessage.classList.add('hidden');
+                noOrdersMessage.classList.add('hidden');
+                availableOrdersDiv.classList.remove('hidden');
+            }
+
+            updateBadges();
+            updateCurrentOrderUI();
+        }
+
+        /**
+         * 배지 업데이트
+         */
+        function updateBadges() {
+            const availableBadge = document.getElementById('available-badge');
+            const currentBadge = document.getElementById('current-badge');
+
+            if (availableOrders.length > 0) {
+                availableBadge.textContent = availableOrders.length;
+                availableBadge.classList.remove('hidden');
+            } else {
+                availableBadge.classList.add('hidden');
+            }
+
+            if (currentOrder) {
+                currentBadge.classList.remove('hidden');
+            } else {
+                currentBadge.classList.add('hidden');
+            }
+        }
+
+        /**
+         * 배달 가능한 주문 렌더링
+         */
+        function renderAvailableOrders() {
+            const container = document.getElementById('available-orders');
+            container.innerHTML = '';
+
+            availableOrders.forEach(order => {
+                const orderDiv = document.createElement('div');
+                orderDiv.className = 'border-2 border-gray-400 hover:bg-gray-200 transition-colors bg-white rounded-lg p-6';
+                
+                orderDiv.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="mb-1 text-gray-800">${order.restaurantName}</h3>
+                            <p class="text-sm text-gray-600">주문 시간: ${order.orderTime}</p>
+                        </div>
+                        <span class="bg-gray-200 text-gray-800 border border-gray-400 px-2 py-1 rounded text-sm">
+                            배달 가능
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <i data-lucide="map-pin" class="w-4 h-4 text-gray-600"></i>
+                                <span class="text-sm text-gray-700">픽업 주소</span>
+                            </div>
+                            <p class="text-sm pl-6 text-gray-600">${order.restaurantAddress}</p>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <i data-lucide="map-pin" class="w-4 h-4 text-gray-600"></i>
+                                <span class="text-sm text-gray-700">배달 주소</span>
+                            </div>
+                            <p class="text-sm pl-6 text-gray-600">${order.customerAddress}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 mb-4 text-sm">
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="clock" class="w-4 h-4 text-gray-600"></i>
+                            <span class="text-gray-700">예상 배달: ${order.estimatedDeliveryTime}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="navigation" class="w-4 h-4 text-gray-600"></i>
+                            <span class="text-gray-700">거리: ${order.distance}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="dollar-sign" class="w-4 h-4 text-gray-600"></i>
+                            <span class="text-gray-700">배달비: ${order.deliveryFee.toLocaleString()}원</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h4 class="text-sm mb-2 text-gray-700">주문 내역</h4>
+                        <div class="text-sm text-gray-600">
+                            ${order.items.map(item => `${item.name} x${item.quantity}`).join(', ')}
+                        </div>
+                        <p class="text-sm mt-1 text-gray-700">총 주문금액: ${order.total.toLocaleString()}원</p>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button 
+                            onclick="acceptOrder('${order.id}')"
+                            class="flex-1 bg-gray-600 text-white border-2 border-gray-800 hover:bg-gray-700 py-2 rounded transition-colors"
+                        >
+                            주문 수락
+                        </button>
+                        <button class="border border-gray-400 text-gray-700 hover:bg-gray-200 p-2 rounded">
+                            <i data-lucide="phone" class="w-4 h-4"></i>
+                        </button>
+                        <button class="border border-gray-400 text-gray-700 hover:bg-gray-200 p-2 rounded">
+                            <i data-lucide="navigation" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+
+                container.appendChild(orderDiv);
+            });
+
+            lucide.createIcons();
+        }
+
+        /**
+         * 주문 수락
+         */
+        function acceptOrder(orderId) {
+            const order = availableOrders.find(o => o.id === orderId);
+            if (order) {
+                currentOrder = { ...order, status: 'accepted' };
+                availableOrders = availableOrders.filter(o => o.id !== orderId);
+                
+                renderAvailableOrders();
+                updateUI();
+                showTab('current');
+                
+                showSimpleNotification('주문을 수락했습니다!');
+            }
+        }
+
+        /**
+         * 현재 주문 UI 업데이트
+         */
+        function updateCurrentOrderUI() {
+            const noCurrentDiv = document.getElementById('no-current-order');
+            const currentDetailsDiv = document.getElementById('current-order-details');
+
+            if (!currentOrder) {
+                noCurrentDiv.classList.remove('hidden');
+                currentDetailsDiv.classList.add('hidden');
+                return;
+            }
+
+            noCurrentDiv.classList.add('hidden');
+            currentDetailsDiv.classList.remove('hidden');
+
+            currentDetailsDiv.innerHTML = `
+                <div class="border-b border-gray-300 p-4 flex items-center justify-between">
+                    <h2 class="text-gray-800">현재 배달</h2>
+                    <span class="bg-gray-200 text-gray-800 border border-gray-400 px-2 py-1 rounded text-sm">
+                        ${getStatusText(currentOrder.status)}
+                    </span>
+                </div>
+                <div class="p-4 space-y-4">
+                    <div>
+                        <h3>${currentOrder.restaurantName}</h3>
+                        <p class="text-sm text-gray-600">주문 시간: ${currentOrder.orderTime}</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <i data-lucide="map-pin" class="w-4 h-4 text-red-500"></i>
+                                <span class="text-sm">픽업 주소</span>
+                            </div>
+                            <p class="text-sm pl-6">${currentOrder.restaurantAddress}</p>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <i data-lucide="map-pin" class="w-4 h-4 text-blue-500"></i>
+                                <span class="text-sm">배달 주소</span>
+                            </div>
+                            <p class="text-sm pl-6">${currentOrder.customerAddress}</p>
+                            <p class="text-sm pl-6 text-gray-600">
+                                고객: ${currentOrder.customerName} (${currentOrder.customerPhone})
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 text-sm">
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="clock" class="w-4 h-4"></i>
+                            <span>예상 배달: ${currentOrder.estimatedDeliveryTime}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="navigation" class="w-4 h-4"></i>
+                            <span>거리: ${currentOrder.distance}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="dollar-sign" class="w-4 h-4"></i>
+                            <span>배달비: ${currentOrder.deliveryFee.toLocaleString()}원</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm mb-2">주문 내역</h4>
+                        <div class="text-sm text-gray-600">
+                            ${currentOrder.items.map(item => `${item.name} x${item.quantity}`).join(', ')}
+                        </div>
+                        <p class="text-sm mt-1">총 주문금액: ${currentOrder.total.toLocaleString()}원</p>
+                    </div>
+
+                    <div class="flex gap-2">
+                        ${getCurrentOrderActions()}
+                        <button class="border border-gray-400 text-gray-700 hover:bg-gray-200 p-2 rounded">
+                            <i data-lucide="phone" class="w-4 h-4"></i>
+                        </button>
+                        <button class="border border-gray-400 text-gray-700 hover:bg-gray-200 p-2 rounded">
+                            <i data-lucide="navigation" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            lucide.createIcons();
+        }
+
+        /**
+         * 현재 주문 액션 버튼 생성
+         */
+        function getCurrentOrderActions() {
+            if (!currentOrder) return '';
+
+            switch (currentOrder.status) {
+                case 'accepted':
+                    return '<button onclick="updateCurrentOrderStatus(\'picked_up\')" class="flex-1 bg-gray-600 text-white py-2 rounded hover:bg-gray-700">픽업 완료</button>';
+                case 'picked_up':
+                    return '<button onclick="updateCurrentOrderStatus(\'delivering\')" class="flex-1 bg-gray-600 text-white py-2 rounded hover:bg-gray-700">배달 시작</button>';
+                case 'delivering':
+                    return '<button onclick="updateCurrentOrderStatus(\'completed\')" class="flex-1 bg-gray-600 text-white py-2 rounded hover:bg-gray-700">배달 완료</button>';
+                default:
+                    return '';
+            }
+        }
+
+        /**
+         * 현재 주문 상태 업데이트
+         */
+        function updateCurrentOrderStatus(newStatus) {
+            if (!currentOrder) return;
+
+            currentOrder.status = newStatus;
+
+            if (newStatus === 'completed') {
+                const completedOrder = {
+                    ...currentOrder,
+                    completedTime: new Date().toLocaleString(),
+                    earnings: currentOrder.deliveryFee
+                };
+                
+                completedDeliveries.unshift(completedOrder);
+                currentOrder = null;
+                
+                // 통계 업데이트
+                updateStats();
+                renderCompletedDeliveries();
+                
+                showSimpleNotification('배달이 완료되었습니다!');
+            }
+
+            updateCurrentOrderUI();
+            updateUI();
+        }
+
+        /**
+         * 완료된 배달 렌더링
+         */
+        function renderCompletedDeliveries() {
+            const container = document.getElementById('completed-list');
+            container.innerHTML = '';
+
+            completedDeliveries.forEach(delivery => {
+                const deliveryDiv = document.createElement('div');
+                deliveryDiv.className = 'border-2 border-gray-400 bg-white rounded-lg p-4';
+                
+                deliveryDiv.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="text-sm text-gray-800">${delivery.restaurantName}</h3>
+                            <p class="text-xs text-gray-600">
+                                배달 완료: ${delivery.completedTime}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <span class="inline-flex items-center px-2 py-1 text-xs rounded border border-gray-400 bg-gray-200 text-gray-800">
+                                <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i>
+                                배달 완료
+                            </span>
+                            <p class="text-sm mt-1 text-gray-800">수익: ${delivery.earnings.toLocaleString()}원</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                        <div>
+                            <span>픽업: ${delivery.restaurantAddress}</span>
+                        </div>
+                        <div>
+                            <span>배달: ${delivery.customerAddress}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-4 mt-2 text-xs text-gray-700">
+                        <span>거리: ${delivery.distance}</span>
+                        <span>주문금액: ${delivery.total.toLocaleString()}원</span>
+                    </div>
+                `;
+
+                container.appendChild(deliveryDiv);
+            });
+
+            lucide.createIcons();
+        }
+
+        /**
+         * 통계 업데이트
+         */
+        function updateStats() {
+            const todayDeliveries = completedDeliveries.filter(d => 
+                d.completedTime.startsWith('2024-01-15')
+            );
+            
+            const earnings = todayDeliveries.reduce((sum, d) => sum + d.earnings, 0);
+            
+            document.getElementById('today-earnings').textContent = `${earnings.toLocaleString()}원`;
+            document.getElementById('today-deliveries').textContent = `${todayDeliveries.length}건`;
+        }
+
+        /**
+         * 상태 텍스트 변환
+         */
+        function getStatusText(status) {
+            const statusMap = {
+                'available': '배달 가능',
+                'accepted': '주문 수락',
+                'picked_up': '픽업 완료',
+                'delivering': '배달 중',
+                'completed': '배달 완료'
+            };
+            return statusMap[status] || status;
+        }
+
+        /**
+         * 알림 관련 함수들
+         */
+        function showNotification(order) {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notification-text');
+            
+            notificationText.textContent = `${order.restaurantName} → ${order.customerAddress}`;
+            notification.classList.add('show');
+            
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                hideNotification();
+            }, 5000);
+        }
+
+        function hideNotification() {
+            const notification = document.getElementById('notification');
+            notification.classList.remove('show');
+        }
+
+        function showSimpleNotification(message) {
+            // 간단한 알림 (실제로는 더 나은 알림 시스템 사용)
+            const tempDiv = document.createElement('div');
+            tempDiv.className = 'fixed top-4 right-4 bg-gray-600 text-white px-4 py-2 rounded shadow-lg z-50';
+            tempDiv.textContent = message;
+            document.body.appendChild(tempDiv);
+            
+            setTimeout(() => {
+                document.body.removeChild(tempDiv);
+            }, 3000);
+        }
+
+        /**
+         * 페이지 이동
+         */
+        function goHome() {
+            window.location.href = '../index.html';
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', initializePage);
+    </script>
+</body>
+</html>
