@@ -1,14 +1,15 @@
 package io.goorm.team02.core.users.controller.dto;
 
-import io.goorm.team02.core.users.domain.enums.UserType;
+//LoginResponse로 { "token": "JWT값" } 반환
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import io.goorm.team02.core.users.domain.enums.UserType;
 
-@Data
+@Getter
 @AllArgsConstructor
-// 회원가입시 response
-public class SignupResponse {
+public class LoginResponse {
     private String email;
     private String name;
     private UserType userType;
+    private String token;
 }

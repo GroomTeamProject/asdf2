@@ -1,19 +1,26 @@
+#테스트용 작성코드
 server:
   port: 8080
+
 spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
     url: jdbc:mariadb://localhost:3306/team02_db
     username: team02_user
     password: go1328
-  flyway:
-    enabled: true
-    baseline-on-migrate: true
-    locations: classpath:db/migration
+
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update   # 엔티티 기반 테이블 생성
       dialect: org.hibernate.dialect.MariaDBDialect
-    
+    show-sql: true      # SQL 로그 확인
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: false      # 테스트 시 임시 비활성화
+
 cors:
   allowed-origins: ${ORIGIN_URL_LOCAL:http://localhost:3000}
+

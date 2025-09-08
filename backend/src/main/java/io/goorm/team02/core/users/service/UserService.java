@@ -64,4 +64,8 @@ public class UserService {
         return new SignupResponse(savedUser.getEmail(), savedUser.getName(), savedUser.getUserType());
     }
 
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> feature/login

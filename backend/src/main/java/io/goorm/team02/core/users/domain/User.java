@@ -94,4 +94,8 @@ public class User extends BaseEntity {
     public List<UserAddress> getAddresses() { return addresses; }
     public void setAddresses(List<UserAddress> addresses) { this.addresses = addresses; }
 
+
 }
+
+
+
