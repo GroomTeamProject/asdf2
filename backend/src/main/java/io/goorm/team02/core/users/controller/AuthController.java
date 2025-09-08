@@ -21,7 +21,7 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
-   // private final UserService userService;
+    private final UserService userService;
 
     // ✅ 회원가입 API
     @PostMapping("/signup")

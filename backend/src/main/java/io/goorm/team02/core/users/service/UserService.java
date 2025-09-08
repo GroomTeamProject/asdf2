@@ -1,3 +1,4 @@
+
 package io.goorm.team02.core.users.service;
 
 import io.goorm.team02.core.users.domain.User;
@@ -64,8 +65,4 @@ public class UserService {
         return new SignupResponse(savedUser.getEmail(), savedUser.getName(), savedUser.getUserType());
     }
 
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> feature/login
