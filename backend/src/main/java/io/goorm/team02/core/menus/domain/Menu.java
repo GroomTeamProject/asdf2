@@ -15,10 +15,17 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "menus")
 public class Menu extends BaseEntity {
 
@@ -60,4 +67,52 @@ public class Menu extends BaseEntity {
 	@OneToMany(mappedBy = "menu", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<MenuOption> options;
 
+	@Builder
+	public Menu(Store store, MenuCategory category, String name, String description,
+				BigDecimal price, String imageUrl, Boolean isPopular, Boolean isRecommended,
+				MenuStatus status, Integer displayOrder) {
+		this.store = store;
+		this.category = category;
+		this.name = name;
+		this.description = description;
+		this.price = price;
+		this.imageUrl = imageUrl;
+		this.isPopular = isPopular != null ? isPopular : false;
+		this.isRecommended = isRecommended != null ? isRecommended : false;
+		this.status = status != null ? status : MenuStatus.AVAILABLE;
+		this.displayOrder = displayOrder != null ? displayOrder : 0;
+	}
+
+	// 필요한 경우 setter 메서드들 추가
+	public void updateName(String name) {
+		this.name = name;
+	}
+
+	public void updateDescription(String description) {
+		this.description = description;
+	}
+
+	public void updatePrice(BigDecimal price) {
+		this.price = price;
+	}
+
+	public void updateImageUrl(String imageUrl) {
+		this.imageUrl = imageUrl;
+	}
+
+	public void updateStatus(MenuStatus status) {
+		this.status = status;
+	}
+
+	public void updateDisplayOrder(Integer displayOrder) {
+		this.displayOrder = displayOrder;
+	}
+
+	public void updateIsPopular(Boolean isPopular) {
+		this.isPopular = isPopular;
+	}
+
+	public void updateIsRecommended(Boolean isRecommended) {
+		this.isRecommended = isRecommended;
+	}
 }

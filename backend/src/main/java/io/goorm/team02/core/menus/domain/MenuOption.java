@@ -13,9 +13,15 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import java.util.List;
 
 @Entity
+@Getter
+@NoArgsConstructor
 @Table(name = "menu_options")
 public class MenuOption  {
 
@@ -41,5 +47,14 @@ public class MenuOption  {
 
 	@OneToMany(mappedBy = "option", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<MenuOptionItem> items;
+
+	@Builder
+	public MenuOption(Menu menu, String name, OptionType type, Boolean isRequired, Integer displayOrder) {
+		this.menu = menu;
+		this.name = name;
+		this.type = type;
+		this.isRequired = isRequired != null ? isRequired : false;
+		this.displayOrder = displayOrder != null ? displayOrder : 0;
+	}
 
 }

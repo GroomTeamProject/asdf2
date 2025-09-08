@@ -8,9 +8,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 
 @Entity
+@Getter
+@NoArgsConstructor
 @Table(name = "menu_option_items")
 public class MenuOptionItem {
 
@@ -32,5 +38,15 @@ public class MenuOptionItem {
 
 	@Column(nullable = false)
 	private Boolean isActive = true;
+
+	@Builder
+	public MenuOptionItem(MenuOption option, String name, BigDecimal additionalPrice,
+						  Integer displayOrder, Boolean isActive) {
+		this.option = option;
+		this.name = name;
+		this.additionalPrice = additionalPrice != null ? additionalPrice : BigDecimal.ZERO;
+		this.displayOrder = displayOrder != null ? displayOrder : 0;
+		this.isActive = isActive != null ? isActive : true;
+	}
 
 }
