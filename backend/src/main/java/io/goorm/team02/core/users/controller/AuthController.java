@@ -2,10 +2,10 @@ package io.goorm.team02.core.users.controller;
 
 import io.goorm.team02.core.users.controller.dto.LoginRequest;
 import io.goorm.team02.core.users.controller.dto.LoginResponse;
-import io.goorm.team02.core.users.controller.dto.SignupRequest;
-import io.goorm.team02.core.users.controller.dto.SignupResponse;
+//import io.goorm.team02.core.users.controller.dto.SignupRequest;
+//import io.goorm.team02.core.users.controller.dto.SignupResponse;
 import io.goorm.team02.core.users.service.AuthService;
-import io.goorm.team02.core.users.service.UserService;
+//import io.goorm.team02.core.users.service.UserService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
@@ -20,9 +20,9 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
-    private final UserService userService;
+   // private final UserService userService;
 
-    // ✅ 회원가입 API
+    /*// ✅ 회원가입 API
     @PostMapping("/signup")
     //@RequestBody SignupRequest request→ 클라이언트에서 보낸 JSON 데이터를 SignupRequest 객체로 변환
     public ResponseEntity<?> signup(@RequestBody SignupRequest request) {
@@ -31,7 +31,7 @@ public class AuthController {
         //return ResponseEntity.ok("User registered successfully");
         SignupResponse response = userService.registerUser(request);
         return ResponseEntity.ok(response);
-    }
+    }*/
 
     // ✅ 로그인 API
     @PostMapping("/login")
