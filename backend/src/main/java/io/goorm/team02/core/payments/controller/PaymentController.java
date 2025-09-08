@@ -1,111 +1,48 @@
+// src/main/java/com/example/toss/controller/PaymentController.java
 package io.goorm.team02.core.payments.controller;
 
-import io.goorm.team02.core.payments.domain.Payment;
-import io.goorm.team02.core.payments.service.PaymentService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import io.goorm.team02.core.payments.dto.PaymentRequest;
+import io.goorm.team02.core.payments.dto.PaymentResponse;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
-// 프론트에서 /api/payments로 요청이 들어온다고 가정
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/payments")
-@CrossOrigin(origins = "http://localhost:5173")
 public class PaymentController {
 
-    private final PaymentService paymentService;
+    private final String SECRET_KEY = "test_sk_xxxxxxxxxxxxx"; // TossPayments 테스트 시크릿 키
 
-    @Autowired
-    public PaymentController(PaymentService paymentService) {
-        this.paymentService = paymentService;
-    }
+    @PostMapping("/create")
+    public PaymentResponse createPayment(@RequestBody PaymentRequest request) {
 
-    // POST 요청 처리
-    @PostMapping
-    public ResponseEntity<PaymentResponse> placePayment(@RequestBody PaymentRequest paymentRequest) {
-        try {
-            Payment payment = paymentService.createPayment(paymentRequest);
+        String url = "https://api.tosspayments.com/v1/payments";
 
-            PaymentResponse response = new PaymentResponse(
-                    payment.getId(),
-                    payment.getStatus().name(),
-                    "Payment processed successfully");
+        RestTemplate restTemplate = new RestTemplate();
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            PaymentResponse response = new PaymentResponse(
-                    null,
-                    "FAILED",
-                    "Payment processing failed: " + e.getMessage());
-            return ResponseEntity.status(500).body(response);
-        }
-    }
+        Map<String, Object> body = new HashMap<>();
+        body.put("orderId", request.getOrderId());
+        body.put("orderName", request.getOrderName());
+        body.put("amount", request.getAmount());
+        body.put("customerEmail", "customer123@gmail.com");
+        body.put("successUrl", "http://localhost:5173/success");
+        body.put("failUrl", "http://localhost:5173/fail");
 
-    // --- DTO 클래스 ---
-    public static class PaymentRequest {
-        private Long orderId;
-        private String method; // CARD, CASH, KAKAO_PAY 등
-        private double amount;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBasicAuth(SECRET_KEY, ""); // TossPayments는 Basic Auth 사용
 
-        // getters & setters
-        public Long getOrderId() {
-            return orderId;
-        }
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-        public void setOrderId(Long orderId) {
-            this.orderId = orderId;
-        }
+        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
 
-        public String getMethod() {
-            return method;
-        }
+        Map data = response.getBody();
+        String paymentUrl = (String) data.get("paymentUrl"); // TossPayments가 반환하는 결제 페이지 URL
 
-        public void setMethod(String method) {
-            this.method = method;
-        }
-
-        public double getAmount() {
-            return amount;
-        }
-
-        public void setAmount(double amount) {
-            this.amount = amount;
-        }
-    }
-
-    public static class PaymentResponse {
-        private Long paymentId;
-        private String status;
-        private String message;
-
-        public PaymentResponse(Long paymentId, String status, String message) {
-            this.paymentId = paymentId;
-            this.status = status;
-            this.message = message;
-        }
-
-        // getters & setters
-        public Long getPaymentId() {
-            return paymentId;
-        }
-
-        public void setPaymentId(Long paymentId) {
-            this.paymentId = paymentId;
-        }
-
-        public String getStatus() {
-            return status;
-        }
-
-        public void setStatus(String status) {
-            this.status = status;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public void setMessage(String message) {
-            this.message = message;
-        }
+        return new PaymentResponse(paymentUrl);
     }
 }

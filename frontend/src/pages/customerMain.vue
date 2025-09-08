@@ -26,16 +26,24 @@ const addToCart = (product) => {
 
 // 장바구니 페이지 이동
 const goCart = () => router.push('/cart')
+
+// 주문 상태 확인 페이지 이동
+const goOrderStatus = () => router.push('/orderstatus')
 </script>
 
 <template>
     <div class="p-4 space-y-4">
         <h1 class="text-2xl font-bold">상품 목록</h1>
 
+        <div class="flex gap-2">
+            <button @click="goCart" class="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+                <ShoppingCart class="w-5 h-5" /> 장바구니
+            </button>
 
-        <button @click="goCart" class="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
-            <ShoppingCart class="w-5 h-5" /> 장바구니
-        </button>
+            <button @click="goOrderStatus" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600">
+                주문 확인
+            </button>
+        </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             <div v-for="product in products" :key="product.id" class="p-4 border rounded bg-white flex flex-col gap-2">

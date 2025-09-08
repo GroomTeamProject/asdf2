@@ -2,10 +2,11 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.5'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.flywaydb.flyway' version '11.7.2' // 최신 안정 버전
 }
 
 group = 'io.goorm.team02'
-version = '0.0.1-SNAPSHOT' + new Date().format('yyyy-MM-dd-HHmm')
+version = '0.0.1-SNAPSHOT-' + new Date().format('yyyy-MM-dd-HHmm')
 
 java {
     toolchain {
@@ -37,7 +38,6 @@ dependencies {
     
     // Flyway DB 마이그레이션
     implementation 'org.flywaydb:flyway-core'
-    implementation 'org.flywaydb:flyway-mysql'
     
     // Lombok
     compileOnly 'org.projectlombok:lombok'
@@ -51,4 +51,12 @@ dependencies {
 // JUnit 5 사용 설정
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+// Flyway 설정 (MariaDB용)
+flyway {
+    url = 'jdbc:mariadb://localhost:3306/quickdeliver'
+    user = 'root'
+    password = 'Wnsrns3224!'
+    // MariaDB는 schemas 설정 필요 없음
 }

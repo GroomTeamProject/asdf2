@@ -9,7 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tosspayments/payment-sdk": "^1.9.1",
+    "@tosspayments/payment-widget-sdk": "^0.12.0",
+    "@tosspayments/tosspayments-sdk": "^2.3.7",
     "axios": "^1.11.0",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
     "lucide-vue-next": "^0.542.0",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.5.0",
@@ -21,5 +27,10 @@
     "@vitejs/plugin-vue": "^6.0.1",
     "tailwindcss": "^4.1.12",
     "vite": "^7.1.2"
-  }
+  },
+  "description": "This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.",
+  "main": "vite.config.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

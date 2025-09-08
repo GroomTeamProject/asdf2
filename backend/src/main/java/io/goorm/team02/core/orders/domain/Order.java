@@ -1,84 +1,53 @@
 package io.goorm.team02.core.orders.domain;
 
-import io.goorm.team02.core.common.domain.BaseEntity;
-import io.goorm.team02.core.deliveries.domain.Delivery;
-import io.goorm.team02.core.orders.domain.enums.OrderStatus;
-import io.goorm.team02.core.payments.domain.Payment;
-import io.goorm.team02.core.reviews.domain.Review;
-import io.goorm.team02.core.stores.domain.Store;
-import io.goorm.team02.core.users.domain.User;
 import jakarta.persistence.*;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+
+import io.goorm.team02.core.orders.domain.enums.OrderStatus;
 
 @Entity
 @Table(name = "orders")
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class Order extends BaseEntity {
+public class Order {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    private String customerName;
+    private String phone;
+    private String deliveryAddress;
+    private String deliveryDetailAddress;
+    private String orderMemo;
 
-	@Column(name = "order_number", nullable = false, unique = true, length = 50)
-	private String orderNumber;
+    private int totalAmount;
 
-	@ManyToOne
-	@JoinColumn(name = "user_id", nullable = false)
-	private User user;
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status = OrderStatus.COOKING;
 
-	@ManyToOne
-	@JoinColumn(name = "store_id", nullable = false)
-	private Store store;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-	@Column(nullable = false, columnDefinition = "TEXT")
-	private String deliveryAddress;
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "order")
+    private List<OrderItem> items;
 
-	@Column(name = "delivery_detail_address", length = 100)
-	private String deliveryDetailAddress;
+    public void setStatus(OrderStatus cooking) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setStatus'");
+    }
 
-	@Column(nullable = false, length = 20)
-	private String phone;
+    public Iterable<Order> getItems() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getItems'");
+    }
 
-	@Column(columnDefinition = "TEXT")
-	private String orderMemo;
+    public Object setOrder(Order order) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setOrder'");
+    }
 
-	@Column(nullable = false, precision = 10, scale = 2)
-	private BigDecimal menuTotalAmount;
+    public OrderStatus getStatus() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getStatus'");
+    }
 
-	@Column(precision = 10, scale = 2)
-	private BigDecimal deliveryFee = BigDecimal.ZERO;
-
-	@Column(precision = 10, scale = 2)
-	private BigDecimal discountAmount = BigDecimal.ZERO;
-
-	@Column(nullable = false, precision = 10, scale = 2)
-	private BigDecimal totalAmount;
-
-	@Enumerated(EnumType.STRING)
-	private OrderStatus status = OrderStatus.PENDING;
-
-	private LocalDateTime orderedAt = LocalDateTime.now();
-	private LocalDateTime acceptedAt;
-	private LocalDateTime cookingStartedAt;
-	private LocalDateTime cookingCompletedAt;
-	private LocalDateTime deliveredAt;
-	private LocalDateTime cancelledAt;
-
-	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<OrderItem> orderItems;
-
-	@OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
-	private Payment payment;
-
-	@OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
-	private Delivery delivery;
-
-	@OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
-	private Review review;
-
+    // Getter, Setter
 }
