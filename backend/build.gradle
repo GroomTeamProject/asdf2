@@ -1,8 +1,10 @@
-plugins { id 'java' id 'org.springframework.boot' version '3.5.5' id 'io.spring.dependency-management' version '1.1.7'
+plugins {
+    id 'java' id 'org.springframework.boot' version '3.5.5'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'io.goorm.team02'
-version = '0.0.1-SNAPSHOT' + new Date().format('yyyy-MM-dd-HHmm')
+version = '0.0.1-SNAPSHOT-' + new Date().format('yyyy-MM-dd-HHmm')
 
 java {
     toolchain {
@@ -59,4 +61,12 @@ dependencies {
 // JUnit 5 사용 설정
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+// Flyway 설정 (MariaDB용)
+flyway {
+    url = 'jdbc:mariadb://localhost:3306/quickdeliver'
+    user = 'root'
+    password = 'Wnsrns3224!'
+    // MariaDB는 schemas 설정 필요 없음
 }

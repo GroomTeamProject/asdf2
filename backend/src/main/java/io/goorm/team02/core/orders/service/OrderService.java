@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
 public class OrderService {
 
     private final OrderRepository orderRepository;
@@ -169,4 +168,23 @@ public class OrderService {
                               .orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다: " + storeId));
     }
 
+	@Transactional
+	public void cancelOrder(Long orderId) {
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(() -> new RuntimeException("주문이 존재하지 않습니다."));
+		if (order.getStatus() == OrderStatus.COOKING) {
+			order.setStatus(OrderStatus.CANCELLED);
+			orderRepository.save(order);
+		} else {
+			throw new RuntimeException("이미 결제 완료된 주문은 취소할 수 없습니다.");
+		}
+	}
+
+	@Transactional
+	public void updateStatus(Long orderId, OrderStatus status) {
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(() -> new RuntimeException("주문이 존재하지 않습니다."));
+		order.setStatus(status);
+		orderRepository.save(order);
+	}
 }

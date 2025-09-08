@@ -14,7 +14,11 @@ import DefaultLayout from '../layouts/DefaultLayout.vue'
 
 import { customerRoutes } from './customerRoutes.js'
 import CartPage from '../pages/cartPage.vue'
-import PaymentPage from '../pages/Payment.vue'
+import OrderCheck from '../pages/OrderCheckout.vue'
+import PaymentWidget from "../pages/PaymentWidget.vue";
+import SuccessPage from "../pages/SuccessPage.vue";
+import FailPage from "../pages/FailPage.vue";
+import OrderStatus from "../pages/OrderStatus.vue";
 
 const routes = [
   {
@@ -33,7 +37,11 @@ const routes = [
   },
   ...customerRoutes,
   { path: '/cart', component: CartPage },
-  { path: '/payment', component: PaymentPage },
+  { path: '/ordercheck', component: OrderCheck },
+  { path: "/payment", component: PaymentWidget },
+  { path: "/success", component: SuccessPage },
+  { path: "/fail", component: FailPage },
+  { path: "/orderstatus", component: OrderStatus },
 ]
 
 const router = createRouter({

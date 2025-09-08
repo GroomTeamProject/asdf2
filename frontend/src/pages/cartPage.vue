@@ -37,8 +37,8 @@ const placeOrder = async () => {
     const confirmed = confirm(`총 ${totalPrice.value.toLocaleString()}원을 주문하시겠습니까?`);
     if (confirmed) {
         // 결제 페이지에서 사용할 데이터 저장
-        localStorage.setItem("cartForPayment", JSON.stringify(cart.value));
-        router.push("/payment");
+        localStorage.setItem("cartForCheckout", JSON.stringify(cart.value));
+        router.push("/ordercheck");
     }
 };
 

@@ -1,48 +1,59 @@
 package io.goorm.team02.core.payments.domain;
 
-import io.goorm.team02.core.orders.domain.Order;
 import io.goorm.team02.core.payments.domain.enums.PaymentMethod;
 import io.goorm.team02.core.payments.domain.enums.PaymentStatus;
+import io.goorm.team02.core.orders.domain.Order;
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "payments")
 @Getter
 @Setter
+@NoArgsConstructor
 public class Payment {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@OneToOne
+	@JoinColumn(name = "order_id", nullable = false)
+	private Order order;
+
+	@Column(name = "payment_key", unique = true)
 	private String paymentKey;
 
 	@Enumerated(EnumType.STRING)
-	private PaymentStatus status;
+	@Column(name = "payment_method", nullable = false)
+	private PaymentMethod method;
 
-	@Enumerated(EnumType.STRING)
-	private PaymentMethod method; // 필드 이름 정확히 확인! -> setPaymentMethod 호출 가능
-
+	@Column(nullable = false)
 	private BigDecimal amount;
 
+	@Enumerated(EnumType.STRING)
+	private PaymentStatus status = PaymentStatus.PENDING;
+
+	@Column(name = "pg_provider")
 	private String pgProvider;
+
+	@Column(name = "pg_tid")
 	private String pgTid;
 
-	private String failedReason; // setFailedReason 호출 가능
+	@Column(name = "approved_at")
+	private LocalDateTime approvedAt;
 
-	// Order와 1:1 연관관계
-	@OneToOne
-	@JoinColumn(name = "order_id")
-	private Order order;
+	@Column(name = "failed_reason")
+	private String failedReason;
 
-	// 편의 메서드: Service에서 setOrderId(Long) 호출 가능
-	public void setOrderId(Long orderId) {
-		if (this.order == null) {
-			this.order = new Order();
-		}
-		this.order.setId(orderId);
-	}
+	@Column(name = "created_at")
+	private LocalDateTime createdAt = LocalDateTime.now();
+
+	@Column(name = "updated_at")
+	private LocalDateTime updatedAt = LocalDateTime.now();
 }
