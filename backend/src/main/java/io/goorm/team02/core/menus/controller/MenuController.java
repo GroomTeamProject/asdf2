@@ -1,7 +1,6 @@
 package io.goorm.team02.core.menus.controller;
 
-import io.goorm.team02.core.menus.controller.dto.categorycreate.MenuCategoryCreateRequest;
-import io.goorm.team02.core.menus.controller.dto.categorycreate.MenuCategoryResponse;
+import io.goorm.team02.core.menus.controller.dto.categorycreate.*;
 import io.goorm.team02.core.menus.controller.dto.menucreate.MenuCreateRequest;
 import io.goorm.team02.core.menus.controller.dto.menucreate.MenuResponse;
 import io.goorm.team02.core.menus.domain.Menu;
@@ -13,9 +12,15 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/owner/menus")
@@ -25,28 +30,28 @@ public class MenuController {
 
     private final MenuService menuService;
 
-//    // ================================
-//    // 3.1 메뉴 카테고리 관리
-//    // ================================
-//
-//    /**
-//     * 메뉴 카테고리 목록 조회
-//     */
-//    @GetMapping("/categories")
-//    @Operation(summary = "메뉴 카테고리 목록 조회", description = "가게의 모든 메뉴 카테고리를 조회합니다")
-//    @Tag(name = "Menu Category Management")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "카테고리 목록 조회 성공"),
-//            @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
-//    })
-//    public ResponseEntity<List<MenuCategoryResponse>> getMenuCategories() {
-//        List<MenuCategory> categories = menuService.getMenuCategories();
-//        List<MenuCategoryResponse> response = categories.stream()
-//                .map(MenuCategoryResponse::from)
-//                .toList();
-//        return ResponseEntity.ok(response);
-//    }
-//
+    // ================================
+    // 3.1 메뉴 카테고리 관리
+    // ================================
+
+    /**
+     * 메뉴 카테고리 목록 조회
+     */
+    @GetMapping("/categories")
+    @Operation(summary = "메뉴 카테고리 목록 조회", description = "가게의 메뉴 카테고리를 조회합니다")
+    @Tag(name = "Menu Category Management")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "카테고리 목록 조회 성공"),
+            @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
+    })
+    public ResponseEntity<List<MenuCategoryResponse>> getMenuCategories() {
+        List<MenuCategory> categories = menuService.getMenuCategories();
+        List<MenuCategoryResponse> response = categories.stream()
+                .map(MenuCategoryResponse::from)
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
     /**
      * 메뉴 카테고리 등록
      */
@@ -60,68 +65,68 @@ public class MenuController {
     })
     public ResponseEntity<MenuCategoryResponse> createCategory(
             @Parameter(description = "카테고리 생성 요청 정보", required = true)
-            @RequestBody MenuCategoryCreateRequest request) {
+            @Valid @RequestBody MenuCategoryCreateRequest request) {
         MenuCategory category = menuService.createCategory(request);
         return ResponseEntity.ok(MenuCategoryResponse.from(category));
     }
-//
-//    /**
-//     * 메뉴 카테고리 수정
-//     */
-//    @PutMapping("/categories/{categoryId}")
-//    @Operation(summary = "메뉴 카테고리 수정", description = "메뉴 카테고리 정보를 수정합니다")
-//    @Tag(name = "Menu Category Management")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "카테고리 수정 성공"),
-//            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
-//            @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음")
-//    })
-//    public ResponseEntity<MenuCategoryResponse> updateCategory(
-//            @Parameter(description = "카테고리 ID", required = true, example = "1")
-//            @PathVariable Long categoryId,
-//            @Parameter(description = "카테고리 수정 요청 정보", required = true)
-//            @RequestBody MenuCategoryUpdateRequest request) {
-//        MenuCategory category = menuService.updateCategory(categoryId, request);
-//        return ResponseEntity.ok(MenuCategoryResponse.from(category));
-//    }
-//
-//    /**
-//     * 메뉴 카테고리 삭제
-//     */
-//    @DeleteMapping("/categories/{categoryId}")
-//    @Operation(summary = "메뉴 카테고리 삭제", description = "메뉴 카테고리를 삭제합니다")
-//    @Tag(name = "Menu Category Management")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "카테고리 삭제 성공"),
-//            @ApiResponse(responseCode = "400", description = "카테고리에 메뉴가 존재함"),
-//            @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음")
-//    })
-//    public ResponseEntity<Void> deleteCategory(
-//            @Parameter(description = "삭제할 카테고리 ID", required = true, example = "1")
-//            @PathVariable Long categoryId) {
-//        menuService.deleteCategory(categoryId);
-//        return ResponseEntity.ok().build();
-//    }
-//
-//    /**
-//     * 카테고리 순서 변경
-//     */
-//    @PutMapping("/categories/order")
-//    @Operation(summary = "카테고리 순서 변경", description = "메뉴 카테고리의 표시 순서를 변경합니다")
-//    @Tag(name = "Menu Category Management")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "순서 변경 성공"),
-//            @ApiResponse(responseCode = "400", description = "잘못된 요청")
-//    })
-//    public ResponseEntity<List<MenuCategoryResponse>> updateCategoryOrder(
-//            @Parameter(description = "카테고리 순서 변경 요청", required = true)
-//            @RequestBody CategoryOrderUpdateRequest request) {
-//        List<MenuCategory> categories = menuService.updateCategoryOrder(request);
-//        List<MenuCategoryResponse> response = categories.stream()
-//                .map(MenuCategoryResponse::from)
-//                .toList();
-//        return ResponseEntity.ok(response);
-//    }
+
+    /**
+     * 메뉴 카테고리 수정
+     */
+    @PutMapping("/categories/{categoryId}")
+    @Operation(summary = "메뉴 카테고리 수정", description = "메뉴 카테고리 정보를 수정합니다")
+    @Tag(name = "Menu Category Management")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "카테고리 수정 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음")
+    })
+    public ResponseEntity<MenuCategoryResponse> updateCategory(
+            @Parameter(description = "카테고리 ID", required = true, example = "1")
+            @PathVariable Long categoryId,
+            @Parameter(description = "카테고리 수정 요청 정보", required = true)
+            @Valid @RequestBody MenuCategoryUpdateRequest request) {
+        MenuCategory category = menuService.updateCategory(categoryId, request);
+        return ResponseEntity.ok(MenuCategoryResponse.from(category));
+    }
+
+    /**
+     * 메뉴 카테고리 삭제
+     */
+    @DeleteMapping("/categories/{categoryId}")
+    @Operation(summary = "메뉴 카테고리 삭제", description = "메뉴 카테고리를 삭제합니다")
+    @Tag(name = "Menu Category Management")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "카테고리 삭제 성공"),
+            @ApiResponse(responseCode = "400", description = "카테고리에 메뉴가 존재함"),
+            @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음")
+    })
+    public ResponseEntity<Void> deleteCategory(
+            @Parameter(description = "삭제할 카테고리 ID", required = true, example = "1")
+            @PathVariable Long categoryId) {
+        menuService.deleteCategory(categoryId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 카테고리 순서 변경
+     */
+    @PutMapping("/categories/order")
+    @Operation(summary = "카테고리 순서 변경", description = "메뉴 카테고리를 다른 위치로 이동합니다 (드래그 앤 드롭)")
+    @Tag(name = "Menu Category Management")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "순서 변경 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청")
+    })
+    public ResponseEntity<List<MenuCategoryResponse>> updateCategoryOrder(
+            @Parameter(description = "카테고리 이동 요청", required = true)
+            @Valid @RequestBody CategoryMoveRequest request) {
+        List<MenuCategory> categories = menuService.updateCategoryOrder(request);
+        List<MenuCategoryResponse> response = categories.stream()
+                .map(MenuCategoryResponse::from)
+                .toList();
+        return ResponseEntity.ok(response);
+    }
 
     // ================================
     // 3.2 메뉴 관리

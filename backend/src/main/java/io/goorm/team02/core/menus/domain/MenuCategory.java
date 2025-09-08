@@ -52,16 +52,22 @@ public class MenuCategory {
 		this.isActive = isActive != null ? isActive : true;
 	}
 
-	// 수정 메서드들
+	// update 메서드들
 	public void updateName(String name) {
-		this.name = name;
+		if (name != null && !name.trim().isEmpty()) {
+			this.name = name.trim();
+		}
 	}
 
 	public void updateDisplayOrder(Integer displayOrder) {
-		this.displayOrder = displayOrder;
+		if (displayOrder != null && displayOrder >= 0) {
+			this.displayOrder = displayOrder;
+		}
 	}
 
 	public void updateIsActive(Boolean isActive) {
-		this.isActive = isActive;
+		if (isActive != null) {
+			this.isActive = isActive;
+		}
 	}
 }

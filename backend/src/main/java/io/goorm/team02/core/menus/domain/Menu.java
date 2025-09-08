@@ -101,8 +101,11 @@ public class Menu extends BaseEntity {
 	}
 
 	public void updateStatus(MenuStatus status) {
-		this.status = status;
+		if (status != null) {
+			this.status = status;
+		}
 	}
+
 
 	public void updateDisplayOrder(Integer displayOrder) {
 		this.displayOrder = displayOrder;
