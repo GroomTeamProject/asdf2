@@ -4,9 +4,7 @@ import io.goorm.team02.core.menus.controller.dto.categorycreate.CategoryMoveRequ
 import io.goorm.team02.core.menus.controller.dto.categorycreate.CategoryOrderUpdateRequest;
 import io.goorm.team02.core.menus.controller.dto.categorycreate.MenuCategoryCreateRequest;
 import io.goorm.team02.core.menus.controller.dto.categorycreate.MenuCategoryUpdateRequest;
-import io.goorm.team02.core.menus.controller.dto.menucreate.MenuCreateRequest;
-import io.goorm.team02.core.menus.controller.dto.menucreate.MenuOptionCreateRequest;
-import io.goorm.team02.core.menus.controller.dto.menucreate.MenuOptionItemCreateRequest;
+import io.goorm.team02.core.menus.controller.dto.menucreate.*;
 import io.goorm.team02.core.menus.domain.Menu;
 import io.goorm.team02.core.menus.domain.MenuCategory;
 import io.goorm.team02.core.menus.domain.MenuOption;
@@ -23,10 +21,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -917,5 +920,1246 @@ public class MenuService {
         }
 
         log.debug("카테고리 순서 변경 요청 유효성 검증 완료");
+    }
+
+    /**
+     * 메뉴 목록 조회 (카테고리별 필터링 가능)
+     */
+    public List<Menu> getMenus(Long categoryId) {
+        log.info("=== 메뉴 목록 조회 시작 ===");
+
+        // 현재 로그인한 사용자 ID 가져오기
+        Long currentUserId = getCurrentUserId();
+        log.info("현재 사용자 ID: {}", currentUserId);
+        log.info("카테고리 ID 필터: {}", categoryId);
+
+        // 내 가게 조회
+        log.info("가게 정보 조회 중...");
+        Store store = getMyStore();
+        log.info("가게 조회 완료 - 가게 ID: {}, 가게명: {}", store.getId(), store.getName());
+
+        List<Menu> menus;
+
+        if (categoryId != null) {
+            // 특정 카테고리의 메뉴 조회
+            log.info("특정 카테고리의 메뉴 조회 중... 카테고리 ID: {}", categoryId);
+
+            // 카테고리 존재 여부 및 권한 확인
+            MenuCategory category = menuCategoryRepository.findById(categoryId)
+                    .orElseThrow(() -> {
+                        log.error("카테고리를 찾을 수 없습니다. ID: {}", categoryId);
+                        return new RuntimeException("카테고리를 찾을 수 없습니다");
+                    });
+
+            // 카테고리가 해당 가게의 것인지 확인
+            if (!category.getStore().getId().equals(store.getId())) {
+                log.error("다른 가게의 카테고리입니다. 카테고리 소유 가게 ID: {}, 현재 가게 ID: {}",
+                        category.getStore().getId(), store.getId());
+                throw new RuntimeException("다른 가게의 카테고리입니다");
+            }
+
+            log.info("카테고리 확인 완료 - 카테고리명: {}, 활성상태: {}", category.getName(), category.getIsActive());
+
+            menus = menuRepository.findByStoreIdAndCategoryIdOrderByDisplayOrderAsc(store.getId(), categoryId);
+
+            log.info("특정 카테고리 메뉴 조회 완료 - 카테고리: {}, 메뉴 수: {}개", category.getName(), menus.size());
+
+        } else {
+            // 전체 메뉴 조회
+            log.info("전체 메뉴 조회 중...");
+            menus = menuRepository.findByStoreIdOrderByDisplayOrderAsc(store.getId());
+            log.info("전체 메뉴 조회 완료 - 총 메뉴 수: {}개", menus.size());
+        }
+
+        // 메뉴별 상태 통계
+        if (!menus.isEmpty()) {
+            long availableCount = menus.stream().filter(m -> m.getStatus() == MenuStatus.AVAILABLE).count();
+            long soldOutCount = menus.stream().filter(m -> m.getStatus() == MenuStatus.SOLD_OUT).count();
+            long hiddenCount = menus.stream().filter(m -> m.getStatus() == MenuStatus.HIDDEN).count();
+
+            log.info("메뉴 상태별 통계 - 판매중: {}개, 품절: {}개, 숨김: {}개",
+                    availableCount, soldOutCount, hiddenCount);
+        }
+
+        log.info("=== 메뉴 목록 조회 종료 ===");
+        return menus;
+    }
+
+    /**
+     * 메뉴 상세 조회
+     */
+    public Menu getMenu(Long menuId) {
+        log.info("=== 메뉴 상세 조회 시작 ===");
+
+        // 현재 로그인한 사용자 ID 가져오기
+        Long currentUserId = getCurrentUserId();
+        log.info("현재 사용자 ID: {}", currentUserId);
+        log.info("조회할 메뉴 ID: {}", menuId);
+
+        // 내 가게 조회
+        log.info("가게 정보 조회 중...");
+        Store store = getMyStore();
+        log.info("가게 조회 완료 - 가게 ID: {}, 가게명: {}", store.getId(), store.getName());
+
+        // 메뉴 조회 및 권한 확인
+        log.info("메뉴 조회 중... 메뉴 ID: {}", menuId);
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> {
+                    log.error("메뉴를 찾을 수 없습니다. 메뉴 ID: {}, 가게 ID: {}", menuId, store.getId());
+                    return new RuntimeException("메뉴를 찾을 수 없습니다");
+                });
+
+        log.info("메뉴 조회 완료 - 메뉴명: {}, 상태: {}", menu.getName(), menu.getStatus());
+
+        // 메뉴 상세 정보 로깅
+        logMenuDetails(menu);
+
+        log.info("=== 메뉴 상세 조회 종료 ===");
+        return menu;
+    }
+
+    /**
+     * 메뉴 상세 정보 로깅
+     */
+    private void logMenuDetails(Menu menu) {
+        log.info("메뉴 상세 정보:");
+        log.info("  - ID: {}", menu.getId());
+        log.info("  - 이름: {}", menu.getName());
+        log.info("  - 설명: {}", menu.getDescription());
+        log.info("  - 가격: {}원", menu.getPrice());
+        log.info("  - 카테고리: {} (ID: {})",
+                menu.getCategory() != null ? menu.getCategory().getName() : "없음",
+                menu.getCategory() != null ? menu.getCategory().getId() : null);
+        log.info("  - 상태: {}", menu.getStatus());
+        log.info("  - 인기메뉴: {}", menu.getIsPopular());
+        log.info("  - 추천메뉴: {}", menu.getIsRecommended());
+        log.info("  - 표시순서: {}", menu.getDisplayOrder());
+        log.info("  - 이미지: {}", menu.getImageUrl() != null ? "있음" : "없음");
+
+        // 옵션 정보
+        if (menu.getOptions() != null && !menu.getOptions().isEmpty()) {
+            log.info("  - 옵션 그룹 수: {}개", menu.getOptions().size());
+
+            long requiredOptions = menu.getOptions().stream()
+                    .filter(option -> option.getIsRequired())
+                    .count();
+            log.info("  - 필수 옵션 그룹: {}개", requiredOptions);
+
+            // 각 옵션 그룹의 상세 정보
+            for (int i = 0; i < menu.getOptions().size(); i++) {
+                var option = menu.getOptions().get(i);
+                int itemCount = option.getItems() != null ? option.getItems().size() : 0;
+                log.info("    {}. {} ({}) - 아이템 {}개, 필수: {}",
+                        i + 1, option.getName(), option.getType(),
+                        itemCount, option.getIsRequired());
+            }
+        } else {
+            log.info("  - 옵션: 없음");
+        }
+
+        log.info("  - 생성일: {}", menu.getCreatedAt());
+        log.info("  - 수정일: {}", menu.getUpdatedAt());
+    }
+
+    /**
+     * 메뉴 수정
+     */
+    @Transactional
+    public Menu updateMenu(Long menuId, MenuUpdateRequest request) {
+        log.info("=== 메뉴 수정 시작 ===");
+
+        // 현재 로그인한 사용자 ID 가져오기
+        Long currentUserId = getCurrentUserId();
+        log.info("현재 사용자 ID: {}", currentUserId);
+        log.info("수정할 메뉴 ID: {}", menuId);
+
+        // 입력받은 값들 로그 출력
+        log.info("수정 요청 정보:");
+        log.info("  - 메뉴명: {}", request.getName());
+        log.info("  - 설명: {}", request.getDescription());
+        log.info("  - 가격: {}", request.getPrice());
+        log.info("  - 카테고리 ID: {}", request.getCategoryId());
+        log.info("  - 이미지URL: {}", request.getImageUrl());
+        log.info("  - 인기메뉴: {}", request.getIsPopular());
+        log.info("  - 추천메뉴: {}", request.getIsRecommended());
+        log.info("  - 상태: {}", request.getStatus());
+        log.info("  - 표시순서: {}", request.getDisplayOrder());
+        log.info("  - 이미지삭제: {}", request.getRemoveImage());
+
+        // 내 가게 조회
+        log.info("가게 정보 조회 중...");
+        Store store = getMyStore();
+        log.info("가게 조회 완료 - 가게 ID: {}, 가게명: {}", store.getId(), store.getName());
+
+        // 메뉴 조회 및 권한 확인
+        log.info("메뉴 조회 중... 메뉴 ID: {}", menuId);
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> {
+                    log.error("메뉴를 찾을 수 없습니다. 메뉴 ID: {}, 가게 ID: {}", menuId, store.getId());
+                    return new RuntimeException("메뉴를 찾을 수 없습니다");
+                });
+
+        log.info("메뉴 조회 완료 - 기존 메뉴명: {}", menu.getName());
+
+        // 입력값 검증
+        validateMenuUpdateRequest(request, store.getId(), menuId);
+
+        // 카테고리 변경 처리
+        MenuCategory newCategory = null;
+        if (request.getCategoryId() != null) {
+            newCategory = validateAndGetCategory(request.getCategoryId(), store.getId());
+        }
+
+        // 변경사항 적용
+        boolean hasChanges = false;
+
+        // 메뉴명 변경
+        if (request.getName() != null && !request.getName().trim().isEmpty()) {
+            String newName = request.getName().trim();
+            if (!newName.equals(menu.getName())) {
+                log.info("메뉴명 변경: {} -> {}", menu.getName(), newName);
+                menu.updateName(newName);
+                hasChanges = true;
+            }
+        }
+
+        // 설명 변경
+        if (request.getDescription() != null) {
+            String currentDescription = menu.getDescription() != null ? menu.getDescription() : "";
+            if (!request.getDescription().equals(currentDescription)) {
+                log.info("설명 변경: {} -> {}", currentDescription, request.getDescription());
+                menu.updateDescription(request.getDescription());
+                hasChanges = true;
+            }
+        }
+
+        // 가격 변경
+        if (request.getPrice() != null && request.getPrice().compareTo(menu.getPrice()) != 0) {
+            log.info("가격 변경: {} -> {}", menu.getPrice(), request.getPrice());
+            menu.updatePrice(request.getPrice());
+            hasChanges = true;
+        }
+
+        // 카테고리 변경
+        if (newCategory != null && !newCategory.getId().equals(menu.getCategory().getId())) {
+            log.info("카테고리 변경: {} (ID: {}) -> {} (ID: {})",
+                    menu.getCategory().getName(), menu.getCategory().getId(),
+                    newCategory.getName(), newCategory.getId());
+            menu.updateCategory(newCategory);
+            hasChanges = true;
+        }
+
+        // 이미지 처리
+        if (request.getRemoveImage() != null && request.getRemoveImage()) {
+            if (menu.getImageUrl() != null) {
+                log.info("이미지 삭제: {}", menu.getImageUrl());
+                menu.removeImage();
+                hasChanges = true;
+            }
+        } else if (request.getImageUrl() != null) {
+            String currentImageUrl = menu.getImageUrl() != null ? menu.getImageUrl() : "";
+            if (!request.getImageUrl().equals(currentImageUrl)) {
+                log.info("이미지 URL 변경: {} -> {}", currentImageUrl, request.getImageUrl());
+                menu.updateImageUrl(request.getImageUrl());
+                hasChanges = true;
+            }
+        }
+
+        // 인기메뉴 여부 변경
+        if (request.getIsPopular() != null && !request.getIsPopular().equals(menu.getIsPopular())) {
+            log.info("인기메뉴 여부 변경: {} -> {}", menu.getIsPopular(), request.getIsPopular());
+            menu.updateIsPopular(request.getIsPopular());
+            hasChanges = true;
+        }
+
+        // 추천메뉴 여부 변경
+        if (request.getIsRecommended() != null && !request.getIsRecommended().equals(menu.getIsRecommended())) {
+            log.info("추천메뉴 여부 변경: {} -> {}", menu.getIsRecommended(), request.getIsRecommended());
+            menu.updateIsRecommended(request.getIsRecommended());
+            hasChanges = true;
+        }
+
+        // 상태 변경
+        if (request.getStatus() != null && !request.getStatus().equals(menu.getStatus())) {
+            log.info("상태 변경: {} -> {}", menu.getStatus(), request.getStatus());
+            menu.updateStatus(request.getStatus());
+            hasChanges = true;
+        }
+
+        // 표시 순서 변경
+        if (request.getDisplayOrder() != null && !request.getDisplayOrder().equals(menu.getDisplayOrder())) {
+            log.info("표시 순서 변경: {} -> {}", menu.getDisplayOrder(), request.getDisplayOrder());
+            menu.updateDisplayOrder(request.getDisplayOrder());
+            hasChanges = true;
+        }
+
+        if (!hasChanges) {
+            log.info("변경된 정보가 없습니다.");
+            return menu;
+        }
+
+        // 메뉴 저장
+        log.info("메뉴 저장 중...");
+        Menu savedMenu = menuRepository.save(menu);
+
+        log.info("메뉴 수정 완료! 메뉴 ID: {}, 메뉴명: {}", savedMenu.getId(), savedMenu.getName());
+        log.info("=== 메뉴 수정 종료 ===");
+
+        return savedMenu;
+    }
+
+    /**
+     * 메뉴 수정 요청 검증
+     */
+    private void validateMenuUpdateRequest(MenuUpdateRequest request, Long storeId, Long menuId) {
+        log.debug("메뉴 수정 요청 유효성 검증 시작");
+
+        // 메뉴명 중복 체크 (다른 메뉴와)
+        if (request.getName() != null && !request.getName().trim().isEmpty()) {
+            String trimmedName = request.getName().trim();
+
+            if (trimmedName.length() > 100) {
+                throw new IllegalArgumentException("메뉴명은 100자를 초과할 수 없습니다");
+            }
+
+            // 현재 메뉴가 아닌 다른 메뉴에서 같은 이름이 사용되는지 확인
+            List<Menu> existingMenus = menuRepository.findByStoreIdOrderByDisplayOrderAsc(storeId);
+            boolean isDuplicate = existingMenus.stream()
+                    .anyMatch(menu -> !menu.getId().equals(menuId) &&
+                            menu.getName().equals(trimmedName));
+
+            if (isDuplicate) {
+                throw new IllegalArgumentException("이미 존재하는 메뉴명입니다: " + trimmedName);
+            }
+        }
+
+        // 가격 검증
+        if (request.getPrice() != null) {
+            if (request.getPrice().compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException("가격은 0원 이상이어야 합니다");
+            }
+            if (request.getPrice().compareTo(new BigDecimal("1000000")) > 0) {
+                throw new IllegalArgumentException("가격은 100만원을 초과할 수 없습니다");
+            }
+        }
+
+        // 표시 순서 검증
+        if (request.getDisplayOrder() != null && request.getDisplayOrder() < 0) {
+            throw new IllegalArgumentException("표시 순서는 0 이상이어야 합니다");
+        }
+
+        log.debug("메뉴 수정 요청 유효성 검증 완료");
+    }
+
+    /**
+     * 카테고리 유효성 검증 및 조회
+     */
+    private MenuCategory validateAndGetCategory(Long categoryId, Long storeId) {
+        log.info("카테고리 유효성 검증 중... 카테고리 ID: {}", categoryId);
+
+        MenuCategory category = menuCategoryRepository.findById(categoryId)
+                .orElseThrow(() -> {
+                    log.error("카테고리를 찾을 수 없습니다. ID: {}", categoryId);
+                    return new IllegalArgumentException("카테고리를 찾을 수 없습니다");
+                });
+
+        // 카테고리가 해당 가게의 것인지 확인
+        if (!category.getStore().getId().equals(storeId)) {
+            log.error("다른 가게의 카테고리입니다. 카테고리 소유 가게 ID: {}, 현재 가게 ID: {}",
+                    category.getStore().getId(), storeId);
+            throw new IllegalArgumentException("다른 가게의 카테고리입니다");
+        }
+
+        // 카테고리가 활성 상태인지 확인
+        if (!category.getIsActive()) {
+            log.warn("비활성화된 카테고리입니다. 카테고리: {}", category.getName());
+            throw new IllegalArgumentException("비활성화된 카테고리로는 이동할 수 없습니다: " + category.getName());
+        }
+
+        log.info("카테고리 검증 완료 - 카테고리명: {}", category.getName());
+        return category;
+    }
+
+    /**
+     * 메뉴 삭제
+     */
+    @Transactional
+    public void deleteMenu(Long menuId) {
+        log.info("=== 메뉴 삭제 시작 ===");
+
+        // 현재 로그인한 사용자 ID 가져오기
+        Long currentUserId = getCurrentUserId();
+        log.info("현재 사용자 ID: {}", currentUserId);
+        log.info("삭제할 메뉴 ID: {}", menuId);
+
+        // 내 가게 조회
+        log.info("가게 정보 조회 중...");
+        Store store = getMyStore();
+        log.info("가게 조회 완료 - 가게 ID: {}, 가게명: {}", store.getId(), store.getName());
+
+        // 메뉴 조회 및 권한 확인
+        log.info("메뉴 조회 중... 메뉴 ID: {}", menuId);
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> {
+                    log.error("메뉴를 찾을 수 없습니다. 메뉴 ID: {}, 가게 ID: {}", menuId, store.getId());
+                    return new RuntimeException("메뉴를 찾을 수 없습니다");
+                });
+
+        log.info("메뉴 조회 완료 - 메뉴명: {}, 상태: {}, 카테고리: {}",
+                menu.getName(), menu.getStatus(),
+                menu.getCategory() != null ? menu.getCategory().getName() : "없음");
+
+        // 삭제 전 검증
+        validateMenuDeletion(menu);
+
+        // 메뉴에 속한 옵션들 처리
+        handleMenuOptionsBeforeDeletion(menu);
+
+        // 메뉴 삭제
+        log.info("메뉴 삭제 실행 중...");
+        menuRepository.delete(menu);
+
+        log.info("메뉴 삭제 완료! 삭제된 메뉴: {} (ID: {})", menu.getName(), menuId);
+        log.info("=== 메뉴 삭제 종료 ===");
+    }
+
+    /**
+     * 메뉴 삭제 전 검증
+     */
+    private void validateMenuDeletion(Menu menu) {
+        log.info("메뉴 삭제 가능 여부 검증 중...");
+
+        // 1. 현재 주문 중인 메뉴인지 확인 (실제 주문 시스템이 있다면)
+        // TODO: 주문 시스템과 연동하여 현재 주문 중인 메뉴인지 확인
+        // if (orderService.hasActiveOrders(menu.getId())) {
+        //     throw new IllegalArgumentException("현재 주문 중인 메뉴는 삭제할 수 없습니다");
+        // }
+
+        // 2. 메뉴 상태에 따른 삭제 정책
+        if (menu.getStatus() == MenuStatus.AVAILABLE) {
+            log.warn("판매 중인 메뉴를 삭제합니다: {}", menu.getName());
+            // 필요에 따라 경고만 하거나 삭제를 막을 수 있음
+            // throw new IllegalArgumentException("판매 중인 메뉴는 먼저 숨김 처리 후 삭제해주세요");
+        }
+
+        // 3. 인기/추천 메뉴 삭제 시 경고
+        if (menu.getIsPopular() || menu.getIsRecommended()) {
+            log.warn("인기/추천 메뉴를 삭제합니다: {} (인기: {}, 추천: {})",
+                    menu.getName(), menu.getIsPopular(), menu.getIsRecommended());
+        }
+
+        log.info("메뉴 삭제 가능 여부 검증 완료");
+    }
+
+    /**
+     * 메뉴 삭제 전 옵션들 처리
+     */
+    private void handleMenuOptionsBeforeDeletion(Menu menu) {
+        if (menu.getOptions() != null && !menu.getOptions().isEmpty()) {
+            log.info("메뉴에 속한 옵션들 처리 중...");
+
+            int totalOptionGroups = menu.getOptions().size();
+            int totalOptionItems = 0;
+
+            // 각 옵션 그룹의 아이템들 삭제
+            for (MenuOption option : menu.getOptions()) {
+                if (option.getItems() != null && !option.getItems().isEmpty()) {
+                    int itemCount = option.getItems().size();
+                    totalOptionItems += itemCount;
+
+                    log.info("옵션 그룹 '{}' 의 아이템 {}개 삭제 중...", option.getName(), itemCount);
+
+                    // 옵션 아이템들 삭제 (Cascade로 자동 삭제되지만 명시적으로 처리)
+                    menuOptionItemRepository.deleteByOptionId(option.getId());
+
+                    log.debug("옵션 그룹 '{}' 아이템들 삭제 완료", option.getName());
+                }
+            }
+
+            // 옵션 그룹들 삭제 (Cascade로 자동 삭제되지만 명시적으로 처리)
+            log.info("총 {}개 옵션 그룹 삭제 중...", totalOptionGroups);
+            menuOptionRepository.deleteByMenuId(menu.getId());
+
+            log.info("옵션 처리 완료 - 삭제된 옵션 그룹: {}개, 옵션 아이템: {}개",
+                    totalOptionGroups, totalOptionItems);
+        } else {
+            log.info("삭제할 옵션이 없습니다");
+        }
+    }
+
+    /**
+     * 메뉴 소프트 삭제 (비활성화)
+     */
+    @Transactional
+    public void softDeleteMenu(Long menuId) {
+        log.info("=== 메뉴 소프트 삭제 시작 ===");
+
+        Long currentUserId = getCurrentUserId();
+        Store store = getMyStore();
+
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> new RuntimeException("메뉴를 찾을 수 없습니다"));
+
+        log.info("메뉴 숨김 처리: {} (기존 상태: {})", menu.getName(), menu.getStatus());
+
+        // 상태를 HIDDEN으로 변경 (실제 삭제하지 않음)
+        menu.updateStatus(MenuStatus.HIDDEN);
+        menuRepository.save(menu);
+
+        log.info("메뉴 소프트 삭제 완료! 메뉴: {} (ID: {})", menu.getName(), menuId);
+        log.info("=== 메뉴 소프트 삭제 종료 ===");
+    }
+
+    /**
+     * 메뉴 판매 상태 변경
+     */
+    @Transactional
+    public Menu updateMenuStatus(Long menuId, MenuStatusRequest request) {
+        log.info("=== 메뉴 판매 상태 변경 시작 ===");
+
+        // 현재 로그인한 사용자 ID 가져오기
+        Long currentUserId = getCurrentUserId();
+        log.info("현재 사용자 ID: {}", currentUserId);
+        log.info("상태 변경할 메뉴 ID: {}", menuId);
+
+        // 입력받은 값들 로그 출력
+        log.info("상태 변경 요청 정보:");
+        log.info("  - 새로운 상태: {}", request.getStatus());
+        log.info("  - 변경 사유: {}", request.getReason());
+        log.info("  - 일시적 변경: {}", request.getIsTemporary());
+
+        // 내 가게 조회
+        log.info("가게 정보 조회 중...");
+        Store store = getMyStore();
+        log.info("가게 조회 완료 - 가게 ID: {}, 가게명: {}", store.getId(), store.getName());
+
+        // 메뉴 조회 및 권한 확인
+        log.info("메뉴 조회 중... 메뉴 ID: {}", menuId);
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> {
+                    log.error("메뉴를 찾을 수 없습니다. 메뉴 ID: {}, 가게 ID: {}", menuId, store.getId());
+                    return new RuntimeException("메뉴를 찾을 수 없습니다");
+                });
+
+        log.info("메뉴 조회 완료 - 메뉴명: {}, 현재 상태: {}", menu.getName(), menu.getStatus());
+
+        // 입력값 검증
+        validateMenuStatusRequest(request, menu);
+
+        // 현재 상태와 동일한지 확인
+        if (menu.getStatus() == request.getStatus()) {
+            log.info("이미 동일한 상태입니다: {}", request.getStatus());
+            return menu;
+        }
+
+        // 상태 변경 전 추가 검증
+        validateStatusTransition(menu.getStatus(), request.getStatus(), menu);
+
+        // 상태 변경
+        MenuStatus previousStatus = menu.getStatus();
+        menu.updateStatus(request.getStatus());
+
+        // 상태 변경 로그 기록
+        logStatusChange(menu, previousStatus, request);
+
+        // 상태별 추가 처리
+        handleStatusSpecificActions(menu, previousStatus, request);
+
+        // 메뉴 저장
+        log.info("메뉴 상태 저장 중...");
+        Menu savedMenu = menuRepository.save(menu);
+
+        log.info("메뉴 판매 상태 변경 완료! 메뉴: {} - {} -> {}",
+                savedMenu.getName(), previousStatus, savedMenu.getStatus());
+        log.info("=== 메뉴 판매 상태 변경 종료 ===");
+
+        return savedMenu;
+    }
+
+    /**
+     * 메뉴 상태 변경 요청 검증
+     */
+    private void validateMenuStatusRequest(MenuStatusRequest request, Menu menu) {
+        log.debug("메뉴 상태 변경 요청 유효성 검증 시작");
+
+        // 필수 필드 검증
+        if (request.getStatus() == null) {
+            throw new IllegalArgumentException("메뉴 상태는 필수입니다");
+        }
+
+        // 변경 사유 길이 검증
+        if (request.getReason() != null && request.getReason().length() > 200) {
+            throw new IllegalArgumentException("변경 사유는 200자를 초과할 수 없습니다");
+        }
+
+        log.debug("메뉴 상태 변경 요청 유효성 검증 완료");
+    }
+
+    /**
+     * 상태 전환 유효성 검증
+     */
+    private void validateStatusTransition(MenuStatus currentStatus, MenuStatus newStatus, Menu menu) {
+        log.debug("상태 전환 유효성 검증: {} -> {}", currentStatus, newStatus);
+
+        // 카테고리가 비활성화된 경우 AVAILABLE로 변경 불가
+        if (newStatus == MenuStatus.AVAILABLE &&
+                menu.getCategory() != null && !menu.getCategory().getIsActive()) {
+            log.warn("비활성화된 카테고리의 메뉴를 판매중으로 변경할 수 없습니다. 카테고리: {}",
+                    menu.getCategory().getName());
+            throw new IllegalArgumentException(
+                    "비활성화된 카테고리의 메뉴는 판매중으로 변경할 수 없습니다. 먼저 카테고리를 활성화해주세요."
+            );
+        }
+
+        // 필수 옵션이 모두 비활성화된 경우 AVAILABLE로 변경 불가 (옵션이 있는 경우)
+        if (newStatus == MenuStatus.AVAILABLE && menu.getOptions() != null && !menu.getOptions().isEmpty()) {
+            boolean hasAllRequiredOptionsDisabled = menu.getOptions().stream()
+                    .filter(option -> option.getIsRequired())
+                    .anyMatch(option -> option.getItems() == null ||
+                            option.getItems().stream().noneMatch(item -> item.getIsActive()));
+
+            if (hasAllRequiredOptionsDisabled) {
+                log.warn("필수 옵션이 모두 비활성화된 메뉴를 판매중으로 변경할 수 없습니다");
+                throw new IllegalArgumentException(
+                        "필수 옵션이 모두 비활성화되어 있습니다. 필수 옵션을 활성화한 후 판매중으로 변경해주세요."
+                );
+            }
+        }
+
+        log.debug("상태 전환 유효성 검증 완료");
+    }
+
+    /**
+     * 상태 변경 로그 기록
+     */
+    private void logStatusChange(Menu menu, MenuStatus previousStatus, MenuStatusRequest request) {
+        log.info("메뉴 상태 변경 상세:");
+        log.info("  - 메뉴: {} (ID: {})", menu.getName(), menu.getId());
+        log.info("  - 상태 변경: {} -> {}", previousStatus, request.getStatus());
+        log.info("  - 변경 사유: {}", request.getReason() != null ? request.getReason() : "사유 없음");
+        log.info("  - 일시적 변경: {}", request.getIsTemporary());
+        log.info("  - 변경 시간: {}", LocalDateTime.now());
+
+        // 상태별 의미 설명
+        String statusDescription = getStatusDescription(request.getStatus());
+        log.info("  - 상태 의미: {}", statusDescription);
+    }
+
+    /**
+     * 상태별 설명 반환
+     */
+    private String getStatusDescription(MenuStatus status) {
+        return switch (status) {
+            case AVAILABLE -> "고객이 주문할 수 있는 상태";
+            case SOLD_OUT -> "일시적으로 품절된 상태 (메뉴 목록에는 표시됨)";
+            case HIDDEN -> "고객에게 보이지 않는 상태 (완전 숨김)";
+        };
+    }
+
+    /**
+     * 상태별 추가 처리
+     */
+    private void handleStatusSpecificActions(Menu menu, MenuStatus previousStatus, MenuStatusRequest request) {
+        switch (request.getStatus()) {
+            case AVAILABLE -> {
+                log.info("메뉴를 판매 가능 상태로 변경했습니다");
+                // TODO: 필요시 알림 발송, 캐시 갱신 등
+            }
+            case SOLD_OUT -> {
+                log.info("메뉴를 품절 상태로 변경했습니다");
+                if (request.getIsTemporary()) {
+                    log.info("일시적 품절로 설정되었습니다");
+                    // TODO: 자동 복구 스케줄링 등
+                }
+            }
+            case HIDDEN -> {
+                log.info("메뉴를 숨김 상태로 변경했습니다");
+                // 인기/추천 메뉴 설정 해제 검토
+                if (menu.getIsPopular() || menu.getIsRecommended()) {
+                    log.warn("숨김 처리된 메뉴가 인기/추천 메뉴로 설정되어 있습니다. 검토가 필요합니다.");
+                }
+            }
+        }
+    }
+
+    /**
+     * 메뉴 상태 일괄 변경 (여러 메뉴 동시 처리) - 추가 기능
+     */
+    @Transactional
+    public List<Menu> updateMultipleMenuStatus(List<Long> menuIds, MenuStatusRequest request) {
+        log.info("=== 메뉴 상태 일괄 변경 시작 ===");
+        log.info("대상 메뉴 수: {}개, 변경할 상태: {}", menuIds.size(), request.getStatus());
+
+        Store store = getMyStore();
+        List<Menu> updatedMenus = new ArrayList<>();
+
+        for (Long menuId : menuIds) {
+            try {
+                Menu menu = updateMenuStatus(menuId, request);
+                updatedMenus.add(menu);
+            } catch (Exception e) {
+                log.error("메뉴 상태 변경 실패 - 메뉴 ID: {}, 오류: {}", menuId, e.getMessage());
+                // 개별 실패는 로그만 남기고 계속 진행 (필요에 따라 예외 발생 가능)
+            }
+        }
+
+        log.info("메뉴 상태 일괄 변경 완료 - 성공: {}개, 실패: {}개",
+                updatedMenus.size(), menuIds.size() - updatedMenus.size());
+        log.info("=== 메뉴 상태 일괄 변경 종료 ===");
+
+        return updatedMenus;
+    }
+
+    /**
+     * 메뉴 순서 변경 (드래그 앤 드롭 방식)
+     */
+    @Transactional
+    public List<Menu> updateMenuOrder(MenuOrderUpdateRequest request) {
+        log.info("=== 메뉴 순서 변경 시작 ===");
+
+        // 현재 로그인한 사용자 ID 가져오기
+        Long currentUserId = getCurrentUserId();
+        log.info("현재 사용자 ID: {}", currentUserId);
+
+        // 입력받은 값들 로그 출력
+        log.info("순서 변경 요청 정보:");
+        log.info("  - 이동할 메뉴 ID: {}", request.getMenuId());
+        log.info("  - 새로운 위치: {}", request.getNewPosition());
+        log.info("  - 카테고리 ID: {}", request.getCategoryId());
+        log.info("  - 전체 순서: {}", request.getGlobalOrder());
+
+        // 내 가게 조회
+        log.info("가게 정보 조회 중...");
+        Store store = getMyStore();
+        log.info("가게 조회 완료 - 가게 ID: {}, 가게명: {}", store.getId(), store.getName());
+
+        // 이동할 메뉴 조회 및 권한 확인
+        log.info("이동할 메뉴 조회 중... 메뉴 ID: {}", request.getMenuId());
+        Menu targetMenu = menuRepository.findByIdAndStoreId(request.getMenuId(), store.getId())
+                .orElseThrow(() -> {
+                    log.error("메뉴를 찾을 수 없습니다. 메뉴 ID: {}, 가게 ID: {}", request.getMenuId(), store.getId());
+                    return new RuntimeException("메뉴를 찾을 수 없습니다");
+                });
+
+        log.info("이동할 메뉴 확인 완료 - 메뉴명: {}, 현재 순서: {}, 카테고리: {}",
+                targetMenu.getName(), targetMenu.getDisplayOrder(),
+                targetMenu.getCategory() != null ? targetMenu.getCategory().getName() : "없음");
+
+        List<Menu> menus;
+        String orderScope;
+
+        if (request.getGlobalOrder() != null && request.getGlobalOrder()) {
+            // 전체 메뉴 기준 순서 변경
+            menus = menuRepository.findByStoreIdOrderByDisplayOrderAsc(store.getId());
+            orderScope = "전체 메뉴";
+        } else {
+            // 카테고리 내 순서 변경
+            Long categoryIdForOrder = request.getCategoryId() != null ?
+                    request.getCategoryId() :
+                    (targetMenu.getCategory() != null ? targetMenu.getCategory().getId() : null);
+
+            if (categoryIdForOrder == null) {
+                log.error("카테고리 정보가 없습니다");
+                throw new IllegalArgumentException("카테고리 정보가 필요합니다");
+            }
+
+            // 카테고리 권한 확인
+            MenuCategory category = menuCategoryRepository.findById(categoryIdForOrder)
+                    .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다"));
+
+            if (!category.getStore().getId().equals(store.getId())) {
+                throw new RuntimeException("다른 가게의 카테고리입니다");
+            }
+
+            menus = menuRepository.findByStoreIdAndCategoryIdOrderByDisplayOrderAsc(store.getId(), categoryIdForOrder);
+            orderScope = "카테고리 '" + category.getName() + "' 내";
+        }
+
+        if (menus.isEmpty()) {
+            log.warn("순서를 변경할 메뉴가 없습니다");
+            throw new IllegalArgumentException("순서를 변경할 메뉴가 없습니다");
+        }
+
+        log.info("{} 메뉴 조회 완료 - 총 {}개", orderScope, menus.size());
+
+        // 새로운 위치 유효성 검증
+        if (request.getNewPosition() < 1 || request.getNewPosition() > menus.size()) {
+            log.error("잘못된 위치입니다. 요청 위치: {}, 총 메뉴 수: {}", request.getNewPosition(), menus.size());
+            throw new IllegalArgumentException(
+                    String.format("위치는 1부터 %d 사이여야 합니다", menus.size())
+            );
+        }
+
+        // 현재 위치 찾기
+        int currentPosition = -1;
+        for (int i = 0; i < menus.size(); i++) {
+            if (menus.get(i).getId().equals(request.getMenuId())) {
+                currentPosition = i + 1; // 1부터 시작
+                break;
+            }
+        }
+
+        if (currentPosition == -1) {
+            log.error("메뉴를 목록에서 찾을 수 없습니다. 메뉴 ID: {}", request.getMenuId());
+            throw new RuntimeException("메뉴를 해당 범위에서 찾을 수 없습니다");
+        }
+
+        log.info("메뉴 이동: {} (ID: {}) - {} 위치 {} -> {}",
+                targetMenu.getName(), targetMenu.getId(), orderScope,
+                currentPosition, request.getNewPosition());
+
+        // 위치가 같으면 변경하지 않음
+        if (currentPosition == request.getNewPosition()) {
+            log.info("이미 같은 위치입니다. 변경하지 않습니다.");
+            return menus;
+        }
+
+        // 메뉴 리스트에서 이동할 메뉴 제거
+        Menu movingMenu = menus.remove(currentPosition - 1);
+
+        // 새로운 위치에 삽입 (인덱스는 0부터 시작하므로 -1)
+        menus.add(request.getNewPosition() - 1, movingMenu);
+
+        // 모든 메뉴의 displayOrder를 새로 설정
+        List<Menu> updatedMenus = new ArrayList<>();
+
+        if (request.getGlobalOrder() != null && request.getGlobalOrder()) {
+            // 전체 메뉴 순서 재설정
+            for (int i = 0; i < menus.size(); i++) {
+                Menu menu = menus.get(i);
+                int newDisplayOrder = i + 1;
+
+                if (!menu.getDisplayOrder().equals(newDisplayOrder)) {
+                    log.info("메뉴 순서 업데이트: {} (ID: {}) - {} -> {}",
+                            menu.getName(), menu.getId(),
+                            menu.getDisplayOrder(), newDisplayOrder);
+                    menu.updateDisplayOrder(newDisplayOrder);
+                    updatedMenus.add(menu);
+                }
+            }
+        } else {
+            // 카테고리 내 순서만 재설정 (카테고리별로 1부터 시작)
+            for (int i = 0; i < menus.size(); i++) {
+                Menu menu = menus.get(i);
+                int newDisplayOrder = i + 1;
+
+                if (!menu.getDisplayOrder().equals(newDisplayOrder)) {
+                    log.info("메뉴 순서 업데이트: {} (ID: {}) - {} -> {}",
+                            menu.getName(), menu.getId(),
+                            menu.getDisplayOrder(), newDisplayOrder);
+                    menu.updateDisplayOrder(newDisplayOrder);
+                    updatedMenus.add(menu);
+                }
+            }
+        }
+
+        // 변경된 메뉴들만 저장
+        if (!updatedMenus.isEmpty()) {
+            menuRepository.saveAll(updatedMenus);
+            log.info("총 {}개 메뉴 순서가 업데이트되었습니다", updatedMenus.size());
+        }
+
+        log.info("=== 메뉴 순서 변경 완료 ===");
+
+        // 최종 결과를 순서대로 반환
+        if (request.getGlobalOrder() != null && request.getGlobalOrder()) {
+            return menuRepository.findByStoreIdOrderByDisplayOrderAsc(store.getId());
+        } else {
+            Long categoryIdForResult = request.getCategoryId() != null ?
+                    request.getCategoryId() :
+                    targetMenu.getCategory().getId();
+            return menuRepository.findByStoreIdAndCategoryIdOrderByDisplayOrderAsc(store.getId(), categoryIdForResult);
+        }
+    }
+
+    /**
+     * 카테고리별 메뉴 순서 정규화 (추가 유틸리티 메서드)
+     */
+    @Transactional
+    public void normalizeMenuOrdersInCategory(Long categoryId) {
+        log.info("카테고리 내 메뉴 순서 정규화 시작 - 카테고리 ID: {}", categoryId);
+
+        Store store = getMyStore();
+        List<Menu> menus = menuRepository.findByStoreIdAndCategoryIdOrderByDisplayOrderAsc(store.getId(), categoryId);
+
+        List<Menu> updatedMenus = new ArrayList<>();
+        for (int i = 0; i < menus.size(); i++) {
+            Menu menu = menus.get(i);
+            int expectedOrder = i + 1;
+
+            if (!menu.getDisplayOrder().equals(expectedOrder)) {
+                menu.updateDisplayOrder(expectedOrder);
+                updatedMenus.add(menu);
+            }
+        }
+
+        if (!updatedMenus.isEmpty()) {
+            menuRepository.saveAll(updatedMenus);
+            log.info("카테고리 내 {}개 메뉴 순서가 정규화되었습니다", updatedMenus.size());
+        }
+
+        log.info("카테고리 내 메뉴 순서 정규화 완료");
+    }
+
+    /**
+     * 전체 메뉴 순서 정규화
+     */
+    @Transactional
+    public void normalizeAllMenuOrders() {
+        log.info("전체 메뉴 순서 정규화 시작");
+
+        Store store = getMyStore();
+        List<Menu> menus = menuRepository.findByStoreIdOrderByDisplayOrderAsc(store.getId());
+
+        List<Menu> updatedMenus = new ArrayList<>();
+        for (int i = 0; i < menus.size(); i++) {
+            Menu menu = menus.get(i);
+            int expectedOrder = i + 1;
+
+            if (!menu.getDisplayOrder().equals(expectedOrder)) {
+                menu.updateDisplayOrder(expectedOrder);
+                updatedMenus.add(menu);
+            }
+        }
+
+        if (!updatedMenus.isEmpty()) {
+            menuRepository.saveAll(updatedMenus);
+            log.info("전체 {}개 메뉴 순서가 정규화되었습니다", updatedMenus.size());
+        }
+
+        log.info("전체 메뉴 순서 정규화 완료");
+    }
+
+    /**
+     * 메뉴 이미지 업로드
+     */
+    @Transactional
+    public String uploadMenuImage(Long menuId, MultipartFile file) {
+        log.info("=== 메뉴 이미지 업로드 시작 ===");
+
+        // 현재 로그인한 사용자 ID 가져오기
+        Long currentUserId = getCurrentUserId();
+        log.info("현재 사용자 ID: {}", currentUserId);
+        log.info("이미지 업로드할 메뉴 ID: {}", menuId);
+
+        // 파일 정보 로깅
+        log.info("업로드 파일 정보:");
+        log.info("  - 파일명: {}", file.getOriginalFilename());
+        log.info("  - 파일 크기: {}바이트", file.getSize());
+        log.info("  - 콘텐츠 타입: {}", file.getContentType());
+
+        // 내 가게 조회
+        log.info("가게 정보 조회 중...");
+        Store store = getMyStore();
+        log.info("가게 조회 완료 - 가게 ID: {}, 가게명: {}", store.getId(), store.getName());
+
+        // 메뉴 조회 및 권한 확인
+        log.info("메뉴 조회 중... 메뉴 ID: {}", menuId);
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> {
+                    log.error("메뉴를 찾을 수 없습니다. 메뉴 ID: {}, 가게 ID: {}", menuId, store.getId());
+                    return new RuntimeException("메뉴를 찾을 수 없습니다");
+                });
+
+        log.info("메뉴 조회 완료 - 메뉴명: {}, 기존 이미지: {}",
+                menu.getName(), menu.getImageUrl() != null ? "있음" : "없음");
+
+        // 파일 유효성 검증
+        validateImageFile(file);
+
+        try {
+            // 이미지 파일 업로드 처리
+            String imageUrl = processImageUpload(file, menu);
+
+            // 기존 이미지가 있다면 삭제 처리 (선택사항)
+            if (menu.getImageUrl() != null && !menu.getImageUrl().isEmpty()) {
+                log.info("기존 이미지 삭제 처리: {}", menu.getImageUrl());
+                // TODO: 실제 파일 삭제 로직 (S3, 로컬 파일시스템 등)
+                deleteImageFile(menu.getImageUrl());
+            }
+
+            // 메뉴 이미지 URL 업데이트
+            menu.updateImageUrl(imageUrl);
+            menuRepository.save(menu);
+
+            log.info("메뉴 이미지 업로드 완료! 메뉴: {}, 이미지 URL: {}", menu.getName(), imageUrl);
+            log.info("=== 메뉴 이미지 업로드 종료 ===");
+
+            return imageUrl;
+
+        } catch (Exception e) {
+            log.error("메뉴 이미지 업로드 실패", e);
+            throw new RuntimeException("이미지 업로드에 실패했습니다: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 메뉴 이미지 삭제
+     */
+    @Transactional
+    public void deleteMenuImage(Long menuId, Long imageId) {
+        log.info("=== 메뉴 이미지 삭제 시작 ===");
+
+        // 현재 로그인한 사용자 ID 가져오기
+        Long currentUserId = getCurrentUserId();
+        log.info("현재 사용자 ID: {}", currentUserId);
+        log.info("이미지 삭제할 메뉴 ID: {}, 이미지 ID: {}", menuId, imageId);
+
+        // 내 가게 조회
+        log.info("가게 정보 조회 중...");
+        Store store = getMyStore();
+        log.info("가게 조회 완료 - 가게 ID: {}, 가게명: {}", store.getId(), store.getName());
+
+        // 메뉴 조회 및 권한 확인
+        log.info("메뉴 조회 중... 메뉴 ID: {}", menuId);
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> {
+                    log.error("메뉴를 찾을 수 없습니다. 메뉴 ID: {}, 가게 ID: {}", menuId, store.getId());
+                    return new RuntimeException("메뉴를 찾을 수 없습니다");
+                });
+
+        log.info("메뉴 조회 완료 - 메뉴명: {}, 현재 이미지: {}",
+                menu.getName(), menu.getImageUrl() != null ? "있음" : "없음");
+
+        // 현재 구조에서는 메뉴당 하나의 이미지만 지원하므로 imageId는 검증용으로만 사용
+        // 실제 다중 이미지를 지원하려면 별도의 MenuImage 엔티티가 필요
+        if (menu.getImageUrl() == null || menu.getImageUrl().isEmpty()) {
+            log.warn("삭제할 이미지가 없습니다. 메뉴: {}", menu.getName());
+            throw new RuntimeException("삭제할 이미지가 없습니다");
+        }
+
+        // imageId 검증 (간단한 방식: URL의 해시값이나 파일명으로 검증)
+        if (!isValidImageId(menu.getImageUrl(), imageId)) {
+            log.error("잘못된 이미지 ID입니다. 메뉴 ID: {}, 이미지 ID: {}", menuId, imageId);
+            throw new RuntimeException("잘못된 이미지 ID입니다");
+        }
+
+        try {
+            // 실제 이미지 파일 삭제
+            String imageUrl = menu.getImageUrl();
+            log.info("이미지 파일 삭제 처리 중: {}", imageUrl);
+            deleteImageFile(imageUrl);
+
+            // 메뉴의 이미지 URL 제거
+            menu.removeImage();
+            menuRepository.save(menu);
+
+            log.info("메뉴 이미지 삭제 완료! 메뉴: {}, 삭제된 이미지: {}", menu.getName(), imageUrl);
+            log.info("=== 메뉴 이미지 삭제 종료 ===");
+
+        } catch (Exception e) {
+            log.error("메뉴 이미지 삭제 실패", e);
+            throw new RuntimeException("이미지 삭제에 실패했습니다: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 이미지 파일 유효성 검증
+     */
+    private void validateImageFile(MultipartFile file) {
+        log.debug("이미지 파일 유효성 검증 시작");
+
+        // 파일 크기 검증 (10MB 제한)
+        long maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.getSize() > maxSize) {
+            log.error("파일 크기가 너무 큽니다. 크기: {}바이트, 최대: {}바이트", file.getSize(), maxSize);
+            throw new IllegalArgumentException("파일 크기는 10MB를 초과할 수 없습니다");
+        }
+
+        // 파일 형식 검증
+        String contentType = file.getContentType();
+        if (contentType == null || !isValidImageType(contentType)) {
+            log.error("지원하지 않는 파일 형식입니다. 콘텐츠 타입: {}", contentType);
+            throw new IllegalArgumentException("지원하지 않는 파일 형식입니다. JPG, PNG, GIF만 업로드 가능합니다");
+        }
+
+        // 파일명 검증
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || originalFilename.trim().isEmpty()) {
+            log.error("파일명이 없습니다");
+            throw new IllegalArgumentException("올바른 파일명이 필요합니다");
+        }
+
+        // 파일 확장자 검증
+        String extension = getFileExtension(originalFilename);
+        if (!isValidImageExtension(extension)) {
+            log.error("지원하지 않는 파일 확장자입니다. 확장자: {}", extension);
+            throw new IllegalArgumentException("지원하지 않는 파일 확장자입니다");
+        }
+
+        log.debug("이미지 파일 유효성 검증 완료");
+    }
+
+    /**
+     * 이미지 타입 유효성 검사
+     */
+    private boolean isValidImageType(String contentType) {
+        return contentType.equals("image/jpeg") ||
+                contentType.equals("image/jpg") ||
+                contentType.equals("image/png") ||
+                contentType.equals("image/gif") ||
+                contentType.equals("image/webp");
+    }
+
+    /**
+     * 이미지 확장자 유효성 검사
+     */
+    private boolean isValidImageExtension(String extension) {
+        return extension.matches("(?i)\\.(jpg|jpeg|png|gif|webp)$");
+    }
+
+    /**
+     * 파일 확장자 추출
+     */
+    private String getFileExtension(String filename) {
+        int lastDot = filename.lastIndexOf('.');
+        return lastDot > 0 ? filename.substring(lastDot) : "";
+    }
+
+    /**
+     * 이미지 업로드 처리
+     */
+    private String processImageUpload(MultipartFile file, Menu menu) throws Exception {
+        log.info("이미지 업로드 처리 중...");
+
+        // 파일명 생성 (중복 방지)
+        String originalFilename = file.getOriginalFilename();
+        String extension = getFileExtension(originalFilename);
+        String newFilename = generateUniqueFilename(menu, extension);
+
+        log.info("생성된 파일명: {}", newFilename);
+
+        // TODO: 실제 파일 저장 로직 구현
+        // 예시: S3 업로드
+        String imageUrl = uploadToS3(file, newFilename);
+
+        // 또는 로컬 파일시스템에 저장
+        // String imageUrl = uploadToLocalFileSystem(file, newFilename);
+
+        log.info("이미지 업로드 완료 - URL: {}", imageUrl);
+        return imageUrl;
+    }
+
+    /**
+     * 고유 파일명 생성
+     */
+    private String generateUniqueFilename(Menu menu, String extension) {
+        LocalDateTime now = LocalDateTime.now();
+        String timestamp = now.format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+
+        // 메뉴 ID + 타임스탬프 + 랜덤값으로 고유 파일명 생성
+        String randomSuffix = UUID.randomUUID().toString().substring(0, 8);
+        return String.format("menu_%d_%s_%s%s", menu.getId(), timestamp, randomSuffix, extension);
+    }
+
+    /**
+     * S3에 이미지 업로드 (구현 필요)
+     */
+    private String uploadToS3(MultipartFile file, String filename) throws Exception {
+        // TODO: AWS S3 SDK를 사용한 업로드 로직 구현
+        // 임시로 더미 URL 반환
+        log.warn("S3 업로드 로직이 구현되지 않았습니다. 더미 URL을 반환합니다.");
+        return "https://example-bucket.s3.amazonaws.com/menu-images/" + filename;
+    }
+
+    /**
+     * 로컬 파일시스템에 이미지 저장 (개발용)
+     */
+    private String uploadToLocalFileSystem(MultipartFile file, String filename) throws Exception {
+        String uploadDir = "uploads/menu-images/";
+        Path uploadPath = Paths.get(uploadDir);
+
+        // 디렉토리 생성
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+
+        // 파일 저장
+        Path filePath = uploadPath.resolve(filename);
+        file.transferTo(filePath.toFile());
+
+        // URL 반환
+        return "/images/menu/" + filename;
+    }
+
+    /**
+     * 이미지 파일 삭제
+     */
+    private void deleteImageFile(String imageUrl) {
+        try {
+            log.info("이미지 파일 삭제 중: {}", imageUrl);
+
+            // TODO: 실제 파일 삭제 로직 구현
+            // S3에서 삭제
+            // deleteFromS3(imageUrl);
+
+            // 또는 로컬 파일시스템에서 삭제
+            // deleteFromLocalFileSystem(imageUrl);
+
+            log.info("이미지 파일 삭제 완료");
+        } catch (Exception e) {
+            log.error("이미지 파일 삭제 실패: {}", imageUrl, e);
+            // 파일 삭제 실패는 치명적이지 않으므로 예외를 던지지 않음
+        }
+    }
+
+    /**
+     * 이미지 ID 유효성 검증
+     */
+    private boolean isValidImageId(String imageUrl, Long imageId) {
+        // 간단한 검증: URL의 해시값과 imageId 비교
+        // 실제 구현에서는 더 정교한 검증 로직 필요
+        long urlHash = Math.abs(imageUrl.hashCode());
+        return urlHash % 1000000 == imageId % 1000000;
+    }
+
+    /**
+     * 메뉴 이미지 정보 조회
+     */
+    public Map<String, Object> getMenuImageInfo(Long menuId) {
+        log.info("메뉴 이미지 정보 조회 - 메뉴 ID: {}", menuId);
+
+        Store store = getMyStore();
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> new RuntimeException("메뉴를 찾을 수 없습니다"));
+
+        Map<String, Object> imageInfo = new HashMap<>();
+        imageInfo.put("menuId", menu.getId());
+        imageInfo.put("menuName", menu.getName());
+        imageInfo.put("hasImage", menu.getImageUrl() != null && !menu.getImageUrl().isEmpty());
+        imageInfo.put("imageUrl", menu.getImageUrl());
+
+        if (menu.getImageUrl() != null) {
+            // 이미지 ID는 URL 해시값으로 생성
+            long imageId = Math.abs(menu.getImageUrl().hashCode()) % 1000000;
+            imageInfo.put("imageId", imageId);
+        }
+
+        return imageInfo;
+    }
+
+    /**
+     * 메뉴 이미지 URL 직접 업데이트 (외부 이미지 URL 설정용)
+     */
+    @Transactional
+    public Menu updateMenuImageUrl(Long menuId, String imageUrl) {
+        log.info("메뉴 이미지 URL 직접 업데이트 - 메뉴 ID: {}, URL: {}", menuId, imageUrl);
+
+        Store store = getMyStore();
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> new RuntimeException("메뉴를 찾을 수 없습니다"));
+
+        // URL 유효성 간단 검증
+        if (imageUrl != null && !imageUrl.trim().isEmpty()) {
+            if (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
+                throw new IllegalArgumentException("올바른 이미지 URL이 아닙니다");
+            }
+        }
+
+        menu.updateImageUrl(imageUrl);
+        Menu savedMenu = menuRepository.save(menu);
+
+        log.info("메뉴 이미지 URL 업데이트 완료");
+        return savedMenu;
     }
 }

@@ -83,21 +83,29 @@ public class Menu extends BaseEntity {
 		this.displayOrder = displayOrder != null ? displayOrder : 0;
 	}
 
-	// 필요한 경우 setter 메서드들 추가
+	// 메뉴 정보 업데이트 메서드들
 	public void updateName(String name) {
-		this.name = name;
+		if (name != null && !name.trim().isEmpty()) {
+			this.name = name.trim();
+		}
 	}
 
 	public void updateDescription(String description) {
-		this.description = description;
+		this.description = description; // null 허용 (설명 삭제 가능)
 	}
 
 	public void updatePrice(BigDecimal price) {
-		this.price = price;
+		if (price != null && price.compareTo(BigDecimal.ZERO) >= 0) {
+			this.price = price;
+		}
+	}
+
+	public void updateCategory(MenuCategory category) {
+		this.category = category;
 	}
 
 	public void updateImageUrl(String imageUrl) {
-		this.imageUrl = imageUrl;
+		this.imageUrl = imageUrl; // null 허용 (이미지 삭제 가능)
 	}
 
 	public void updateStatus(MenuStatus status) {
@@ -106,16 +114,28 @@ public class Menu extends BaseEntity {
 		}
 	}
 
-
 	public void updateDisplayOrder(Integer displayOrder) {
-		this.displayOrder = displayOrder;
+		if (displayOrder != null && displayOrder >= 0) {
+			this.displayOrder = displayOrder;
+		}
 	}
 
 	public void updateIsPopular(Boolean isPopular) {
-		this.isPopular = isPopular;
+		if (isPopular != null) {
+			this.isPopular = isPopular;
+		}
 	}
 
 	public void updateIsRecommended(Boolean isRecommended) {
-		this.isRecommended = isRecommended;
+		if (isRecommended != null) {
+			this.isRecommended = isRecommended;
+		}
 	}
+
+	// 이미지 제거
+	public void removeImage() {
+		this.imageUrl = null;
+	}
+
+
 }

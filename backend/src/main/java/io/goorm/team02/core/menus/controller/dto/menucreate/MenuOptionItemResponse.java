@@ -1,4 +1,4 @@
-// MenuOptionItemResponse.java
+// MenuOptionItemResponse.java (완전 버전)
 package io.goorm.team02.core.menus.controller.dto.menucreate;
 
 import io.goorm.team02.core.menus.domain.MenuOptionItem;

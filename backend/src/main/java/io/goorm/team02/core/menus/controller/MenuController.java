@@ -1,8 +1,7 @@
 package io.goorm.team02.core.menus.controller;
 
 import io.goorm.team02.core.menus.controller.dto.categorycreate.*;
-import io.goorm.team02.core.menus.controller.dto.menucreate.MenuCreateRequest;
-import io.goorm.team02.core.menus.controller.dto.menucreate.MenuResponse;
+import io.goorm.team02.core.menus.controller.dto.menucreate.*;
 import io.goorm.team02.core.menus.domain.Menu;
 import io.goorm.team02.core.menus.domain.MenuCategory;
 //import io.goorm.team02.core.menus.domain.MenuOptionGroup;
@@ -14,8 +13,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -128,46 +129,46 @@ public class MenuController {
         return ResponseEntity.ok(response);
     }
 
-    // ================================
-    // 3.2 메뉴 관리
-    // ================================
+//     ================================
+//     3.2 메뉴 관리
+//     ================================
 
-//    /**
-//     * 메뉴 목록 조회 (카테고리별)
-//     */
-//    @GetMapping
-//    @Operation(summary = "메뉴 목록 조회", description = "가게의 모든 메뉴 또는 특정 카테고리의 메뉴를 조회합니다")
-//    @Tag(name = "Menu Management")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "메뉴 목록 조회 성공"),
-//            @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
-//    })
-//    public ResponseEntity<List<MenuResponse>> getMenus(
-//            @Parameter(description = "카테고리 ID (선택사항)", example = "1")
-//            @RequestParam(required = false) Long categoryId) {
-//        List<Menu> menus = menuService.getMenus(categoryId);
-//        List<MenuResponse> response = menus.stream()
-//                .map(MenuResponse::from)
-//                .toList();
-//        return ResponseEntity.ok(response);
-//    }
+    /**
+     * 메뉴 목록 조회 (카테고리별)
+     */
+    @GetMapping
+    @Operation(summary = "메뉴 목록 조회", description = "가게의 모든 메뉴 또는 특정 카테고리의 메뉴를 조회합니다")
+    @Tag(name = "Menu Management")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "메뉴 목록 조회 성공"),
+            @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
+    })
+    public ResponseEntity<List<MenuResponse>> getMenus(
+            @Parameter(description = "카테고리 ID (선택사항)", example = "1")
+            @RequestParam(required = false) Long categoryId) {
+        List<Menu> menus = menuService.getMenus(categoryId);
+        List<MenuResponse> response = menus.stream()
+                .map(MenuResponse::from)
+                .toList();
+        return ResponseEntity.ok(response);
+    }
 
-//    /**
-//     * 메뉴 상세 조회
-//     */
-//    @GetMapping("/{menuId}")
-//    @Operation(summary = "메뉴 상세 조회", description = "특정 메뉴의 상세 정보를 조회합니다")
-//    @Tag(name = "Menu Management")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "메뉴 조회 성공"),
-//            @ApiResponse(responseCode = "404", description = "메뉴를 찾을 수 없음")
-//    })
-//    public ResponseEntity<MenuDetailResponse> getMenu(
-//            @Parameter(description = "메뉴 ID", required = true, example = "1")
-//            @PathVariable Long menuId) {
-//        Menu menu = menuService.getMenu(menuId);
-//        return ResponseEntity.ok(MenuDetailResponse.from(menu));
-//    }
+    /**
+     * 메뉴 상세 조회
+     */
+    @GetMapping("/{menuId}")
+    @Operation(summary = "메뉴 상세 조회", description = "특정 메뉴의 상세 정보를 조회합니다")
+    @Tag(name = "Menu Management")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "메뉴 조회 성공"),
+            @ApiResponse(responseCode = "404", description = "메뉴를 찾을 수 없음")
+    })
+    public ResponseEntity<MenuDetailResponse> getMenu(
+            @Parameter(description = "메뉴 ID", required = true, example = "1")
+            @PathVariable Long menuId) {
+        Menu menu = menuService.getMenu(menuId);
+        return ResponseEntity.ok(MenuDetailResponse.from(menu));
+    }
 
     /**
      * 메뉴 등록
@@ -187,132 +188,162 @@ public class MenuController {
         return ResponseEntity.ok(MenuResponse.from(menu));
     }
 
+    /**
+     * 메뉴 수정
+     */
+    @PutMapping("/{menuId}")
+    @Operation(summary = "메뉴 수정", description = "메뉴 정보를 수정합니다")
+    @Tag(name = "Menu Management")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "메뉴 수정 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "404", description = "메뉴를 찾을 수 없음")
+    })
+    public ResponseEntity<MenuResponse> updateMenu(
+            @Parameter(description = "메뉴 ID", required = true, example = "1")
+            @PathVariable Long menuId,
+            @Parameter(description = "메뉴 수정 요청 정보", required = true)
+            @RequestBody MenuUpdateRequest request) {
+        Menu menu = menuService.updateMenu(menuId, request);
+        return ResponseEntity.ok(MenuResponse.from(menu));
+    }
+
+    /**
+     * 메뉴 삭제
+     */
+    @DeleteMapping("/{menuId}")
+    @Operation(summary = "메뉴 삭제", description = "메뉴를 삭제합니다")
+    @Tag(name = "Menu Management")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "메뉴 삭제 성공"),
+            @ApiResponse(responseCode = "404", description = "메뉴를 찾을 수 없음")
+    })
+    public ResponseEntity<Void> deleteMenu(
+            @Parameter(description = "삭제할 메뉴 ID", required = true, example = "1")
+            @PathVariable Long menuId) {
+        menuService.deleteMenu(menuId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 메뉴 판매 상태 변경
+     */
+    @PutMapping("/{menuId}/status")
+    @Operation(summary = "메뉴 판매 상태 변경", description = "메뉴의 판매 상태를 변경합니다 (판매중/품절/숨김)")
+    @Tag(name = "Menu Status Management")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "상태 변경 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 상태 값"),
+            @ApiResponse(responseCode = "404", description = "메뉴를 찾을 수 없음")
+    })
+    public ResponseEntity<MenuResponse> updateMenuStatus(
+            @Parameter(description = "메뉴 ID", required = true, example = "1")
+            @PathVariable Long menuId,
+            @Parameter(description = "메뉴 상태 변경 요청", required = true)
+            @RequestBody MenuStatusRequest request) {
+        Menu menu = menuService.updateMenuStatus(menuId, request);
+        return ResponseEntity.ok(MenuResponse.from(menu));
+    }
+
+
+    /**
+     * 메뉴 순서 변경
+     */
+    @PutMapping("/order")
+    @Operation(summary = "메뉴 순서 변경", description = "메뉴의 표시 순서를 변경합니다")
+    @Tag(name = "Menu Management")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "순서 변경 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청")
+    })
+    public ResponseEntity<List<MenuResponse>> updateMenuOrder(
+            @Parameter(description = "메뉴 순서 변경 요청", required = true)
+            @RequestBody MenuOrderUpdateRequest request) {
+        List<Menu> menus = menuService.updateMenuOrder(request);
+        List<MenuResponse> response = menus.stream()
+                .map(MenuResponse::from)
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
+    // ================================
+    // 3.3 메뉴 이미지 관리
+    // ================================
+
+    /**
+     * 메뉴 이미지 업로드
+     */
+    @PostMapping(value = "/{menuId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "메뉴 이미지 업로드", description = "메뉴 이미지를 업로드합니다")
+    @Tag(name = "Menu Image Management")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "이미지 업로드 성공"),
+            @ApiResponse(responseCode = "400", description = "파일이 비어있거나 잘못된 형식"),
+            @ApiResponse(responseCode = "413", description = "파일 크기가 너무 큼"),
+            @ApiResponse(responseCode = "404", description = "메뉴를 찾을 수 없음")
+    })
+    public ResponseEntity<String> uploadMenuImage(
+            @Parameter(description = "메뉴 ID", required = true, example = "1")
+            @PathVariable Long menuId,
+            @Parameter(description = "업로드할 이미지 파일", required = true)
+            @RequestParam("file") MultipartFile file) {
+
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("파일이 비어있습니다");
+        }
+
+        String imageUrl = menuService.uploadMenuImage(menuId, file);
+        return ResponseEntity.ok(imageUrl);
+    }
+
+    /**
+     * 메뉴 이미지 정보 조회
+     */
+    @GetMapping("/{menuId}/images/info")
+    @Operation(summary = "메뉴 이미지 정보 조회", description = "메뉴의 이미지 정보를 조회합니다")
+    @Tag(name = "Menu Image Management")
+    public ResponseEntity<Map<String, Object>> getMenuImageInfo(
+            @Parameter(description = "메뉴 ID", required = true, example = "1")
+            @PathVariable Long menuId) {
+        Map<String, Object> imageInfo = menuService.getMenuImageInfo(menuId);
+        return ResponseEntity.ok(imageInfo);
+    }
+
 //    /**
-//     * 메뉴 수정
+//     * 메뉴 이미지 URL 직접 설정
 //     */
-//    @PutMapping("/{menuId}")
-//    @Operation(summary = "메뉴 수정", description = "메뉴 정보를 수정합니다")
-//    @Tag(name = "Menu Management")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "메뉴 수정 성공"),
-//            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
-//            @ApiResponse(responseCode = "404", description = "메뉴를 찾을 수 없음")
-//    })
-//    public ResponseEntity<MenuResponse> updateMenu(
+//    @PutMapping("/{menuId}/images/url")
+//    @Operation(summary = "메뉴 이미지 URL 설정", description = "외부 이미지 URL을 직접 설정합니다")
+//    @Tag(name = "Menu Image Management")
+//    public ResponseEntity<MenuResponse> updateMenuImageUrl(
 //            @Parameter(description = "메뉴 ID", required = true, example = "1")
 //            @PathVariable Long menuId,
-//            @Parameter(description = "메뉴 수정 요청 정보", required = true)
-//            @RequestBody MenuUpdateRequest request) {
-//        Menu menu = menuService.updateMenu(menuId, request);
+//            @Parameter(description = "이미지 URL", required = true)
+//            @RequestBody Map<String, String> request) {
+//        String imageUrl = request.get("imageUrl");
+//        Menu menu = menuService.updateMenuImageUrl(menuId, imageUrl);
 //        return ResponseEntity.ok(MenuResponse.from(menu));
 //    }
 
-//    /**
-//     * 메뉴 삭제
-//     */
-//    @DeleteMapping("/{menuId}")
-//    @Operation(summary = "메뉴 삭제", description = "메뉴를 삭제합니다")
-//    @Tag(name = "Menu Management")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "메뉴 삭제 성공"),
-//            @ApiResponse(responseCode = "404", description = "메뉴를 찾을 수 없음")
-//    })
-//    public ResponseEntity<Void> deleteMenu(
-//            @Parameter(description = "삭제할 메뉴 ID", required = true, example = "1")
-//            @PathVariable Long menuId) {
-//        menuService.deleteMenu(menuId);
-//        return ResponseEntity.ok().build();
-//    }
-
-//    /**
-//     * 메뉴 판매 상태 변경
-//     */
-//    @PutMapping("/{menuId}/status")
-//    @Operation(summary = "메뉴 판매 상태 변경", description = "메뉴의 판매 상태를 변경합니다 (판매중/품절/숨김)")
-//    @Tag(name = "Menu Status Management")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "상태 변경 성공"),
-//            @ApiResponse(responseCode = "400", description = "잘못된 상태 값"),
-//            @ApiResponse(responseCode = "404", description = "메뉴를 찾을 수 없음")
-//    })
-//    public ResponseEntity<MenuResponse> updateMenuStatus(
-//            @Parameter(description = "메뉴 ID", required = true, example = "1")
-//            @PathVariable Long menuId,
-//            @Parameter(description = "메뉴 상태 변경 요청", required = true)
-//            @RequestBody MenuStatusRequest request) {
-//        Menu menu = menuService.updateMenuStatus(menuId, request);
-//        return ResponseEntity.ok(MenuResponse.from(menu));
-//    }
-
-//    /**
-//     * 메뉴 순서 변경
-//     */
-//    @PutMapping("/order")
-//    @Operation(summary = "메뉴 순서 변경", description = "메뉴의 표시 순서를 변경합니다")
-//    @Tag(name = "Menu Management")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "순서 변경 성공"),
-//            @ApiResponse(responseCode = "400", description = "잘못된 요청")
-//    })
-//    public ResponseEntity<List<MenuResponse>> updateMenuOrder(
-//            @Parameter(description = "메뉴 순서 변경 요청", required = true)
-//            @RequestBody MenuOrderUpdateRequest request) {
-//        List<Menu> menus = menuService.updateMenuOrder(request);
-//        List<MenuResponse> response = menus.stream()
-//                .map(MenuResponse::from)
-//                .toList();
-//        return ResponseEntity.ok(response);
-//    }
-//
-//    // ================================
-//    // 3.3 메뉴 이미지 관리
-//    // ================================
-//
-//    /**
-//     * 메뉴 이미지 업로드
-//     */
-//    @PostMapping(value = "/{menuId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-//    @Operation(summary = "메뉴 이미지 업로드", description = "메뉴 이미지를 업로드합니다")
-//    @Tag(name = "Menu Image Management")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "이미지 업로드 성공"),
-//            @ApiResponse(responseCode = "400", description = "파일이 비어있거나 잘못된 형식"),
-//            @ApiResponse(responseCode = "413", description = "파일 크기가 너무 큼"),
-//            @ApiResponse(responseCode = "404", description = "메뉴를 찾을 수 없음")
-//    })
-//    public ResponseEntity<String> uploadMenuImage(
-//            @Parameter(description = "메뉴 ID", required = true, example = "1")
-//            @PathVariable Long menuId,
-//            @Parameter(description = "업로드할 이미지 파일", required = true)
-//            @RequestParam("file") MultipartFile file) {
-//
-//        if (file.isEmpty()) {
-//            return ResponseEntity.badRequest().body("파일이 비어있습니다");
-//        }
-//
-//        String imageUrl = menuService.uploadMenuImage(menuId, file);
-//        return ResponseEntity.ok(imageUrl);
-//    }
-//
-//    /**
-//     * 메뉴 이미지 삭제
-//     */
-//    @DeleteMapping("/{menuId}/images/{imageId}")
-//    @Operation(summary = "메뉴 이미지 삭제", description = "업로드된 메뉴 이미지를 삭제합니다")
-//    @Tag(name = "Menu Image Management")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "이미지 삭제 성공"),
-//            @ApiResponse(responseCode = "404", description = "이미지를 찾을 수 없음"),
-//            @ApiResponse(responseCode = "403", description = "삭제 권한이 없음")
-//    })
-//    public ResponseEntity<Void> deleteMenuImage(
-//            @Parameter(description = "메뉴 ID", required = true, example = "1")
-//            @PathVariable Long menuId,
-//            @Parameter(description = "삭제할 이미지 ID", required = true, example = "1")
-//            @PathVariable Long imageId) {
-//        menuService.deleteMenuImage(menuId, imageId);
-//        return ResponseEntity.ok().build();
-//    }
+    /**
+     * 메뉴 이미지 삭제
+     */
+    @DeleteMapping("/{menuId}/images/{imageId}")
+    @Operation(summary = "메뉴 이미지 삭제", description = "업로드된 메뉴 이미지를 삭제합니다")
+    @Tag(name = "Menu Image Management")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "이미지 삭제 성공"),
+            @ApiResponse(responseCode = "404", description = "이미지를 찾을 수 없음"),
+            @ApiResponse(responseCode = "403", description = "삭제 권한이 없음")
+    })
+    public ResponseEntity<Void> deleteMenuImage(
+            @Parameter(description = "메뉴 ID", required = true, example = "1")
+            @PathVariable Long menuId,
+            @Parameter(description = "삭제할 이미지 ID", required = true, example = "1")
+            @PathVariable Long imageId) {
+        menuService.deleteMenuImage(menuId, imageId);
+        return ResponseEntity.ok().build();
+    }
 
 //    // ================================
 //    // 3.4 메뉴 옵션 그룹 관리
