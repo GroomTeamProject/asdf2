@@ -30,4 +30,9 @@ public class OrderController implements OrderControllerDocs {
 		return orderService.getAll(storeId);
 	}
 
+	@GetMapping("/{orderId}")
+	public OrderResponse getOrderDetail(@PathVariable Long orderId) {
+		return orderService.getOrderDetail(orderId);
+	}
+
 }

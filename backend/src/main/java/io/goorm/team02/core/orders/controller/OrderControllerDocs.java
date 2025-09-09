@@ -20,4 +20,8 @@ public interface OrderControllerDocs {
 	public List<OrderResponse> getAll(
 			@Parameter(description = "가게 ID", required = true) @RequestParam("storeId") Long storeId);
 
+	@Operation(summary = "주문 상세 조회", description = "특정 주문의 상세 정보를 조회합니다")
+	public OrderResponse getOrderDetail(
+			@Parameter(description = "주문 ID", required = true) @PathVariable Long orderId);
+
 }

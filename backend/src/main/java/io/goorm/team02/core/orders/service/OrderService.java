@@ -34,4 +34,16 @@ public class OrderService {
 				.toList();
 	}
 
+	public OrderResponse getOrderDetail(Long orderId) {
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
+		
+		// JPA 지연 로딩으로 orderItems와 options를 가져옴
+		order.getOrderItems().forEach(orderItem -> {
+			orderItem.getOptions().size(); // 지연 로딩 트리거
+		});
+		
+		return OrderResponse.from(order);
+	}
+
 }
