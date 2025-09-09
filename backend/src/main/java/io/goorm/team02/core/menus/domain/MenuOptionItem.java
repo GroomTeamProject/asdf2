@@ -49,4 +49,28 @@ public class MenuOptionItem {
 		this.isActive = isActive != null ? isActive : true;
 	}
 
+	public void updateName(String name) {
+		if (name != null && !name.trim().isEmpty()) {
+			this.name = name.trim();
+		}
+	}
+
+	public void updateAdditionalPrice(BigDecimal additionalPrice) {
+		if (additionalPrice != null && additionalPrice.compareTo(BigDecimal.ZERO) >= 0) {
+			this.additionalPrice = additionalPrice;
+		}
+	}
+
+	public void updateDisplayOrder(Integer displayOrder) {
+		if (displayOrder != null && displayOrder >= 0) {
+			this.displayOrder = displayOrder;
+		}
+	}
+
+	public void updateIsActive(Boolean isActive) {
+		if (isActive != null) {
+			this.isActive = isActive;
+		}
+	}
+
 }

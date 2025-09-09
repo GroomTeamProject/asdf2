@@ -6,6 +6,7 @@ import io.goorm.team02.core.menus.domain.Menu;
 import io.goorm.team02.core.menus.domain.MenuCategory;
 //import io.goorm.team02.core.menus.domain.MenuOptionGroup;
 import io.goorm.team02.core.menus.domain.MenuOption;
+import io.goorm.team02.core.menus.domain.MenuOptionItem;
 import io.goorm.team02.core.menus.service.MenuService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -450,120 +451,141 @@ public class MenuController {
         return ResponseEntity.ok(response);
     }
 
-//    // ================================
-//    // 3.5 메뉴 옵션 관리
-//    // ================================
-//
-//    /**
-//     * 메뉴 옵션 목록 조회
-//     */
-//    @GetMapping("/{menuId}/option-groups/{groupId}/options")
-//    @Operation(summary = "메뉴 옵션 목록 조회", description = "특정 옵션 그룹의 옵션 목록을 조회합니다")
-//    @Tag(name = "Menu Option Management")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "옵션 목록 조회 성공"),
-//            @ApiResponse(responseCode = "404", description = "옵션 그룹을 찾을 수 없음")
-//    })
-//    public ResponseEntity<List<MenuOptionResponse>> getMenuOptions(
-//            @Parameter(description = "메뉴 ID", required = true, example = "1")
-//            @PathVariable Long menuId,
-//            @Parameter(description = "옵션 그룹 ID", required = true, example = "1")
-//            @PathVariable Long groupId) {
-//        List<MenuOption> options = menuService.getMenuOptions(menuId, groupId);
-//        List<MenuOptionResponse> response = options.stream()
-//                .map(MenuOptionResponse::from)
-//                .toList();
-//        return ResponseEntity.ok(response);
-//    }
-//
-//    /**
-//     * 메뉴 옵션 등록
-//     */
-//    @PostMapping("/{menuId}/option-groups/{groupId}/options")
-//    @Operation(summary = "메뉴 옵션 등록", description = "옵션 그룹에 새로운 옵션을 등록합니다")
-//    @Tag(name = "Menu Option Management")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "옵션 등록 성공"),
-//            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
-//            @ApiResponse(responseCode = "404", description = "옵션 그룹을 찾을 수 없음")
-//    })
-//    public ResponseEntity<MenuOptionResponse> createOption(
-//            @Parameter(description = "메뉴 ID", required = true, example = "1")
-//            @PathVariable Long menuId,
-//            @Parameter(description = "옵션 그룹 ID", required = true, example = "1")
-//            @PathVariable Long groupId,
-//            @Parameter(description = "옵션 생성 요청 정보", required = true)
-//            @RequestBody MenuOptionCreateRequest request) {
-//        MenuOption option = menuService.createOption(menuId, groupId, request);
-//        return ResponseEntity.ok(MenuOptionResponse.from(option));
-//    }
-//
-//    /**
-//     * 메뉴 옵션 수정
-//     */
-//    @PutMapping("/{menuId}/option-groups/{groupId}/options/{optionId}")
-//    @Operation(summary = "메뉴 옵션 수정", description = "메뉴 옵션 정보를 수정합니다")
-//    @Tag(name = "Menu Option Management")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "옵션 수정 성공"),
-//            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
-//            @ApiResponse(responseCode = "404", description = "옵션을 찾을 수 없음")
-//    })
-//    public ResponseEntity<MenuOptionResponse> updateOption(
-//            @Parameter(description = "메뉴 ID", required = true, example = "1")
-//            @PathVariable Long menuId,
-//            @Parameter(description = "옵션 그룹 ID", required = true, example = "1")
-//            @PathVariable Long groupId,
-//            @Parameter(description = "옵션 ID", required = true, example = "1")
-//            @PathVariable Long optionId,
-//            @Parameter(description = "옵션 수정 요청 정보", required = true)
-//            @RequestBody MenuOptionUpdateRequest request) {
-//        MenuOption option = menuService.updateOption(menuId, groupId, optionId, request);
-//        return ResponseEntity.ok(MenuOptionResponse.from(option));
-//    }
-//
-//    /**
-//     * 메뉴 옵션 삭제
-//     */
-//    @DeleteMapping("/{menuId}/option-groups/{groupId}/options/{optionId}")
-//    @Operation(summary = "메뉴 옵션 삭제", description = "메뉴 옵션을 삭제합니다")
-//    @Tag(name = "Menu Option Management")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "옵션 삭제 성공"),
-//            @ApiResponse(responseCode = "404", description = "옵션을 찾을 수 없음")
-//    })
-//    public ResponseEntity<Void> deleteOption(
-//            @Parameter(description = "메뉴 ID", required = true, example = "1")
-//            @PathVariable Long menuId,
-//            @Parameter(description = "옵션 그룹 ID", required = true, example = "1")
-//            @PathVariable Long groupId,
-//            @Parameter(description = "삭제할 옵션 ID", required = true, example = "1")
-//            @PathVariable Long optionId) {
-//        menuService.deleteOption(menuId, groupId, optionId);
-//        return ResponseEntity.ok().build();
-//    }
-//
-//    /**
-//     * 메뉴 옵션 상태 변경
-//     */
-//    @PutMapping("/{menuId}/option-groups/{groupId}/options/{optionId}/status")
-//    @Operation(summary = "메뉴 옵션 상태 변경", description = "메뉴 옵션의 판매 상태를 변경합니다")
-//    @Tag(name = "Menu Option Management")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "옵션 상태 변경 성공"),
-//            @ApiResponse(responseCode = "400", description = "잘못된 상태 값"),
-//            @ApiResponse(responseCode = "404", description = "옵션을 찾을 수 없음")
-//    })
-//    public ResponseEntity<MenuOptionResponse> updateOptionStatus(
-//            @Parameter(description = "메뉴 ID", required = true, example = "1")
-//            @PathVariable Long menuId,
-//            @Parameter(description = "옵션 그룹 ID", required = true, example = "1")
-//            @PathVariable Long groupId,
-//            @Parameter(description = "옵션 ID", required = true, example = "1")
-//            @PathVariable Long optionId,
-//            @Parameter(description = "옵션 상태 변경 요청", required = true)
-//            @RequestBody MenuOptionStatusRequest request) {
-//        MenuOption option = menuService.updateOptionStatus(menuId, groupId, optionId, request);
-//        return ResponseEntity.ok(MenuOptionResponse.from(option));
-//    }
+    // ================================
+    // 3.5 메뉴 옵션 관리
+    // ================================
+
+    /**
+     * 메뉴 옵션 목록 조회
+     */
+    @GetMapping("/{menuId}/option-groups/{groupId}/options")
+    @Operation(summary = "메뉴 옵션 목록 조회", description = "특정 옵션 그룹의 옵션 아이템 목록을 조회합니다")
+    @Tag(name = "Menu Option Management")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "옵션 목록 조회 성공"),
+            @ApiResponse(responseCode = "404", description = "옵션 그룹을 찾을 수 없음")
+    })
+    public ResponseEntity<List<MenuOptionItemResponse>> getMenuOptions(
+            @Parameter(description = "메뉴 ID", required = true, example = "1")
+            @PathVariable Long menuId,
+            @Parameter(description = "옵션 그룹 ID", required = true, example = "1")
+            @PathVariable Long groupId) {
+        List<MenuOptionItem> options = menuService.getMenuOptions(menuId, groupId);
+        List<MenuOptionItemResponse> response = options.stream()
+                .map(MenuOptionItemResponse::from)
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 메뉴 옵션 등록
+     */
+    @PostMapping("/{menuId}/option-groups/{groupId}/options")
+    @Operation(summary = "메뉴 옵션 등록", description = "옵션 그룹에 새로운 옵션 아이템을 등록합니다")
+    @Tag(name = "Menu Option Management")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "옵션 등록 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "404", description = "옵션 그룹을 찾을 수 없음")
+    })
+    public ResponseEntity<MenuOptionItemResponse> createOption(
+            @Parameter(description = "메뉴 ID", required = true, example = "1")
+            @PathVariable Long menuId,
+            @Parameter(description = "옵션 그룹 ID", required = true, example = "1")
+            @PathVariable Long groupId,
+            @Parameter(description = "옵션 아이템 생성 요청 정보", required = true)
+            @Valid @RequestBody MenuOptionItemCreateRequest request) {
+        MenuOptionItem optionItem = menuService.createOption(menuId, groupId, request);
+        return ResponseEntity.ok(MenuOptionItemResponse.from(optionItem));
+    }
+
+    /**
+     * 메뉴 옵션 수정
+     */
+    @PutMapping("/{menuId}/option-groups/{groupId}/options/{optionId}")
+    @Operation(summary = "메뉴 옵션 수정", description = "메뉴 옵션 아이템 정보를 수정합니다")
+    @Tag(name = "Menu Option Management")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "옵션 수정 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "404", description = "옵션을 찾을 수 없음")
+    })
+    public ResponseEntity<MenuOptionItemResponse> updateOption(
+            @Parameter(description = "메뉴 ID", required = true, example = "1")
+            @PathVariable Long menuId,
+            @Parameter(description = "옵션 그룹 ID", required = true, example = "1")
+            @PathVariable Long groupId,
+            @Parameter(description = "옵션 아이템 ID", required = true, example = "1")
+            @PathVariable Long optionId,
+            @Parameter(description = "옵션 아이템 수정 요청 정보", required = true)
+            @Valid @RequestBody MenuOptionItemUpdateRequest request) {
+        MenuOptionItem optionItem = menuService.updateOption(menuId, groupId, optionId, request);
+        return ResponseEntity.ok(MenuOptionItemResponse.from(optionItem));
+    }
+
+    /**
+     * 메뉴 옵션 삭제
+     */
+    @DeleteMapping("/{menuId}/option-groups/{groupId}/options/{optionId}")
+    @Operation(summary = "메뉴 옵션 삭제", description = "메뉴 옵션을 삭제합니다")
+    @Tag(name = "Menu Option Management")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "옵션 삭제 성공"),
+            @ApiResponse(responseCode = "404", description = "옵션을 찾을 수 없음")
+    })
+    public ResponseEntity<Void> deleteOption(
+            @Parameter(description = "메뉴 ID", required = true, example = "1")
+            @PathVariable Long menuId,
+            @Parameter(description = "옵션 그룹 ID", required = true, example = "1")
+            @PathVariable Long groupId,
+            @Parameter(description = "삭제할 옵션 ID", required = true, example = "1")
+            @PathVariable Long optionId) {
+        menuService.deleteOption(menuId, groupId, optionId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 옵션 아이템 순서 정규화 (유틸리티)
+     */
+    @PutMapping("/{menuId}/option-groups/{groupId}/options/normalize-order")
+    @Operation(summary = "옵션 아이템 순서 정규화", description = "옵션 아이템의 표시 순서를 1부터 연속으로 정규화합니다")
+    @Tag(name = "Menu Option Management")
+    public ResponseEntity<List<MenuOptionItemResponse>> normalizeOptionItemOrders(
+            @Parameter(description = "메뉴 ID", required = true, example = "1")
+            @PathVariable Long menuId,
+            @Parameter(description = "옵션 그룹 ID", required = true, example = "1")
+            @PathVariable Long groupId) {
+        menuService.normalizeOptionItemOrdersAfterDeletion(groupId);
+
+        List<MenuOptionItem> optionItems = menuService.getMenuOptions(menuId, groupId);
+        List<MenuOptionItemResponse> response = optionItems.stream()
+                .map(MenuOptionItemResponse::from)
+                .toList();
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 메뉴 옵션 상태 변경
+     */
+    @PutMapping("/{menuId}/option-groups/{groupId}/options/{optionId}/status")
+    @Operation(summary = "메뉴 옵션 상태 변경", description = "메뉴 옵션 아이템의 활성화 상태를 변경합니다")
+    @Tag(name = "Menu Option Management")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "옵션 상태 변경 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 상태 값"),
+            @ApiResponse(responseCode = "404", description = "옵션을 찾을 수 없음")
+    })
+    public ResponseEntity<MenuOptionItemResponse> updateOptionStatus(
+            @Parameter(description = "메뉴 ID", required = true, example = "1")
+            @PathVariable Long menuId,
+            @Parameter(description = "옵션 그룹 ID", required = true, example = "1")
+            @PathVariable Long groupId,
+            @Parameter(description = "옵션 아이템 ID", required = true, example = "1")
+            @PathVariable Long optionId,
+            @Parameter(description = "옵션 아이템 상태 변경 요청", required = true)
+            @Valid @RequestBody MenuOptionItemStatusRequest request) {
+        MenuOptionItem optionItem = menuService.updateOptionStatus(menuId, groupId, optionId, request);
+        return ResponseEntity.ok(MenuOptionItemResponse.from(optionItem));
+    }
 }
