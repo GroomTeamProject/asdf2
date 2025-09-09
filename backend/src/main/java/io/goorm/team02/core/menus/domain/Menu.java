@@ -15,10 +15,17 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "menus")
 public class Menu extends BaseEntity {
 
@@ -59,5 +66,76 @@ public class Menu extends BaseEntity {
 
 	@OneToMany(mappedBy = "menu", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<MenuOption> options;
+
+	@Builder
+	public Menu(Store store, MenuCategory category, String name, String description,
+				BigDecimal price, String imageUrl, Boolean isPopular, Boolean isRecommended,
+				MenuStatus status, Integer displayOrder) {
+		this.store = store;
+		this.category = category;
+		this.name = name;
+		this.description = description;
+		this.price = price;
+		this.imageUrl = imageUrl;
+		this.isPopular = isPopular != null ? isPopular : false;
+		this.isRecommended = isRecommended != null ? isRecommended : false;
+		this.status = status != null ? status : MenuStatus.AVAILABLE;
+		this.displayOrder = displayOrder != null ? displayOrder : 0;
+	}
+
+	// 메뉴 정보 업데이트 메서드들
+	public void updateName(String name) {
+		if (name != null && !name.trim().isEmpty()) {
+			this.name = name.trim();
+		}
+	}
+
+	public void updateDescription(String description) {
+		this.description = description; // null 허용 (설명 삭제 가능)
+	}
+
+	public void updatePrice(BigDecimal price) {
+		if (price != null && price.compareTo(BigDecimal.ZERO) >= 0) {
+			this.price = price;
+		}
+	}
+
+	public void updateCategory(MenuCategory category) {
+		this.category = category;
+	}
+
+	public void updateImageUrl(String imageUrl) {
+		this.imageUrl = imageUrl; // null 허용 (이미지 삭제 가능)
+	}
+
+	public void updateStatus(MenuStatus status) {
+		if (status != null) {
+			this.status = status;
+		}
+	}
+
+	public void updateDisplayOrder(Integer displayOrder) {
+		if (displayOrder != null && displayOrder >= 0) {
+			this.displayOrder = displayOrder;
+		}
+	}
+
+	public void updateIsPopular(Boolean isPopular) {
+		if (isPopular != null) {
+			this.isPopular = isPopular;
+		}
+	}
+
+	public void updateIsRecommended(Boolean isRecommended) {
+		if (isRecommended != null) {
+			this.isRecommended = isRecommended;
+		}
+	}
+
+	// 이미지 제거
+	public void removeImage() {
+		this.imageUrl = null;
+	}
+
 
 }
