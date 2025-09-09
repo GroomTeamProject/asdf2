@@ -18,8 +18,8 @@ import io.goorm.team02.core.stores.domain.StoreHour;
 import io.goorm.team02.core.stores.repository.StoreHolidayRepository;
 import io.goorm.team02.core.stores.repository.StoreHourRepository;
 import io.goorm.team02.core.stores.domain.TempUser;
+import io.goorm.team02.core.stores.repository.StoreRepository;
 import io.goorm.team02.core.stores.repository.UserRepository;
-import io.goorm.team02.core.stores.repository.StoreUserRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -43,8 +43,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 public class StoreService {
 
-    private final UserRepository storeRepository;
-    private final StoreUserRepository userRepository;
+    private final StoreRepository storeRepository;
+    private final UserRepository userRepository;
     private final StoreHourRepository storeHourRepository;
     private final StoreHolidayRepository storeHolidayRepository;
 
