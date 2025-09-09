@@ -11,12 +11,17 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
 import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
 @Table(name = "order_items")
-public class OrderItem {
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class OrderItem extends io.goorm.team02.core.common.domain.BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
