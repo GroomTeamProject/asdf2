@@ -1,6 +1,8 @@
 <script setup>
 import Header from './layouts/Header.vue'
 import Footer from './layouts/Footer.vue'
+//import Signup from './pages/Signup.vue'
+
 </script>
 
 <template>
