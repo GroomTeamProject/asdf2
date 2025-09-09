@@ -1,24 +1,15 @@
-// src/api/payments.js
 import axios from "axios";
 
 // 백엔드 기본 URL
 const api = axios.create({
-    baseURL: "http://localhost:8080", // 백엔드 포트 확인!
+    baseURL: "http://localhost:8080", // Spring Boot 서버 URL
     timeout: 5000,
 });
 
 // 결제 생성
-export function createPayment({ orderId, paymentKey, method, amount, pgProvider, pgTid }) {
-    return api.post("/api/payments", null, {
-        params: {
-            orderId,
-            paymentKey,
-            method,
-            amount,
-            pgProvider,
-            pgTid,
-        },
-    });
+export function createPayment(paymentData) {
+    // paymentData = { orderId, orderName, amount, paymentMethod }
+    return api.post("/api/payments", paymentData);
 }
 
 // 특정 결제 조회

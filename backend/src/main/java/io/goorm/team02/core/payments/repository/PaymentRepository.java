@@ -1,8 +1,7 @@
 package io.goorm.team02.core.payments.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import io.goorm.team02.core.payments.domain.Payment;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 }

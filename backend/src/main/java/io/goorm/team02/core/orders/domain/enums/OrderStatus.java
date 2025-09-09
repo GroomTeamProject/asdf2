@@ -1,4 +1,4 @@
-package io.goorm.team02.core.orders.domain.enums;
+/*package io.goorm.team02.core.orders.domain.enums;
 
 public enum OrderStatus {
 	PENDING,
@@ -7,5 +7,13 @@ public enum OrderStatus {
 	READY,
 	PICKED_UP,
 	DELIVERED,
-	CANCELLED
+	CANCELLED,
+	PAID
+}
+*/
+
+package io.goorm.team02.core.orders.domain.enums;
+
+public enum OrderStatus {
+	COOKING, CANCELLED, COMPLETED
 }

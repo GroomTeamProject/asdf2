@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.5'
     id 'io.spring.dependency-management' version '1.1.7'
-    id 'org.flywaydb.flyway' version '11.7.2' // 최신 안정 버전
+    id 'org.flywaydb.flyway' version '11.7.2'
 }
 
 group = 'io.goorm.team02'
@@ -14,9 +14,11 @@ java {
     }
 }
 
-configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java']
+        }
     }
 }
 
@@ -25,38 +27,26 @@ repositories {
 }
 
 dependencies {
-    // Spring Boot 기본
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
-    
-    // JPA
+    implementation 'org.springframework.boot:spring-boot-starter-webflux' // WebClient
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    
-    // MariaDB 드라이버
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
-    
-    // Flyway DB 마이그레이션
     implementation 'org.flywaydb:flyway-core'
-    
-    // Lombok
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
-    
-    // 테스트
+    compileOnly 'org.projectlombok:lombok:1.18.32'
+    annotationProcessor 'org.projectlombok:lombok:1.18.32'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-// JUnit 5 사용 설정
+// JUnit 5 사용
 tasks.named('test') {
     useJUnitPlatform()
 }
 
-// Flyway 설정 (MariaDB용)
+// Flyway 설정 (MariaDB)
 flyway {
     url = 'jdbc:mariadb://localhost:3306/quickdeliver'
     user = 'root'
     password = 'Wnsrns3224!'
-    // MariaDB는 schemas 설정 필요 없음
 }

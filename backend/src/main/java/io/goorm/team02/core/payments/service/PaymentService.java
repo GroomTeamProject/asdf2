@@ -1,32 +1,19 @@
+// src/main/java/io/goorm/team02/core/payments/service/PaymentService.java
 package io.goorm.team02.core.payments.service;
 
-import io.goorm.team02.core.orders.domain.Order;
-import io.goorm.team02.core.payments.domain.Payment;
-import io.goorm.team02.core.payments.domain.enums.PaymentMethod;
-import io.goorm.team02.core.payments.domain.enums.PaymentStatus;
-import io.goorm.team02.core.payments.repository.PaymentRepository;
+import io.goorm.team02.core.payments.dto.PaymentRequest;
+import io.goorm.team02.core.payments.dto.PaymentResponse;
 import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
 
 @Service
 public class PaymentService {
 
-    private final PaymentRepository paymentRepository;
+    public PaymentResponse createPayment(PaymentRequest request) {
+        // 실제로는 Toss API 호출 또는 DB 저장
+        // 여기서는 예제용으로 간단히 mock 데이터 반환
+        String paymentId = "pay-" + System.currentTimeMillis();
+        String status = "READY"; // 결제 대기 상태
 
-    public PaymentService(PaymentRepository paymentRepository) {
-        this.paymentRepository = paymentRepository;
-    }
-
-    public Payment createPayment(Order order, String paymentKey,
-            PaymentMethod method, BigDecimal amount,
-            PaymentStatus status) {
-        Payment payment = new Payment();
-        payment.setOrder(order);
-        payment.setPaymentKey(paymentKey);
-        payment.setMethod(method);
-        payment.setAmount(amount);
-        payment.setStatus(status != null ? status : PaymentStatus.PENDING);
-        return paymentRepository.save(payment);
+        return new PaymentResponse(paymentId, request.getAmount(), status);
     }
 }

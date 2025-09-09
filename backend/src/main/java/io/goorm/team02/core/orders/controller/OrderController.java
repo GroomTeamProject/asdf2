@@ -1,18 +1,27 @@
 package io.goorm.team02.core.orders.controller;
 
-import io.goorm.team02.core.orders.controller.dto.OrderRequest;
-import lombok.RequiredArgsConstructor;
+import io.goorm.team02.core.orders.service.OrderService;
+import io.goorm.team02.core.orders.dto.OrderRequest;
+import io.goorm.team02.core.orders.domain.Order;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/orders")
-@RequiredArgsConstructor
 public class OrderController {
 
+	private final OrderService orderService;
+
+	public OrderController(OrderService orderService) {
+		this.orderService = orderService;
+	}
+
 	@PostMapping
-	public String create(@RequestBody OrderRequest request) {
-		// DB 저장 없이 결제 완료만 처리
-		System.out.println("주문 데이터 확인: " + request); // 콘솔에서 데이터 확인 가능
-		return "주문 및 결제 완료!";
+	public Order createOrder(@RequestBody OrderRequest request) {
+		return orderService.createOrder(request.toOrder());
+	}
+
+	@GetMapping
+	public java.util.List<Order> getAllOrders() {
+		return orderService.getAllOrders();
 	}
 }

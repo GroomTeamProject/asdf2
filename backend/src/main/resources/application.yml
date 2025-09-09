@@ -12,11 +12,11 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+    properties:
+      hibernate.format_sql: true
 
   flyway:
     enabled: false
 
-
-# CORS 허용 origins 추가
 cors:
   allowed-origins: "*"

@@ -1,7 +1,7 @@
 package io.goorm.team02.core.orders.service;
 
 import io.goorm.team02.core.orders.domain.Order;
-import io.goorm.team02.core.orders.domain.enums.OrderItem;
+import io.goorm.team02.core.orders.domain.OrderItem;
 import io.goorm.team02.core.orders.domain.enums.OrderStatus;
 import io.goorm.team02.core.orders.repository.OrderRepository;
 import org.springframework.stereotype.Service;
@@ -37,7 +37,7 @@ public class OrderService {
 			order.setStatus(OrderStatus.CANCELLED);
 			orderRepository.save(order);
 		} else {
-			throw new RuntimeException("이미 결제 완료된 주문은 취소할 수 없습니다.");
+			throw new RuntimeException("이미 완료된 주문은 취소할 수 없습니다.");
 		}
 	}
 
