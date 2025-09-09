@@ -4,7 +4,7 @@ import io.goorm.team02.core.common.domain.BaseEntity;
 import io.goorm.team02.core.menus.domain.MenuCategory;
 import io.goorm.team02.core.stores.domain.enums.StoreCategory;
 import io.goorm.team02.core.stores.domain.enums.StoreStatus;
-import io.goorm.team02.core.users.domain.User;
+import io.goorm.team02.core.stores.domain.TempUser;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,8 +19,12 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
+@Setter
+@Getter
 @Table(name = "stores")
 public class Store extends BaseEntity {
 
@@ -30,7 +34,7 @@ public class Store extends BaseEntity {
 
 	@ManyToOne
 	@JoinColumn(name = "owner_id", nullable = false)
-	private User owner;
+	private TempUser owner;
 
 	@Column(name = "business_number", nullable = false, length = 20, unique = true)
 	private String businessNumber;
@@ -50,10 +54,10 @@ public class Store extends BaseEntity {
 	@Column(name = "detail_address", length = 100)
 	private String detailAddress;
 
-	@Column(precision = 10, scale = 8)
+	@Column(precision = 15, scale = 8)
 	private BigDecimal latitude;
 
-	@Column(precision = 11, scale = 8)
+	@Column(precision = 15, scale = 8)
 	private BigDecimal longitude;
 
 	@Enumerated(EnumType.STRING)
