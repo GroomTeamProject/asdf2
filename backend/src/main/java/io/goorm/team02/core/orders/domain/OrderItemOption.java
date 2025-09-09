@@ -1,3 +1,4 @@
+// domain/OrderItemOption.java
 package io.goorm.team02.core.orders.domain;
 
 import io.goorm.team02.core.orders.controller.dto.OrderRequest;
@@ -23,8 +24,11 @@ public class OrderItemOption{
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	private String name;
+	private int price;
+
 	@ManyToOne
-	@JoinColumn(name = "order_item_id", nullable = false)
+	@JoinColumn(name = "order_item_id")
 	private OrderItem orderItem;
 
 	@Column(nullable = false, length = 50)

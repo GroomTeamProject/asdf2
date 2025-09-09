@@ -23,14 +23,12 @@ import java.util.Map;
 @Table(name = "order_items")
 @Data
 public class OrderItem {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
-
-	@ManyToOne
-	@JoinColumn(name = "order_id", nullable = false)
-	private Order order;
+    private String name;
+    private int quantity;
 
 	@ManyToOne
 	@JoinColumn(name = "menu_id", nullable = false)

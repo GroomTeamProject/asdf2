@@ -176,7 +176,7 @@ public class OrderService {
 			order.setStatus(OrderStatus.CANCELLED);
 			orderRepository.save(order);
 		} else {
-			throw new RuntimeException("이미 결제 완료된 주문은 취소할 수 없습니다.");
+			throw new RuntimeException("이미 완료된 주문은 취소할 수 없습니다.");
 		}
 	}
 

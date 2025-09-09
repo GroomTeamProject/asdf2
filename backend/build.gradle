@@ -12,9 +12,11 @@ java {
     }
 }
 
-configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java']
+        }
     }
 }
 
@@ -58,15 +60,14 @@ dependencies {
 	implementation 'software.amazon.awssdk:auth:2.20.56'
 }
 
-// JUnit 5 사용 설정
+// JUnit 5 사용
 tasks.named('test') {
     useJUnitPlatform()
 }
 
-// Flyway 설정 (MariaDB용)
+// Flyway 설정 (MariaDB)
 flyway {
     url = 'jdbc:mariadb://localhost:3306/quickdeliver'
     user = 'root'
     password = 'Wnsrns3224!'
-    // MariaDB는 schemas 설정 필요 없음
 }

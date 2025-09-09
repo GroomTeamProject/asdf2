@@ -1,6 +1,5 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { ArrowLeft } from "lucide-vue-next";
 import { useRouter } from "vue-router";
 import axios from "axios";
 
@@ -10,6 +9,10 @@ const name = ref("");
 const cardNumber = ref("");
 const expiry = ref("");
 const cvc = ref("");
+const deliveryAddress = ref("");
+const detailAddress = ref("");
+const phone = ref("");
+const orderMemo = ref("");
 
 // 장바구니 로드
 onMounted(() => {
@@ -23,8 +26,8 @@ const totalPrice = computed(() =>
 
 // 주문/결제
 const placeOrder = async () => {
-    if (!name.value || !cardNumber.value || !expiry.value || !cvc.value) {
-        alert("모든 결제 정보를 입력해주세요.");
+    if (!deliveryAddress.value || !phone.value) {
+        alert("주소와 전화번호는 필수입니다.");
         return;
     }
 
@@ -33,23 +36,39 @@ const placeOrder = async () => {
         return;
     }
 
+    const orderData = {
+        deliveryAddress: deliveryAddress.value,
+        detailAddress: detailAddress.value,
+        phone: phone.value,
+        orderMemo: orderMemo.value,
+        totalAmount: totalPrice.value,
+        items: cart.value.map((item) => ({
+            menuId: item.id,
+            quantity: item.quantity,
+            totalPrice: item.price * item.quantity,
+            options: item.options || [],
+        })),
+    };
+
     try {
-        const res = await axios.post('http://localhost:3000/api/payment', {
-            cart: cart.value,
-            customer: {
-                name: name.value,
-                cardNumber: cardNumber.value,
-                expiry: expiry.value,
-                cvc: cvc.value
-            }
+        // 1️⃣ 주문 생성
+        const orderRes = await axios.post("http://localhost:8080/api/orders", orderData);
+        const orderId = orderRes.data.id;
+
+        // 2️⃣ 결제 생성
+        const paymentRes = await axios.post("http://localhost:8080/api/payments", {
+            orderId,
+            orderName: "주문 상품", // 필요 시 실제 상품명 넣기
+            amount: totalPrice.value,
+            paymentMethod: "CARD",
         });
 
-        alert(`총 ${totalPrice.value.toLocaleString()}원 결제 완료!\n결제 ID: ${res.data.paymentId}`);
+        alert(`총 ${totalPrice.value.toLocaleString()}원 결제 완료!\n결제 ID: ${paymentRes.data.id}`);
         localStorage.removeItem("cart");
         router.push("/");
     } catch (err) {
         console.error(err);
-        alert("결제 실패, 서버 에러 발생!");
+        alert("주문/결제 중 오류가 발생했습니다.");
     }
 };
 
@@ -64,7 +83,7 @@ const goBack = () => router.push("/cart");
         <div class="mb-4">
             <label class="block font-semibold mb-1">배달 주소</label>
             <input v-model="deliveryAddress" type="text" placeholder="도로명 주소"
-                class="w-full border px-3 py-2 rounded mb-2" />
+                class="w-full border px-3 py-2 mb-2 rounded" />
             <input v-model="detailAddress" type="text" placeholder="상세 주소" class="w-full border px-3 py-2 rounded" />
         </div>
 
@@ -83,14 +102,13 @@ const goBack = () => router.push("/cart");
         <!-- 주문 상품 요약 -->
         <div class="mb-4">
             <h2 class="font-semibold mb-2">주문 상품</h2>
-            <h2 class="font-semibold mb-2">주문 상품</h2>
             <ul>
-                <li v-for="item in items" :key="item.id" class="flex justify-between mb-1">
-                    <span>{{ item.menu_name }} x {{ item.quantity }}</span>
-                    <span>{{ item.total_price.toLocaleString() }}원</span>
+                <li v-for="item in cart" :key="item.id" class="flex justify-between mb-1">
+                    <span>{{ item.name }} x {{ item.quantity }}</span>
+                    <span>{{ (item.price * item.quantity).toLocaleString() }}원</span>
                 </li>
             </ul>
-            <p class="text-right font-bold mt-2">총 {{ totalAmount.toLocaleString() }}원</p>
+            <p class="text-right font-bold mt-2">총 {{ totalPrice.toLocaleString() }}원</p>
         </div>
 
         <!-- 주문 버튼 -->
@@ -99,63 +117,3 @@ const goBack = () => router.push("/cart");
         </button>
     </div>
 </template>
-
-<script>
-import axios from "axios";
-
-export default {
-    name: "OrderCheckout",
-    props: {
-        items: {
-            type: Array,
-            required: true, // 메뉴 정보는 부모 컴포넌트에서 받아옴
-        },
-    },
-    data() {
-        return {
-            deliveryAddress: "",
-            detailAddress: "",
-            phone: "",
-            orderMemo: "",
-        };
-    },
-    computed: {
-        totalAmount() {
-            return this.items.reduce((sum, item) => sum + item.total_price, 0);
-        },
-    },
-    methods: {
-        placeOrder() {
-            if (!this.deliveryAddress || !this.phone) {
-                alert("주소와 전화번호는 필수입니다.");
-                return;
-            }
-
-            const orderData = {
-                delivery_address: this.deliveryAddress,
-                delivery_detail_address: this.detailAddress,
-                phone: this.phone,
-                order_memo: this.orderMemo,
-                total_amount: this.totalAmount,
-                items: this.items.map((i) => ({
-                    menu_id: i.id,
-                    quantity: i.quantity,
-                    total_price: i.total_price,
-                    options: i.options || [],
-                })),
-            };
-
-            // 백엔드 API 호출
-            axios.post("http://localhost:8080/api/orders", orderData)
-                .then(res => {
-                    alert("주문이 완료되었습니다!");
-                    // 결제 완료 후 페이지 이동 등 처리
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert("주문 중 오류가 발생했습니다.");
-                });
-        },
-    },
-};
-</script>
