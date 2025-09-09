@@ -60,9 +60,15 @@ export default {
 
         alert(`로그인 성공! 환영합니다, ${name}님.`)
 
-        // 3️⃣ 로그인 후 페이지 이동 (예: 대시보드)
-        this.$router.push('/dashboard') // /dashboard 라우트는 나중에 만들어 주세요
-
+        // 3️⃣ 로그인 후 권한에 맞는 페이지로 이동 (예: 대시보드)
+        //this.$router.push('/dashboard') // /dashboard 라우트는 나중에 만들어 주세요
+        if (userType === 'CUSTOMER') {
+          this.$router.push('/customer-main')
+        } else if (userType === 'OWNER') {
+          this.$router.push('/owner-main')
+        } else if (userType === 'RIDER') {
+          this.$router.push('/driver-main')
+        }
       } catch (error) {
         console.error('로그인 실패:', error.response?.data || error)
         alert('로그인 실패: ' + (error.response?.data?.error || error.message))
