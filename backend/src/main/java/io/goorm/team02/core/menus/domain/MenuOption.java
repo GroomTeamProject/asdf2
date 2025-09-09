@@ -57,4 +57,27 @@ public class MenuOption  {
 		this.displayOrder = displayOrder != null ? displayOrder : 0;
 	}
 
+	public void updateName(String name) {
+		if (name != null && !name.trim().isEmpty()) {
+			this.name = name.trim();
+		}
+	}
+
+	public void updateType(OptionType type) {
+		if (type != null) {
+			this.type = type;
+		}
+	}
+
+	public void updateIsRequired(Boolean isRequired) {
+		if (isRequired != null) {
+			this.isRequired = isRequired;
+		}
+	}
+
+	public void updateDisplayOrder(Integer displayOrder) {
+		if (displayOrder != null && displayOrder >= 0) {
+			this.displayOrder = displayOrder;
+		}
+	}
 }

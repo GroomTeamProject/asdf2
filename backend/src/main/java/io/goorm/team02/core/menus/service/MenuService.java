@@ -10,6 +10,7 @@ import io.goorm.team02.core.menus.domain.MenuCategory;
 import io.goorm.team02.core.menus.domain.MenuOption;
 import io.goorm.team02.core.menus.domain.MenuOptionItem;
 import io.goorm.team02.core.menus.domain.enums.MenuStatus;
+import io.goorm.team02.core.menus.domain.enums.OptionType;
 import io.goorm.team02.core.menus.repository.MenuCategoryRepository;
 import io.goorm.team02.core.menus.repository.MenuOptionItemRepository;
 import io.goorm.team02.core.menus.repository.MenuOptionRepository;
@@ -30,6 +31,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -2161,5 +2163,835 @@ public class MenuService {
 
         log.info("메뉴 이미지 URL 업데이트 완료");
         return savedMenu;
+    }
+
+    /**
+     * 메뉴 옵션 그룹 목록 조회
+     */
+    public List<MenuOption> getMenuOptionGroups(Long menuId) {
+        log.info("=== 메뉴 옵션 그룹 목록 조회 시작 ===");
+
+        // 현재 로그인한 사용자 ID 가져오기
+        Long currentUserId = getCurrentUserId();
+        log.info("현재 사용자 ID: {}", currentUserId);
+        log.info("옵션 그룹을 조회할 메뉴 ID: {}", menuId);
+
+        // 내 가게 조회
+        log.info("가게 정보 조회 중...");
+        Store store = getMyStore();
+        log.info("가게 조회 완료 - 가게 ID: {}, 가게명: {}", store.getId(), store.getName());
+
+        // 메뉴 조회 및 권한 확인
+        log.info("메뉴 조회 중... 메뉴 ID: {}", menuId);
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> {
+                    log.error("메뉴를 찾을 수 없습니다. 메뉴 ID: {}, 가게 ID: {}", menuId, store.getId());
+                    return new RuntimeException("메뉴를 찾을 수 없습니다");
+                });
+
+        log.info("메뉴 조회 완료 - 메뉴명: {}, 상태: {}", menu.getName(), menu.getStatus());
+
+        // 메뉴의 옵션 그룹 목록 조회
+        log.info("메뉴 옵션 그룹 조회 중...");
+        List<MenuOption> optionGroups = menuOptionRepository.findByMenuIdOrderByDisplayOrderAsc(menuId);
+
+        if (optionGroups.isEmpty()) {
+            log.info("메뉴에 옵션 그룹이 없습니다");
+        } else {
+            log.info("메뉴 옵션 그룹 조회 완료 - 총 {}개 그룹", optionGroups.size());
+
+            // 각 옵션 그룹별 상세 정보 로깅
+            logOptionGroupDetails(optionGroups);
+        }
+
+        log.info("=== 메뉴 옵션 그룹 목록 조회 종료 ===");
+        return optionGroups;
+    }
+
+    /**
+     * 옵션 그룹 상세 정보 로깅
+     */
+    private void logOptionGroupDetails(List<MenuOption> optionGroups) {
+        log.info("옵션 그룹 상세 정보:");
+
+        int totalRequiredGroups = 0;
+        int totalOptionalGroups = 0;
+        int totalItems = 0;
+        int totalActiveItems = 0;
+
+        for (int i = 0; i < optionGroups.size(); i++) {
+            MenuOption group = optionGroups.get(i);
+            int itemCount = group.getItems() != null ? group.getItems().size() : 0;
+            int activeItemCount = 0;
+
+            if (group.getItems() != null) {
+                activeItemCount = (int) group.getItems().stream()
+                        .filter(item -> item.getIsActive())
+                        .count();
+            }
+
+            totalItems += itemCount;
+            totalActiveItems += activeItemCount;
+
+            if (group.getIsRequired()) {
+                totalRequiredGroups++;
+            } else {
+                totalOptionalGroups++;
+            }
+
+            String status = determineGroupStatus(group, activeItemCount, itemCount);
+
+            log.info("  {}. {} ({}) - 아이템 {}개 (활성: {}개), 필수: {}, 순서: {}, 상태: {}",
+                    i + 1, group.getName(), group.getType(),
+                    itemCount, activeItemCount, group.getIsRequired(),
+                    group.getDisplayOrder(), status);
+        }
+
+        log.info("옵션 그룹 통계:");
+        log.info("  - 총 그룹 수: {}개 (필수: {}개, 선택: {}개)",
+                optionGroups.size(), totalRequiredGroups, totalOptionalGroups);
+        log.info("  - 총 아이템 수: {}개 (활성: {}개, 비활성: {}개)",
+                totalItems, totalActiveItems, totalItems - totalActiveItems);
+
+        // 문제가 있는 옵션 그룹 체크
+        List<String> issues = checkOptionGroupIssues(optionGroups);
+        if (!issues.isEmpty()) {
+            log.warn("옵션 그룹 문제점:");
+            issues.forEach(issue -> log.warn("  - {}", issue));
+        }
+    }
+
+    /**
+     * 개별 옵션 그룹 상태 판단
+     */
+    private String determineGroupStatus(MenuOption group, int activeItemCount, int totalItemCount) {
+        if (totalItemCount == 0) {
+            return "아이템 없음";
+        } else if (group.getIsRequired() && activeItemCount == 0) {
+            return "필수 그룹이지만 활성 아이템 없음";
+        } else if (activeItemCount == 0) {
+            return "활성 아이템 없음";
+        } else if (activeItemCount < totalItemCount) {
+            return "일부 아이템 비활성";
+        } else {
+            return "정상";
+        }
+    }
+
+    /**
+     * 옵션 그룹 문제점 체크
+     */
+    private List<String> checkOptionGroupIssues(List<MenuOption> optionGroups) {
+        List<String> issues = new ArrayList<>();
+
+        for (MenuOption group : optionGroups) {
+            String groupName = group.getName();
+            int itemCount = group.getItems() != null ? group.getItems().size() : 0;
+            int activeItemCount = 0;
+
+            if (group.getItems() != null) {
+                activeItemCount = (int) group.getItems().stream()
+                        .filter(item -> item.getIsActive())
+                        .count();
+            }
+
+            // 아이템이 없는 그룹
+            if (itemCount == 0) {
+                issues.add(String.format("'%s' 그룹에 아이템이 없습니다", groupName));
+            }
+
+            // 필수 그룹인데 활성 아이템이 없는 경우
+            else if (group.getIsRequired() && activeItemCount == 0) {
+                issues.add(String.format("필수 그룹 '%s'에 활성화된 아이템이 없습니다", groupName));
+            }
+
+            // 단일 선택 그룹인데 아이템이 1개뿐인 경우
+            else if (group.getType() == OptionType.SINGLE && activeItemCount == 1) {
+                issues.add(String.format("단일 선택 그룹 '%s'에 선택지가 1개뿐입니다", groupName));
+            }
+        }
+
+        // 순서 중복 체크
+        Set<Integer> orders = optionGroups.stream()
+                .map(MenuOption::getDisplayOrder)
+                .collect(Collectors.toSet());
+
+        if (orders.size() != optionGroups.size()) {
+            issues.add("옵션 그룹 표시 순서에 중복이 있습니다");
+        }
+
+        return issues;
+    }
+
+    /**
+     * 특정 옵션 그룹 상세 조회 (추가 메서드)
+     */
+    public MenuOption getMenuOptionGroup(Long menuId, Long optionGroupId) {
+        log.info("특정 옵션 그룹 조회 - 메뉴 ID: {}, 옵션 그룹 ID: {}", menuId, optionGroupId);
+
+        Store store = getMyStore();
+
+        // 메뉴 권한 확인
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> new RuntimeException("메뉴를 찾을 수 없습니다"));
+
+        // 옵션 그룹 조회
+        MenuOption optionGroup = menuOptionRepository.findById(optionGroupId)
+                .orElseThrow(() -> new RuntimeException("옵션 그룹을 찾을 수 없습니다"));
+
+        // 옵션 그룹이 해당 메뉴의 것인지 확인
+        if (!optionGroup.getMenu().getId().equals(menuId)) {
+            throw new RuntimeException("다른 메뉴의 옵션 그룹입니다");
+        }
+
+        log.info("옵션 그룹 조회 완료 - 그룹명: {}", optionGroup.getName());
+        return optionGroup;
+    }
+
+    /**
+     * 메뉴 옵션 통계 정보 조회 (추가 메서드)
+     */
+    public Map<String, Object> getMenuOptionStatistics(Long menuId) {
+        log.info("메뉴 옵션 통계 조회 - 메뉴 ID: {}", menuId);
+
+        List<MenuOption> optionGroups = getMenuOptionGroups(menuId);
+
+        Map<String, Object> statistics = new HashMap<>();
+        statistics.put("totalGroups", optionGroups.size());
+        statistics.put("requiredGroups", optionGroups.stream().filter(g -> g.getIsRequired()).count());
+        statistics.put("optionalGroups", optionGroups.stream().filter(g -> !g.getIsRequired()).count());
+
+        int totalItems = optionGroups.stream()
+                .mapToInt(g -> g.getItems() != null ? g.getItems().size() : 0)
+                .sum();
+
+        int activeItems = optionGroups.stream()
+                .mapToInt(g -> g.getItems() != null ?
+                        (int) g.getItems().stream().filter(i -> i.getIsActive()).count() : 0)
+                .sum();
+
+        statistics.put("totalItems", totalItems);
+        statistics.put("activeItems", activeItems);
+        statistics.put("inactiveItems", totalItems - activeItems);
+
+        List<String> issues = checkOptionGroupIssues(optionGroups);
+        statistics.put("hasIssues", !issues.isEmpty());
+        statistics.put("issues", issues);
+
+        return statistics;
+    }
+
+    /**
+     * 메뉴 옵션 그룹 등록
+     */
+    @Transactional
+    public MenuOption createOptionGroup(Long menuId, MenuOptionGroupCreateRequest request) {
+        log.info("=== 메뉴 옵션 그룹 등록 시작 ===");
+
+        // 현재 로그인한 사용자 ID 가져오기
+        Long currentUserId = getCurrentUserId();
+        log.info("현재 사용자 ID: {}", currentUserId);
+        log.info("옵션 그룹을 추가할 메뉴 ID: {}", menuId);
+
+        // 입력받은 값들 로그 출력
+        log.info("옵션 그룹 생성 요청 정보:");
+        log.info("  - 옵션 그룹명: {}", request.getName());
+        log.info("  - 옵션 타입: {}", request.getType());
+        log.info("  - 필수 옵션: {}", request.getIsRequired());
+        log.info("  - 표시 순서: {}", request.getDisplayOrder());
+        log.info("  - 아이템 개수: {}개", request.getItems() != null ? request.getItems().size() : 0);
+
+        // 내 가게 조회
+        log.info("가게 정보 조회 중...");
+        Store store = getMyStore();
+        log.info("가게 조회 완료 - 가게 ID: {}, 가게명: {}", store.getId(), store.getName());
+
+        // 메뉴 조회 및 권한 확인
+        log.info("메뉴 조회 중... 메뉴 ID: {}", menuId);
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> {
+                    log.error("메뉴를 찾을 수 없습니다. 메뉴 ID: {}, 가게 ID: {}", menuId, store.getId());
+                    return new RuntimeException("메뉴를 찾을 수 없습니다");
+                });
+
+        log.info("메뉴 조회 완료 - 메뉴명: {}, 상태: {}", menu.getName(), menu.getStatus());
+
+        // 입력값 검증
+        validateOptionGroupCreateRequest(request, menuId);
+
+        // 표시 순서 자동 설정 (요청에 없는 경우)
+        Integer displayOrder = request.getDisplayOrder();
+        if (displayOrder == null) {
+            Integer maxOrder = getMaxOptionGroupOrder(menuId);
+            displayOrder = maxOrder + 1;
+            log.info("표시 순서 자동 설정: {}", displayOrder);
+        }
+
+        // MenuOption 엔티티 생성
+        log.info("MenuOption 엔티티 생성 중...");
+        MenuOption optionGroup = MenuOption.builder()
+                .menu(menu)
+                .name(request.getName().trim())
+                .type(request.getType())
+                .isRequired(request.getIsRequired() != null ? request.getIsRequired() : false)
+                .displayOrder(displayOrder)
+                .build();
+
+        log.info("MenuOption 엔티티 생성 완료");
+
+        // 옵션 그룹 저장
+        log.info("옵션 그룹 저장 중...");
+        MenuOption savedOptionGroup = menuOptionRepository.save(optionGroup);
+        log.info("옵션 그룹 저장 완료 - 옵션 그룹 ID: {}", savedOptionGroup.getId());
+
+        // 옵션 아이템들 생성 및 저장
+        if (request.getItems() != null && !request.getItems().isEmpty()) {
+            log.info("옵션 아이템들 생성 중... 아이템 수: {}", request.getItems().size());
+            List<MenuOptionItem> optionItems = createOptionItemsForGroup(savedOptionGroup, request.getItems());
+            log.info("옵션 아이템들 생성 완료 - {}개 생성됨", optionItems.size());
+        }
+
+        log.info("메뉴 옵션 그룹 등록 완료! 생성된 옵션 그룹 ID: {}, 옵션 그룹명: {}",
+                savedOptionGroup.getId(), savedOptionGroup.getName());
+        log.info("=== 메뉴 옵션 그룹 등록 종료 ===");
+
+        return savedOptionGroup;
+    }
+
+    /**
+     * 옵션 그룹 생성 요청 검증
+     */
+    private void validateOptionGroupCreateRequest(MenuOptionGroupCreateRequest request, Long menuId) {
+        log.debug("옵션 그룹 생성 요청 유효성 검증 시작");
+
+        // 필수 필드 검증
+        if (request.getName() == null || request.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("옵션 그룹명은 필수입니다");
+        }
+
+        if (request.getName().trim().length() > 50) {
+            throw new IllegalArgumentException("옵션 그룹명은 50자를 초과할 수 없습니다");
+        }
+
+        if (request.getType() == null) {
+            throw new IllegalArgumentException("옵션 타입은 필수입니다");
+        }
+
+        if (request.getDisplayOrder() != null && request.getDisplayOrder() < 0) {
+            throw new IllegalArgumentException("표시 순서는 0 이상이어야 합니다");
+        }
+
+        // 옵션 그룹명 중복 체크 (같은 메뉴 내에서)
+        List<MenuOption> existingGroups = menuOptionRepository.findByMenuIdOrderByDisplayOrderAsc(menuId);
+        boolean isDuplicate = existingGroups.stream()
+                .anyMatch(group -> group.getName().equals(request.getName().trim()));
+
+        if (isDuplicate) {
+            throw new IllegalArgumentException("이미 존재하는 옵션 그룹명입니다: " + request.getName().trim());
+        }
+
+        // 옵션 아이템 검증
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            throw new IllegalArgumentException("옵션 아이템은 최소 1개 이상이어야 합니다");
+        }
+
+        // 각 옵션 아이템 검증
+        for (int i = 0; i < request.getItems().size(); i++) {
+            MenuOptionItemCreateRequest item = request.getItems().get(i);
+            validateOptionItemForGroup(item, i + 1);
+        }
+
+        // 단일 선택인데 아이템이 1개뿐인 경우 경고
+        if (request.getType() == OptionType.SINGLE && request.getItems().size() == 1) {
+            log.warn("단일 선택 옵션 그룹에 아이템이 1개뿐입니다. 선택의 의미가 없을 수 있습니다.");
+        }
+
+        log.debug("옵션 그룹 생성 요청 유효성 검증 완료");
+    }
+
+    /**
+     * 옵션 아이템 검증 (그룹 내)
+     */
+    private void validateOptionItemForGroup(MenuOptionItemCreateRequest item, int itemIndex) {
+        if (item.getName() == null || item.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("옵션 아이템 " + itemIndex + "번의 이름은 필수입니다");
+        }
+
+        if (item.getName().trim().length() > 50) {
+            throw new IllegalArgumentException("옵션 아이템 " + itemIndex + "번의 이름은 50자를 초과할 수 없습니다");
+        }
+
+        if (item.getAdditionalPrice() != null &&
+                item.getAdditionalPrice().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("옵션 아이템 " + itemIndex + "번의 추가 금액은 0원 이상이어야 합니다");
+        }
+
+        if (item.getDisplayOrder() != null && item.getDisplayOrder() < 0) {
+            throw new IllegalArgumentException("옵션 아이템 " + itemIndex + "번의 표시 순서는 0 이상이어야 합니다");
+        }
+    }
+
+    /**
+     * 메뉴의 옵션 그룹 최대 순서 조회
+     */
+    private Integer getMaxOptionGroupOrder(Long menuId) {
+        log.debug("메뉴의 옵션 그룹 최대 순서 조회 - 메뉴 ID: {}", menuId);
+
+        List<MenuOption> optionGroups = menuOptionRepository.findByMenuIdOrderByDisplayOrderAsc(menuId);
+
+        if (optionGroups.isEmpty()) {
+            log.debug("기존 옵션 그룹이 없음 - 순서 0 반환");
+            return 0;
+        }
+
+        Integer maxOrder = optionGroups.stream()
+                .mapToInt(MenuOption::getDisplayOrder)
+                .max()
+                .orElse(0);
+
+        log.debug("최대 순서: {}", maxOrder);
+        return maxOrder;
+    }
+
+    /**
+     * 옵션 그룹을 위한 옵션 아이템들 생성
+     */
+    private List<MenuOptionItem> createOptionItemsForGroup(MenuOption optionGroup, List<MenuOptionItemCreateRequest> itemRequests) {
+        List<MenuOptionItem> optionItems = new ArrayList<>();
+
+        for (int i = 0; i < itemRequests.size(); i++) {
+            MenuOptionItemCreateRequest itemRequest = itemRequests.get(i);
+            log.debug("옵션 아이템 {}번 생성: {}, 추가금액: {}",
+                    i + 1, itemRequest.getName(), itemRequest.getAdditionalPrice());
+
+            Integer itemDisplayOrder = itemRequest.getDisplayOrder();
+            if (itemDisplayOrder == null) {
+                itemDisplayOrder = i + 1; // 1부터 시작
+            }
+
+            MenuOptionItem optionItem = MenuOptionItem.builder()
+                    .option(optionGroup)
+                    .name(itemRequest.getName().trim())
+                    .additionalPrice(itemRequest.getAdditionalPrice() != null ?
+                            itemRequest.getAdditionalPrice() : BigDecimal.ZERO)
+                    .displayOrder(itemDisplayOrder)
+                    .isActive(itemRequest.getIsActive() != null ? itemRequest.getIsActive() : true)
+                    .build();
+
+            // 옵션 아이템 저장
+            MenuOptionItem savedItem = menuOptionItemRepository.save(optionItem);
+            optionItems.add(savedItem);
+
+            log.debug("옵션 아이템 저장 완료 - 아이템 ID: {}", savedItem.getId());
+        }
+
+        return optionItems;
+    }
+
+    /**
+     * 메뉴의 옵션 그룹 개수 제한 체크 (추가 검증)
+     */
+    private void validateOptionGroupLimit(Long menuId) {
+        List<MenuOption> existingGroups = menuOptionRepository.findByMenuIdOrderByDisplayOrderAsc(menuId);
+
+        // 옵션 그룹 개수 제한 (예: 최대 10개)
+        int maxOptionGroups = 10;
+        if (existingGroups.size() >= maxOptionGroups) {
+            log.warn("옵션 그룹 개수 제한 초과 - 현재: {}개, 최대: {}개", existingGroups.size(), maxOptionGroups);
+            throw new IllegalArgumentException("메뉴당 옵션 그룹은 최대 " + maxOptionGroups + "개까지 등록할 수 있습니다");
+        }
+
+        log.debug("옵션 그룹 개수 제한 체크 완료 - 현재: {}개", existingGroups.size());
+    }
+
+    /**
+     * 메뉴 옵션 그룹 수정
+     */
+    @Transactional
+    public MenuOption updateOptionGroup(Long menuId, Long groupId, MenuOptionGroupUpdateRequest request) {
+        log.info("=== 메뉴 옵션 그룹 수정 시작 ===");
+
+        // 현재 로그인한 사용자 ID 가져오기
+        Long currentUserId = getCurrentUserId();
+        log.info("현재 사용자 ID: {}", currentUserId);
+        log.info("수정할 메뉴 ID: {}, 옵션 그룹 ID: {}", menuId, groupId);
+
+        // 입력받은 값들 로그 출력
+        log.info("옵션 그룹 수정 요청 정보:");
+        log.info("  - 옵션 그룹명: {}", request.getName());
+        log.info("  - 옵션 타입: {}", request.getType());
+        log.info("  - 필수 옵션: {}", request.getIsRequired());
+        log.info("  - 표시 순서: {}", request.getDisplayOrder());
+
+        // 내 가게 조회
+        log.info("가게 정보 조회 중...");
+        Store store = getMyStore();
+        log.info("가게 조회 완료 - 가게 ID: {}, 가게명: {}", store.getId(), store.getName());
+
+        // 메뉴 조회 및 권한 확인
+        log.info("메뉴 조회 중... 메뉴 ID: {}", menuId);
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> {
+                    log.error("메뉴를 찾을 수 없습니다. 메뉴 ID: {}, 가게 ID: {}", menuId, store.getId());
+                    return new RuntimeException("메뉴를 찾을 수 없습니다");
+                });
+
+        log.info("메뉴 조회 완료 - 메뉴명: {}", menu.getName());
+
+        // 옵션 그룹 조회 및 권한 확인
+        log.info("옵션 그룹 조회 중... 옵션 그룹 ID: {}", groupId);
+        MenuOption optionGroup = menuOptionRepository.findById(groupId)
+                .orElseThrow(() -> {
+                    log.error("옵션 그룹을 찾을 수 없습니다. ID: {}", groupId);
+                    return new RuntimeException("옵션 그룹을 찾을 수 없습니다");
+                });
+
+        // 옵션 그룹이 해당 메뉴의 것인지 확인
+        if (!optionGroup.getMenu().getId().equals(menuId)) {
+            log.error("다른 메뉴의 옵션 그룹입니다. 옵션 그룹의 메뉴 ID: {}, 요청된 메뉴 ID: {}",
+                    optionGroup.getMenu().getId(), menuId);
+            throw new RuntimeException("다른 메뉴의 옵션 그룹입니다");
+        }
+
+        log.info("옵션 그룹 조회 완료 - 기존 그룹명: {}, 타입: {}, 필수: {}",
+                optionGroup.getName(), optionGroup.getType(), optionGroup.getIsRequired());
+
+        // 입력값 검증
+        validateOptionGroupUpdateRequest(request, menuId, groupId);
+
+        // 변경사항 적용
+        boolean hasChanges = false;
+
+        // 옵션 그룹명 변경
+        if (request.getName() != null && !request.getName().trim().isEmpty()) {
+            String newName = request.getName().trim();
+            if (!newName.equals(optionGroup.getName())) {
+                log.info("옵션 그룹명 변경: {} -> {}", optionGroup.getName(), newName);
+                optionGroup.updateName(newName);
+                hasChanges = true;
+            }
+        }
+
+        // 옵션 타입 변경
+        if (request.getType() != null && !request.getType().equals(optionGroup.getType())) {
+            log.info("옵션 타입 변경: {} -> {}", optionGroup.getType(), request.getType());
+
+            // 타입 변경 시 추가 검증
+            validateOptionTypeChange(optionGroup, request.getType());
+
+            optionGroup.updateType(request.getType());
+            hasChanges = true;
+        }
+
+        // 필수 옵션 여부 변경
+        if (request.getIsRequired() != null && !request.getIsRequired().equals(optionGroup.getIsRequired())) {
+            log.info("필수 옵션 여부 변경: {} -> {}", optionGroup.getIsRequired(), request.getIsRequired());
+
+            // 필수로 변경할 때 추가 검증
+            if (request.getIsRequired()) {
+                validateRequiredOptionChange(optionGroup);
+            }
+
+            optionGroup.updateIsRequired(request.getIsRequired());
+            hasChanges = true;
+        }
+
+        // 표시 순서 변경
+        if (request.getDisplayOrder() != null && !request.getDisplayOrder().equals(optionGroup.getDisplayOrder())) {
+            log.info("표시 순서 변경: {} -> {}", optionGroup.getDisplayOrder(), request.getDisplayOrder());
+            optionGroup.updateDisplayOrder(request.getDisplayOrder());
+            hasChanges = true;
+        }
+
+        if (!hasChanges) {
+            log.info("변경된 정보가 없습니다.");
+            return optionGroup;
+        }
+
+        // 옵션 그룹 저장
+        log.info("옵션 그룹 저장 중...");
+        MenuOption savedOptionGroup = menuOptionRepository.save(optionGroup);
+
+        log.info("메뉴 옵션 그룹 수정 완료! 옵션 그룹 ID: {}, 그룹명: {}",
+                savedOptionGroup.getId(), savedOptionGroup.getName());
+        log.info("=== 메뉴 옵션 그룹 수정 종료 ===");
+
+        return savedOptionGroup;
+    }
+
+    /**
+     * 옵션 그룹 수정 요청 검증
+     */
+    private void validateOptionGroupUpdateRequest(MenuOptionGroupUpdateRequest request, Long menuId, Long groupId) {
+        log.debug("옵션 그룹 수정 요청 유효성 검증 시작");
+
+        // 옵션 그룹명 중복 체크 (다른 옵션 그룹과)
+        if (request.getName() != null && !request.getName().trim().isEmpty()) {
+            String trimmedName = request.getName().trim();
+
+            if (trimmedName.length() > 50) {
+                throw new IllegalArgumentException("옵션 그룹명은 50자를 초과할 수 없습니다");
+            }
+
+            // 현재 옵션 그룹이 아닌 다른 옵션 그룹에서 같은 이름이 사용되는지 확인
+            List<MenuOption> existingGroups = menuOptionRepository.findByMenuIdOrderByDisplayOrderAsc(menuId);
+            boolean isDuplicate = existingGroups.stream()
+                    .anyMatch(group -> !group.getId().equals(groupId) &&
+                            group.getName().equals(trimmedName));
+
+            if (isDuplicate) {
+                throw new IllegalArgumentException("이미 존재하는 옵션 그룹명입니다: " + trimmedName);
+            }
+        }
+
+        // 표시 순서 검증
+        if (request.getDisplayOrder() != null && request.getDisplayOrder() < 0) {
+            throw new IllegalArgumentException("표시 순서는 0 이상이어야 합니다");
+        }
+
+        log.debug("옵션 그룹 수정 요청 유효성 검증 완료");
+    }
+
+    /**
+     * 옵션 타입 변경 검증
+     */
+    private void validateOptionTypeChange(MenuOption optionGroup, OptionType newType) {
+        log.debug("옵션 타입 변경 검증 - {} -> {}", optionGroup.getType(), newType);
+
+        // MULTIPLE에서 SINGLE로 변경하는 경우
+        if (optionGroup.getType() == OptionType.MULTIPLE && newType == OptionType.SINGLE) {
+            log.warn("다중 선택에서 단일 선택으로 변경합니다. 고객의 선택 방식이 제한됩니다.");
+            // 필요에 따라 추가 검증이나 경고 처리
+        }
+
+        // SINGLE에서 MULTIPLE로 변경하는 경우
+        else if (optionGroup.getType() == OptionType.SINGLE && newType == OptionType.MULTIPLE) {
+            log.info("단일 선택에서 다중 선택으로 변경합니다. 고객이 여러 옵션을 선택할 수 있게 됩니다.");
+        }
+
+        log.debug("옵션 타입 변경 검증 완료");
+    }
+
+    /**
+     * 필수 옵션 변경 검증
+     */
+    private void validateRequiredOptionChange(MenuOption optionGroup) {
+        log.debug("필수 옵션으로 변경 검증");
+
+        // 활성화된 옵션 아이템이 있는지 확인
+        if (optionGroup.getItems() != null) {
+            long activeItemCount = optionGroup.getItems().stream()
+                    .filter(item -> item.getIsActive())
+                    .count();
+
+            if (activeItemCount == 0) {
+                log.error("필수 옵션으로 변경할 수 없습니다. 활성화된 아이템이 없습니다.");
+                throw new IllegalArgumentException(
+                        "필수 옵션으로 변경하려면 최소 1개 이상의 활성화된 아이템이 있어야 합니다"
+                );
+            }
+
+            log.debug("필수 옵션 변경 가능 - 활성화된 아이템: {}개", activeItemCount);
+        } else {
+            log.error("필수 옵션으로 변경할 수 없습니다. 아이템이 없습니다.");
+            throw new IllegalArgumentException(
+                    "필수 옵션으로 변경하려면 옵션 아이템이 있어야 합니다"
+            );
+        }
+
+        log.debug("필수 옵션 변경 검증 완료");
+    }
+
+    /**
+     * 메뉴 옵션 그룹 삭제
+     */
+    @Transactional
+    public void deleteOptionGroup(Long menuId, Long groupId) {
+        log.info("=== 메뉴 옵션 그룹 삭제 시작 ===");
+
+        // 현재 로그인한 사용자 ID 가져오기
+        Long currentUserId = getCurrentUserId();
+        log.info("현재 사용자 ID: {}", currentUserId);
+        log.info("삭제할 메뉴 ID: {}, 옵션 그룹 ID: {}", menuId, groupId);
+
+        // 내 가게 조회
+        log.info("가게 정보 조회 중...");
+        Store store = getMyStore();
+        log.info("가게 조회 완료 - 가게 ID: {}, 가게명: {}", store.getId(), store.getName());
+
+        // 메뉴 조회 및 권한 확인
+        log.info("메뉴 조회 중... 메뉴 ID: {}", menuId);
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> {
+                    log.error("메뉴를 찾을 수 없습니다. 메뉴 ID: {}, 가게 ID: {}", menuId, store.getId());
+                    return new RuntimeException("메뉴를 찾을 수 없습니다");
+                });
+
+        log.info("메뉴 조회 완료 - 메뉴명: {}", menu.getName());
+
+        // 옵션 그룹 조회 및 권한 확인
+        log.info("옵션 그룹 조회 중... 옵션 그룹 ID: {}", groupId);
+        MenuOption optionGroup = menuOptionRepository.findById(groupId)
+                .orElseThrow(() -> {
+                    log.error("옵션 그룹을 찾을 수 없습니다. ID: {}", groupId);
+                    return new RuntimeException("옵션 그룹을 찾을 수 없습니다");
+                });
+
+        // 옵션 그룹이 해당 메뉴의 것인지 확인
+        if (!optionGroup.getMenu().getId().equals(menuId)) {
+            log.error("다른 메뉴의 옵션 그룹입니다. 옵션 그룹의 메뉴 ID: {}, 요청된 메뉴 ID: {}",
+                    optionGroup.getMenu().getId(), menuId);
+            throw new RuntimeException("다른 메뉴의 옵션 그룹입니다");
+        }
+
+        log.info("옵션 그룹 조회 완료 - 그룹명: {}, 타입: {}, 필수: {}, 아이템 수: {}개",
+                optionGroup.getName(), optionGroup.getType(), optionGroup.getIsRequired(),
+                optionGroup.getItems() != null ? optionGroup.getItems().size() : 0);
+
+        // 삭제 전 검증
+        validateOptionGroupDeletion(optionGroup, menuId);
+
+        // 옵션 그룹에 속한 아이템들 처리
+        handleOptionItemsBeforeDeletion(optionGroup);
+
+        // 옵션 그룹 삭제
+        log.info("옵션 그룹 삭제 실행 중...");
+        menuOptionRepository.delete(optionGroup);
+
+        log.info("메뉴 옵션 그룹 삭제 완료! 삭제된 그룹: {} (ID: {})", optionGroup.getName(), groupId);
+        log.info("=== 메뉴 옵션 그룹 삭제 종료 ===");
+    }
+
+    /**
+     * 옵션 그룹 삭제 전 검증
+     */
+    private void validateOptionGroupDeletion(MenuOption optionGroup, Long menuId) {
+        log.info("옵션 그룹 삭제 가능 여부 검증 중...");
+
+        // 1. 필수 옵션 그룹 삭제 시 경고
+        if (optionGroup.getIsRequired()) {
+            log.warn("필수 옵션 그룹을 삭제합니다: {}", optionGroup.getName());
+
+            // 필수 옵션 그룹이 남아있는지 확인
+            List<MenuOption> remainingRequiredGroups = menuOptionRepository.findByMenuIdOrderByDisplayOrderAsc(menuId)
+                    .stream()
+                    .filter(group -> !group.getId().equals(optionGroup.getId()) && group.getIsRequired())
+                    .toList();
+
+            if (remainingRequiredGroups.isEmpty()) {
+                log.warn("이 메뉴의 마지막 필수 옵션 그룹을 삭제합니다");
+                // 필요에 따라 삭제를 막거나 경고만 할 수 있음
+                // throw new IllegalArgumentException("메뉴에는 최소 1개의 필수 옵션 그룹이 있어야 합니다");
+            }
+        }
+
+        // 2. 현재 주문 중인 메뉴의 옵션 그룹인지 확인 (실제 주문 시스템이 있다면)
+        // TODO: 주문 시스템과 연동하여 현재 주문 중인 옵션 그룹인지 확인
+        // if (orderService.hasActiveOrdersWithOption(optionGroup.getId())) {
+        //     throw new IllegalArgumentException("현재 주문 중인 옵션 그룹은 삭제할 수 없습니다");
+        // }
+
+        // 3. 옵션 아이템 개수 확인
+        int itemCount = optionGroup.getItems() != null ? optionGroup.getItems().size() : 0;
+        if (itemCount > 0) {
+            log.info("옵션 그룹에 {}개의 아이템이 있습니다. 함께 삭제됩니다", itemCount);
+        }
+
+        log.info("옵션 그룹 삭제 가능 여부 검증 완료");
+    }
+
+    /**
+     * 옵션 그룹 삭제 전 아이템들 처리
+     */
+    private void handleOptionItemsBeforeDeletion(MenuOption optionGroup) {
+        if (optionGroup.getItems() != null && !optionGroup.getItems().isEmpty()) {
+            log.info("옵션 그룹에 속한 아이템들 처리 중...");
+
+            int totalItems = optionGroup.getItems().size();
+            int activeItems = (int) optionGroup.getItems().stream()
+                    .filter(item -> item.getIsActive())
+                    .count();
+            int inactiveItems = totalItems - activeItems;
+
+            log.info("삭제될 아이템 통계:");
+            log.info("  - 총 아이템: {}개", totalItems);
+            log.info("  - 활성 아이템: {}개", activeItems);
+            log.info("  - 비활성 아이템: {}개", inactiveItems);
+
+            // 각 아이템 정보 로깅
+            for (int i = 0; i < optionGroup.getItems().size(); i++) {
+                MenuOptionItem item = optionGroup.getItems().get(i);
+                log.info("  {}. {} (추가금액: {}원, 활성: {})",
+                        i + 1, item.getName(), item.getAdditionalPrice(), item.getIsActive());
+            }
+
+            // 옵션 아이템들 삭제 (Cascade로 자동 삭제되지만 명시적으로 처리)
+            log.info("옵션 아이템들 삭제 중...");
+            menuOptionItemRepository.deleteByOptionId(optionGroup.getId());
+
+            log.info("옵션 아이템들 처리 완료 - {}개 아이템 삭제됨", totalItems);
+        } else {
+            log.info("삭제할 옵션 아이템이 없습니다");
+        }
+    }
+
+    /**
+     * 메뉴의 모든 옵션 그룹 삭제 (메뉴 삭제 시 사용)
+     */
+    @Transactional
+    public void deleteAllOptionGroupsByMenuId(Long menuId) {
+        log.info("메뉴의 모든 옵션 그룹 삭제 - 메뉴 ID: {}", menuId);
+
+        // 모든 옵션 그룹 조회
+        List<MenuOption> optionGroups = menuOptionRepository.findByMenuIdOrderByDisplayOrderAsc(menuId);
+
+        if (optionGroups.isEmpty()) {
+            log.info("삭제할 옵션 그룹이 없습니다");
+            return;
+        }
+
+        log.info("총 {}개 옵션 그룹 삭제 시작", optionGroups.size());
+
+        // 각 옵션 그룹의 아이템들 먼저 삭제
+        for (MenuOption optionGroup : optionGroups) {
+            if (optionGroup.getItems() != null && !optionGroup.getItems().isEmpty()) {
+                log.info("옵션 그룹 '{}' 의 아이템 {}개 삭제",
+                        optionGroup.getName(), optionGroup.getItems().size());
+                menuOptionItemRepository.deleteByOptionId(optionGroup.getId());
+            }
+        }
+
+        // 모든 옵션 그룹 삭제
+        menuOptionRepository.deleteByMenuId(menuId);
+
+        log.info("메뉴의 모든 옵션 그룹 삭제 완료 - {}개 그룹 삭제됨", optionGroups.size());
+    }
+
+    /**
+     * 옵션 그룹 삭제 후 순서 정규화
+     */
+    @Transactional
+    public void normalizeOptionGroupOrdersAfterDeletion(Long menuId) {
+        log.info("옵션 그룹 삭제 후 순서 정규화 - 메뉴 ID: {}", menuId);
+
+        List<MenuOption> remainingGroups = menuOptionRepository.findByMenuIdOrderByDisplayOrderAsc(menuId);
+
+        List<MenuOption> updatedGroups = new ArrayList<>();
+        for (int i = 0; i < remainingGroups.size(); i++) {
+            MenuOption group = remainingGroups.get(i);
+            int expectedOrder = i + 1;
+
+            if (!group.getDisplayOrder().equals(expectedOrder)) {
+                group.updateDisplayOrder(expectedOrder);
+                updatedGroups.add(group);
+            }
+        }
+
+        if (!updatedGroups.isEmpty()) {
+            menuOptionRepository.saveAll(updatedGroups);
+            log.info("{}개 옵션 그룹 순서가 정규화되었습니다", updatedGroups.size());
+        }
+
+        log.info("옵션 그룹 순서 정규화 완료");
     }
 }
