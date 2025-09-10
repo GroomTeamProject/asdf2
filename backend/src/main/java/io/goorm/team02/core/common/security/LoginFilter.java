@@ -3,11 +3,14 @@ package io.goorm.team02.core.common.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.goorm.team02.core.users.controller.dto.LoginRequest;
+import io.goorm.team02.core.users.controller.dto.LoginResponse;
+import io.goorm.team02.core.users.repository.UserinfoRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import io.goorm.team02.core.users.domain.User;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -26,7 +29,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
-
+    private final UserinfoRepository userRepository; // DB 조회용
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
@@ -60,13 +63,24 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
                                             FilterChain chain, Authentication authentication)
             throws IOException, ServletException {
 
-        // 인증 성공 시 JWT 발급
-        String token = jwtTokenProvider.generateToken(authentication);
+        // 인증 성공한 이메일 가져오기
+        String email = authentication.getName();
+
+        // DB에서 user 가져오기 -> PK 확인
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 인증 성공 시 JWT 발급 (email + userId 포함)
+        String token = jwtTokenProvider.generateToken(authentication, user.getId());
+
+        // 응답: JSON으로 email, name, token
+        LoginResponse loginResponse = new LoginResponse(user.getEmail(), user.getName(),user.getUserType(),token);
 
         // 응답 헤더에 JWT 추가
         response.setHeader("Authorization", "Bearer " + token);
         response.setContentType("application/json");
-        response.getWriter().write(objectMapper.writeValueAsString(Map.of("token", token)));
+        //response.getWriter().write(objectMapper.writeValueAsString(Map.of("token", token)));
+        response.getWriter().write(objectMapper.writeValueAsString(loginResponse));
     }
 
     /**
