@@ -5,6 +5,7 @@ import io.goorm.team02.core.orders.controller.dto.OrderResponse;
 import io.goorm.team02.core.orders.domain.Order;
 import io.goorm.team02.core.orders.domain.OrderItem;
 import io.goorm.team02.core.orders.domain.OrderItemOption;
+import io.goorm.team02.core.orders.domain.enums.OrderStatus;
 import io.goorm.team02.core.orders.repository.OrderRepository;
 import io.goorm.team02.core.users.domain.User;
 import io.goorm.team02.core.users.repository.UserinfoRepository;
@@ -117,6 +118,105 @@ public class OrderService {
 		return BigDecimal.ZERO;
 	}
 	
+	/**
+	 * 가게에서 주문 수락
+	 */
+	@Transactional
+	public OrderResponse acceptOrder(Long orderId) {
+		Order order = orderRepository.findById(orderId)
+			.orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
+		
+		// 주문 상태 검증
+		if (order.getStatus() != OrderStatus.PENDING) {
+			throw new IllegalStateException("수락할 수 없는 주문 상태입니다. 현재 상태: " + order.getStatus());
+		}
+		
+		// 도메인에서 상태 변경
+		order.changeStatus(OrderStatus.ACCEPTED);
+		
+		Order savedOrder = orderRepository.save(order);
+		return OrderResponse.from(savedOrder);
+	}
+	
+	/**
+	 * 가게에서 주문 거절
+	 */
+	@Transactional
+	public OrderResponse rejectOrder(Long orderId) {
+		Order order = orderRepository.findById(orderId)
+			.orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
+		
+		// 주문 상태 검증
+		if (order.getStatus() != OrderStatus.PENDING) {
+			throw new IllegalStateException("거절할 수 없는 주문 상태입니다. 현재 상태: " + order.getStatus());
+		}
+		
+		// 도메인에서 상태 변경
+		order.changeStatus(OrderStatus.CANCELLED);
+		
+		Order savedOrder = orderRepository.save(order);
+		return OrderResponse.from(savedOrder);
+	}
+	
+	/**
+	 * 가게에서 조리 시작
+	 */
+	@Transactional
+	public OrderResponse startCooking(Long orderId) {
+		Order order = orderRepository.findById(orderId)
+			.orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
+		
+		// 주문 상태 검증
+		if (order.getStatus() != OrderStatus.ACCEPTED) {
+			throw new IllegalStateException("조리를 시작할 수 없는 주문 상태입니다. 현재 상태: " + order.getStatus());
+		}
+		
+		// 도메인에서 상태 변경
+		order.changeStatus(OrderStatus.COOKING);
+		
+		Order savedOrder = orderRepository.save(order);
+		return OrderResponse.from(savedOrder);
+	}
+	
+	/**
+	 * 가게에서 조리 완료
+	 */
+	@Transactional
+	public OrderResponse completeCooking(Long orderId) {
+		Order order = orderRepository.findById(orderId)
+			.orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
+		
+		// 주문 상태 검증
+		if (order.getStatus() != OrderStatus.COOKING) {
+			throw new IllegalStateException("조리 완료할 수 없는 주문 상태입니다. 현재 상태: " + order.getStatus());
+		}
+		
+		// 도메인에서 상태 변경
+		order.changeStatus(OrderStatus.READY);
+		
+		Order savedOrder = orderRepository.save(order);
+		return OrderResponse.from(savedOrder);
+	}
+	
+	/**
+	 * 배달 완료
+	 */
+	@Transactional
+	public OrderResponse deliverOrder(Long orderId) {
+		Order order = orderRepository.findById(orderId)
+			.orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
+		
+		// 주문 상태 검증 (READY 또는 PICKED_UP 상태에서 배달 완료 가능)
+		if (order.getStatus() != OrderStatus.READY && order.getStatus() != OrderStatus.PICKED_UP) {
+			throw new IllegalStateException("배달 완료할 수 없는 주문 상태입니다. 현재 상태: " + order.getStatus());
+		}
+		
+		// 도메인에서 상태 변경
+		order.changeStatus(OrderStatus.DELIVERED);
+		
+		Order savedOrder = orderRepository.save(order);
+		return OrderResponse.from(savedOrder);
+	}
 
 	public List<OrderResponse> getAll(Long storeId) {
 		List<Order> orders = orderRepository.findAllByStoreIdWithDetails(storeId);

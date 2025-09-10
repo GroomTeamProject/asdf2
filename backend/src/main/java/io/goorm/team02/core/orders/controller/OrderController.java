@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -33,6 +34,46 @@ public class OrderController implements OrderControllerDocs {
 	@GetMapping("/{orderId}")
 	public OrderResponse getOrderDetail(@PathVariable Long orderId) {
 		return orderService.getOrderDetail(orderId);
+	}
+
+	/**
+	 * 가게에서 주문 수락
+	 */
+	@PutMapping("/{orderId}/accept")
+	public OrderResponse acceptOrder(@PathVariable Long orderId) {
+		return orderService.acceptOrder(orderId);
+	}
+
+	/**
+	 * 가게에서 주문 거절
+	 */
+	@PutMapping("/{orderId}/reject")
+	public OrderResponse rejectOrder(@PathVariable Long orderId) {
+		return orderService.rejectOrder(orderId);
+	}
+
+	/**
+	 * 가게에서 조리 시작
+	 */
+	@PutMapping("/{orderId}/start-cooking")
+	public OrderResponse startCooking(@PathVariable Long orderId) {
+		return orderService.startCooking(orderId);
+	}
+
+	/**
+	 * 가게에서 조리 완료
+	 */
+	@PutMapping("/{orderId}/complete-cooking")
+	public OrderResponse completeCooking(@PathVariable Long orderId) {
+		return orderService.completeCooking(orderId);
+	}
+
+	/**
+	 * 배달 완료
+	 */
+	@PutMapping("/{orderId}/deliver")
+	public OrderResponse deliverOrder(@PathVariable Long orderId) {
+		return orderService.deliverOrder(orderId);
 	}
 
 }
