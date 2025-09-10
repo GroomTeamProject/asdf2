@@ -26,12 +26,12 @@ public class AuthService {
                     new UsernamePasswordAuthenticationToken(email, password)
             );
 
-            // 인증 성공 → JWT 발급
-            String token = jwtTokenProvider.generateToken(authentication);
-
             // DB에서 사용자 정보 조회
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("User not found"));
+                    
+            // 인증 성공 → JWT 발급
+            String token = jwtTokenProvider.generateToken(authentication,user.getId());
 
             // LoginResponse 반환
             return new LoginResponse(user.getEmail(), user.getName(), user.getUserType(), token);
