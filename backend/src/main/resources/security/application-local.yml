@@ -14,6 +14,6 @@ spring:
     hibernate:
       ddl-auto: none
       dialect: org.hibernate.dialect.MariaDBDialect
-    
+
 cors:
   allowed-origins: ${ORIGIN_URL_LOCAL}

@@ -11,12 +11,17 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "order_items")
-public class OrderItem {
+@Data
+public class OrderItem{
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,5 +49,46 @@ public class OrderItem {
 
 	@OneToMany(mappedBy = "orderItem", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<OrderItemOption> options;
+
+	// 도메인 비즈니스 로직
+	/**
+	 * 주문 아이템 총액 계산 (메뉴 가격 × 수량 + 옵션 추가 가격)
+	 */
+	public void calculateTotalPrice() {
+		BigDecimal basePrice = this.menuPrice.multiply(BigDecimal.valueOf(this.quantity));
+		BigDecimal optionPrice = calculateOptionPrice();
+		this.totalPrice = basePrice.add(optionPrice);
+	}
+	
+	/**
+	 * 옵션 추가 가격 계산 (수량 반영)
+	 */
+	private BigDecimal calculateOptionPrice() {
+		if (options == null || options.isEmpty()) {
+			return BigDecimal.ZERO;
+		}
+		
+		// 옵션 가격의 합계에 수량을 곱함
+		BigDecimal totalOptionPrice = options.stream()
+			.map(OrderItemOption::getAdditionalPrice)
+			.reduce(BigDecimal.ZERO, BigDecimal::add);
+		
+		return totalOptionPrice.multiply(BigDecimal.valueOf(this.quantity));
+	}
+	
+	/**
+	 * 주문 아이템 생성 팩토리 메서드
+	 */
+	public static OrderItem create(Order order, Menu menu, Integer quantity, List<OrderItemOption> options) {
+		OrderItem orderItem = new OrderItem();
+		orderItem.setOrder(order);
+		orderItem.setMenu(menu);
+		orderItem.setMenuName(menu.getName());
+		orderItem.setMenuPrice(menu.getPrice());
+		orderItem.setQuantity(quantity);
+		orderItem.setOptions(options != null ? options : new ArrayList<>());
+		orderItem.calculateTotalPrice();
+		return orderItem;
+	}
 
 }

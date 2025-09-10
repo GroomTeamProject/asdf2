@@ -1,5 +1,6 @@
 package io.goorm.team02.core.orders.domain;
 
+import io.goorm.team02.core.common.domain.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -9,10 +10,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Entity
 @Table(name = "order_item_options")
-public class OrderItemOption {
+@Data
+public class OrderItemOption{
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
