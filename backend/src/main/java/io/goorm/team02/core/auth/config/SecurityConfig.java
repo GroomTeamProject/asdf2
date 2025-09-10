@@ -1,6 +1,6 @@
-package io.goorm.team02.core.common.config;
+package io.goorm.team02.core.auth.config;
 
-import io.goorm.team02.core.common.security.JwtAuthenticationFilter;
+import io.goorm.team02.core.auth.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -44,6 +44,15 @@ public class SecurityConfig {
             
             // 요청별 접근 권한 설정
             .authorizeHttpRequests(auth -> auth
+                // Swagger/OpenAPI 허용
+                .requestMatchers(
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/swagger-ui.html",
+                    "/swagger-resources/**",
+                    "/webjars/**"
+                ).permitAll()
+                
                 //공통접근
                 .requestMatchers("/api/auth/**", "/error").permitAll() // 로그인/회원가입 허용
 

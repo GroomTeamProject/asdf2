@@ -1,4 +1,4 @@
-package io.goorm.team02.core.users.controller.dto;
+package io.goorm.team02.core.auth.controller.dto;
 
 //LoginResponse로 { "token": "JWT값" } 반환
 import lombok.AllArgsConstructor;
