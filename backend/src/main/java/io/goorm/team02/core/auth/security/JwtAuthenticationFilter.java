@@ -1,6 +1,6 @@
-package io.goorm.team02.core.common.security;
+package io.goorm.team02.core.auth.security;
 
-import io.goorm.team02.core.common.config.CustomUserDetailsService;
+import io.goorm.team02.core.auth.service.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
