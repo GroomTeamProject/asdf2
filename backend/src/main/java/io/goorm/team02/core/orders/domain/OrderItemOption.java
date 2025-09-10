@@ -16,8 +16,7 @@ import lombok.EqualsAndHashCode;
 @Entity
 @Table(name = "order_item_options")
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class OrderItemOption extends BaseEntity {
+public class OrderItemOption{
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

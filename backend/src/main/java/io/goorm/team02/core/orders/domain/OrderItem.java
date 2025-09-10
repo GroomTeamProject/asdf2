@@ -20,8 +20,7 @@ import java.util.List;
 @Entity
 @Table(name = "order_items")
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class OrderItem extends io.goorm.team02.core.common.domain.BaseEntity {
+public class OrderItem{
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
