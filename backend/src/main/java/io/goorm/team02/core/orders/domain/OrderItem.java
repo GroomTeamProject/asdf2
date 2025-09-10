@@ -61,17 +61,19 @@ public class OrderItem{
 	}
 	
 	/**
-	 * 옵션 추가 가격 계산
+	 * 옵션 추가 가격 계산 (수량 반영)
 	 */
-	//TODO: 로직 수정 - quantity만큼 옵션가격 반영하도록
 	private BigDecimal calculateOptionPrice() {
 		if (options == null || options.isEmpty()) {
 			return BigDecimal.ZERO;
 		}
 		
-		return options.stream()
+		// 옵션 가격의 합계에 수량을 곱함
+		BigDecimal totalOptionPrice = options.stream()
 			.map(OrderItemOption::getAdditionalPrice)
 			.reduce(BigDecimal.ZERO, BigDecimal::add);
+		
+		return totalOptionPrice.multiply(BigDecimal.valueOf(this.quantity));
 	}
 	
 	/**
