@@ -163,6 +163,30 @@ export const storeApi = {
     return response.data;   
   }),
 
+  // 운영시간 업데이트
+  updateStoreHours: (hoursData) => apiManager.queueRequest(async () => {
+    console.log('🔄 운영시간 업데이트 중...');
+    const response = await api.put('/owner/store/hours', hoursData);
+    console.log('✅ 운영시간 업데이트 성공');
+    return response.data;
+  }),
+
+  // 특정 요일 운영시간 업데이트
+  updateDayHours: (dayOfWeek, hourData) => apiManager.queueRequest(async () => {
+    console.log('🔄 특정 요일 운영시간 업데이트 중...');
+    const response = await api.put(`/owner/store/hours/${dayOfWeek}`, hourData);
+    console.log('✅ 특정 요일 운영시간 업데이트 성공');
+    return response.data;
+  }),
+
+  // 운영시간 초기 설정
+  createStoreHours: (hoursData) => apiManager.queueRequest(async () => {
+    console.log('🔄 운영시간 초기 설정 중...');
+    const response = await api.post('/owner/store/hours', hoursData);
+    console.log('✅ 운영시간 초기 설정 성공');
+    return response.data;
+  }),
+
   createStore: (storeData) => apiManager.queueRequest(async () => {
     console.log('🔄 가게 등록 중...');
     const response = await api.post('/owner/store', {
