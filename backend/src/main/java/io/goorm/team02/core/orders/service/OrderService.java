@@ -3,6 +3,7 @@ package io.goorm.team02.core.orders.service;
 import io.goorm.team02.core.orders.controller.dto.OrderRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderResponse;
 import io.goorm.team02.core.orders.controller.dto.OrderRejectRequest;
+import io.goorm.team02.core.orders.controller.dto.OrderAcceptRequest;
 import io.goorm.team02.core.orders.domain.Order;
 import io.goorm.team02.core.orders.domain.OrderItem;
 import io.goorm.team02.core.orders.domain.OrderItemOption;
@@ -121,10 +122,10 @@ public class OrderService {
     }
 
     /**
-     * 가게에서 주문 수락
+     * 가게에서 주문 수락 (예상 조리 시간 포함)
      */
     @Transactional
-    public OrderResponse acceptOrder(Long orderId) {
+    public OrderResponse acceptOrder(Long orderId, OrderAcceptRequest request) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
 
@@ -135,6 +136,10 @@ public class OrderService {
 
         // 도메인에서 상태 변경
         order.changeStatus(OrderStatus.ACCEPTED);
+        
+        // 예상 조리 시간 설정
+        order.setMinCookingTime(request.minCookingTime());
+        order.setMaxCookingTime(request.maxCookingTime());
 
         Order savedOrder = orderRepository.save(order);
         return OrderResponse.from(savedOrder);
@@ -245,7 +250,7 @@ public class OrderService {
             orderItem.getOptions().size(); // 지연 로딩 트리거
         });
 
-        return OrderResponse.from(order);
-    }
+		return OrderResponse.from(order);
+	}
 
 }

@@ -84,6 +84,12 @@ public class Order extends BaseEntity {
 	@Column(name = "reject_reason", length = 500)
 	private String rejectReason;
 
+	@Column(name = "min_cooking_time")
+	private Integer minCookingTime;
+
+	@Column(name = "max_cooking_time")
+	private Integer maxCookingTime;
+
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<OrderItem> orderItems;
 

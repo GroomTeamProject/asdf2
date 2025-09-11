@@ -3,6 +3,7 @@ package io.goorm.team02.core.orders.controller;
 import io.goorm.team02.core.orders.controller.dto.OrderRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderResponse;
 import io.goorm.team02.core.orders.controller.dto.OrderRejectRequest;
+import io.goorm.team02.core.orders.controller.dto.OrderAcceptRequest;
 import io.goorm.team02.core.orders.service.OrderService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -39,11 +40,11 @@ public class OrderController implements OrderControllerDocs {
 	}
 
 	/**
-	 * 가게에서 주문 수락
+	 * 가게에서 주문 수락 (예상 조리 시간 포함)
 	 */
 	@PutMapping("/{orderId}/accept")
-	public OrderResponse acceptOrder(@PathVariable Long orderId) {
-		return orderService.acceptOrder(orderId);
+	public OrderResponse acceptOrder(@PathVariable Long orderId, @RequestBody OrderAcceptRequest request) {
+		return orderService.acceptOrder(orderId, request);
 	}
 
 	/**

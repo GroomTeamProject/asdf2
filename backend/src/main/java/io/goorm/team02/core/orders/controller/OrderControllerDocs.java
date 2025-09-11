@@ -3,6 +3,7 @@ package io.goorm.team02.core.orders.controller;
 import io.goorm.team02.core.orders.controller.dto.OrderRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderResponse;
 import io.goorm.team02.core.orders.controller.dto.OrderRejectRequest;
+import io.goorm.team02.core.orders.controller.dto.OrderAcceptRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -40,14 +41,15 @@ public interface OrderControllerDocs {
     public OrderResponse getOrderDetail(
             @Parameter(description = "주문 ID", required = true) @PathVariable Long orderId);
 
-    @Operation(summary = "주문 수락", description = "가게에서 주문을 수락합니다 (PENDING → ACCEPTED)")
+    @Operation(summary = "주문 수락", description = "가게에서 주문을 수락하고 예상 조리 시간을 설정합니다 (PENDING → ACCEPTED)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "주문 수락 성공"),
             @ApiResponse(responseCode = "400", description = "수락할 수 없는 주문 상태"),
             @ApiResponse(responseCode = "404", description = "주문을 찾을 수 없음")
     })
     public OrderResponse acceptOrder(
-            @Parameter(description = "주문 ID", required = true) @PathVariable Long orderId);
+            @Parameter(description = "주문 ID", required = true) @PathVariable Long orderId,
+            @RequestBody OrderAcceptRequest request);
 
     @Operation(summary = "주문 거절", description = "가게에서 주문을 거절합니다 (PENDING → CANCELLED)")
     @ApiResponses({
