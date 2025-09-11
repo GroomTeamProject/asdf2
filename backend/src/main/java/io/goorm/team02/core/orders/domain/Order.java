@@ -81,6 +81,9 @@ public class Order extends BaseEntity {
 	private LocalDateTime deliveredAt;
 	private LocalDateTime cancelledAt;
 
+	@Column(name = "reject_reason", length = 500)
+	private String rejectReason;
+
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<OrderItem> orderItems;
 

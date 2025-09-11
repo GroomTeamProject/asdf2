@@ -31,6 +31,7 @@ public record OrderResponse(
         LocalDateTime cookingCompletedAt,
         LocalDateTime deliveredAt,
         LocalDateTime cancelledAt,
+        String rejectReason,
         List<OrderItemResponse> orderItems
 ) {
 
@@ -57,6 +58,7 @@ public record OrderResponse(
                 order.getCookingCompletedAt(),
                 order.getDeliveredAt(),
                 order.getCancelledAt(),
+                order.getRejectReason(),
                 order.getOrderItems().stream()
                         .map(OrderItemResponse::from)
                         .toList()
