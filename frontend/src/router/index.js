@@ -3,6 +3,7 @@ import Home from '../pages/Home.vue'
 import Signup from '../pages/auth/Signup.vue'
 import Login from '../pages/auth/Login.vue'
 import Dashboard from '../pages/auth/Dashboard.vue'
+import StoreRegistration from '../pages/owner/StoreRegistration.vue'
 
 // 권한별 메인 페이지
 import CustomerMain from '../pages/customer/CustomerMain.vue'
@@ -17,6 +18,7 @@ const routes = [
   { path: '/login', component: Login },
   { path: '/customer-main', component: CustomerMain, meta: { role: 'CUSTOMER' } },
   { path: '/owner-main', component: OwnerMain, meta: { role: 'OWNER' } },
+  { path: '/store-registration', component: StoreRegistration, meta: { role: 'OWNER' } },
   { path: '/driver-main', component: DriverMain, meta: { role: 'RIDER' } }
   //{ path: '/dashboard', component: Dashboard }, //로그인후 이동하는 임시 페이지
 ]
