@@ -4,6 +4,7 @@ import io.goorm.team02.core.orders.controller.dto.OrderRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderResponse;
 import io.goorm.team02.core.orders.controller.dto.OrderRejectRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderAcceptRequest;
+import io.goorm.team02.core.orders.controller.dto.OrderCancelRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -87,5 +88,15 @@ public interface OrderControllerDocs {
     })
     public OrderResponse deliverOrder(
             @Parameter(description = "주문 ID", required = true) @PathVariable Long orderId);
+
+    @Operation(summary = "주문 취소", description = "주문을 취소합니다 (PENDING/ACCEPTED → CANCELLED)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "주문 취소 성공"),
+            @ApiResponse(responseCode = "400", description = "취소할 수 없는 주문 상태"),
+            @ApiResponse(responseCode = "404", description = "주문을 찾을 수 없음")
+    })
+    public OrderResponse cancelOrder(
+            @Parameter(description = "주문 ID", required = true) @PathVariable Long orderId,
+            @RequestBody OrderCancelRequest request);
 
 }

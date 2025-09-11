@@ -4,6 +4,7 @@ import io.goorm.team02.core.orders.controller.dto.OrderRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderResponse;
 import io.goorm.team02.core.orders.controller.dto.OrderRejectRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderAcceptRequest;
+import io.goorm.team02.core.orders.controller.dto.OrderCancelRequest;
 import io.goorm.team02.core.orders.service.OrderService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -77,6 +78,14 @@ public class OrderController implements OrderControllerDocs {
 	@PutMapping("/{orderId}/deliver")
 	public OrderResponse deliverOrder(@PathVariable Long orderId) {
 		return orderService.deliverOrder(orderId);
+	}
+
+	/**
+	 * 주문 취소
+	 */
+	@PutMapping("/{orderId}/cancel")
+	public OrderResponse cancelOrder(@PathVariable Long orderId, @RequestBody OrderCancelRequest request) {
+		return orderService.cancelOrder(orderId, request);
 	}
 
 }
