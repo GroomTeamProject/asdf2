@@ -1,5 +1,6 @@
 package io.goorm.team02.core.menus.service;
 
+import io.goorm.team02.core.auth.security.SecurityUtils;
 import io.goorm.team02.core.menus.controller.dto.categorycreate.CategoryMoveRequest;
 import io.goorm.team02.core.menus.controller.dto.categorycreate.CategoryOrderUpdateRequest;
 import io.goorm.team02.core.menus.controller.dto.categorycreate.MenuCategoryCreateRequest;
@@ -47,14 +48,14 @@ public class MenuService {
     private final StoreRepository storeRepository;
     //private final UserRepository userRepository;
 
-    /**
-     * 현재 로그인한 사용자 ID 조회
-     */
-    private Long getCurrentUserId() {
-        // TODO: Spring Security Context에서 현재 사용자 ID 조회
-        // 임시로 1L 반환
-        return 1L;
-    }
+//    /**
+//     * 현재 로그인한 사용자 ID 조회
+//     */
+//    private Long getCurrentUserId() {
+//
+//        // 임시로 1L 반환
+//        return 1L;
+//    }
     /**
      * 메뉴 카테고리 등록
      */
@@ -63,7 +64,7 @@ public class MenuService {
         log.info("=== 메뉴 카테고리 등록 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
 
         // 입력받은 값들 로그 출력
@@ -173,7 +174,7 @@ public class MenuService {
         log.info("=== 메뉴 등록 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
 
         // 입력받은 값들 로그 출력
@@ -407,7 +408,7 @@ public class MenuService {
      * 내 가게 정보 조회
      */
     private Store getMyStore() {
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.debug("내 가게 정보 조회 - 사용자 ID: {}", currentUserId);
 
         return storeRepository.findByOwnerIdAndIsActiveTrue(currentUserId)
@@ -424,7 +425,7 @@ public class MenuService {
     public List<MenuCategory> getMenuCategories() {
         log.info("=== 메뉴 카테고리 목록 조회 시작 ===");
 
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         Store store = getMyStore();
 
         log.info("메뉴 카테고리 전체 목록 조회 중... (비활성화 포함)");
@@ -453,7 +454,7 @@ public class MenuService {
         log.info("=== 메뉴 카테고리 수정 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("수정할 카테고리 ID: {}", categoryId);
 
@@ -630,7 +631,7 @@ public class MenuService {
         log.info("=== 메뉴 카테고리 삭제 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("삭제할 카테고리 ID: {}", categoryId);
 
@@ -758,7 +759,7 @@ public class MenuService {
     public void softDeleteCategory(Long categoryId) {
         log.info("=== 메뉴 카테고리 소프트 삭제 시작 ===");
 
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         Store store = getMyStore();
 
         MenuCategory category = menuCategoryRepository.findById(categoryId)
@@ -786,7 +787,7 @@ public class MenuService {
         log.info("=== 카테고리 순서 변경 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
 
         // 내 가게 조회
@@ -932,7 +933,7 @@ public class MenuService {
         log.info("=== 메뉴 목록 조회 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("카테고리 ID 필터: {}", categoryId);
 
@@ -995,7 +996,7 @@ public class MenuService {
         log.info("=== 메뉴 상세 조회 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("조회할 메뉴 ID: {}", menuId);
 
@@ -1072,7 +1073,7 @@ public class MenuService {
         log.info("=== 메뉴 수정 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("수정할 메뉴 ID: {}", menuId);
 
@@ -1291,7 +1292,7 @@ public class MenuService {
         log.info("=== 메뉴 삭제 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("삭제할 메뉴 ID: {}", menuId);
 
@@ -1397,7 +1398,7 @@ public class MenuService {
     public void softDeleteMenu(Long menuId) {
         log.info("=== 메뉴 소프트 삭제 시작 ===");
 
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         Store store = getMyStore();
 
         Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
@@ -1421,7 +1422,7 @@ public class MenuService {
         log.info("=== 메뉴 판매 상태 변경 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("상태 변경할 메뉴 ID: {}", menuId);
 
@@ -1621,7 +1622,7 @@ public class MenuService {
         log.info("=== 메뉴 순서 변경 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
 
         // 입력받은 값들 로그 출력
@@ -1841,7 +1842,7 @@ public class MenuService {
         log.info("=== 메뉴 이미지 업로드 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("이미지 업로드할 메뉴 ID: {}", menuId);
 
@@ -1904,7 +1905,7 @@ public class MenuService {
         log.info("=== 메뉴 이미지 삭제 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("이미지 삭제할 메뉴 ID: {}, 이미지 ID: {}", menuId, imageId);
 
@@ -2173,7 +2174,7 @@ public class MenuService {
         log.info("=== 메뉴 옵션 그룹 목록 조회 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("옵션 그룹을 조회할 메뉴 ID: {}", menuId);
 
@@ -2390,7 +2391,7 @@ public class MenuService {
         log.info("=== 메뉴 옵션 그룹 등록 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("옵션 그룹을 추가할 메뉴 ID: {}", menuId);
 
@@ -2613,7 +2614,7 @@ public class MenuService {
         log.info("=== 메뉴 옵션 그룹 수정 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("수정할 메뉴 ID: {}, 옵션 그룹 ID: {}", menuId, groupId);
 
@@ -2811,7 +2812,7 @@ public class MenuService {
         log.info("=== 메뉴 옵션 그룹 삭제 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("삭제할 메뉴 ID: {}, 옵션 그룹 ID: {}", menuId, groupId);
 
@@ -3003,7 +3004,7 @@ public class MenuService {
         log.info("=== 메뉴 옵션 아이템 목록 조회 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("옵션 아이템을 조회할 메뉴 ID: {}, 옵션 그룹 ID: {}", menuId, groupId);
 
@@ -3172,7 +3173,7 @@ public class MenuService {
         log.info("=== 메뉴 옵션 아이템 등록 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("옵션 아이템을 추가할 메뉴 ID: {}, 옵션 그룹 ID: {}", menuId, groupId);
 
@@ -3345,7 +3346,7 @@ public class MenuService {
         log.info("=== 메뉴 옵션 아이템 수정 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("수정할 메뉴 ID: {}, 옵션 그룹 ID: {}, 옵션 아이템 ID: {}", menuId, groupId, optionId);
 
@@ -3557,7 +3558,7 @@ public class MenuService {
         log.info("=== 메뉴 옵션 아이템 삭제 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("삭제할 메뉴 ID: {}, 옵션 그룹 ID: {}, 옵션 아이템 ID: {}", menuId, groupId, optionId);
 
@@ -3690,7 +3691,7 @@ public class MenuService {
     public void softDeleteOption(Long menuId, Long groupId, Long optionId) {
         log.info("=== 메뉴 옵션 아이템 소프트 삭제 시작 ===");
 
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         Store store = getMyStore();
 
         // 메뉴 권한 확인
@@ -3804,7 +3805,7 @@ public class MenuService {
         log.info("=== 메뉴 옵션 아이템 상태 변경 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("상태를 변경할 메뉴 ID: {}, 옵션 그룹 ID: {}, 옵션 아이템 ID: {}", menuId, groupId, optionId);
 
