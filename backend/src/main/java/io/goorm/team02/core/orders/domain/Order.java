@@ -84,6 +84,9 @@ public class Order extends BaseEntity {
 	@Column(name = "reject_reason", length = 500)
 	private String rejectReason;
 
+	@Column(name = "cancel_reason", length = 500)
+	private String cancelReason;
+
 	@Column(name = "min_cooking_time")
 	private Integer minCookingTime;
 
