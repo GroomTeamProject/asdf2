@@ -1,40 +1,30 @@
 package io.goorm.team02.core.common.exception;
 
+import io.goorm.team02.core.common.exception.dto.ErrorResponse;
 import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @Hidden
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // RuntimeException 처리
+    // 그 외 런타임 예외 처리
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", LocalDateTime.now());
-        response.put("status", HttpStatus.BAD_REQUEST.value()); // 400
-        response.put("error", "Bad Request");
-        response.put("message", ex.getMessage());
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex) {
+        return createErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
-    // 그 외 예외 처리
+    // 그 외 예외처리가 되지 않은 모든 예외 처리
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleException(Exception ex) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", LocalDateTime.now());
-        response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value()); // 500
-        response.put("error", "Internal Server Error");
-        response.put("message", ex.getMessage());
+    public ResponseEntity<ErrorResponse> handleException(Exception ex) {
+        return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+    }
 
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    private ResponseEntity<ErrorResponse> createErrorResponse(HttpStatus status, String message) {
+        ErrorResponse response = ErrorResponse.of(status, message);
+        return new ResponseEntity<>(response, status);
     }
 }
