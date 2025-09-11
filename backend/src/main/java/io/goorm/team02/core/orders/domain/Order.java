@@ -112,7 +112,12 @@ public class Order extends BaseEntity {
 	public void calculateTotalAmount() {
 		BigDecimal menuTotal = calculateMenuTotalAmount();
 		this.menuTotalAmount = menuTotal;
-		this.totalAmount = menuTotal.add(this.deliveryFee).subtract(this.discountAmount);
+		
+		// null 값 처리
+		BigDecimal deliveryFee = this.deliveryFee != null ? this.deliveryFee : BigDecimal.ZERO;
+		BigDecimal discountAmount = this.discountAmount != null ? this.discountAmount : BigDecimal.ZERO;
+		
+		this.totalAmount = menuTotal.add(deliveryFee).subtract(discountAmount);
 	}
 	
 	/**
@@ -125,6 +130,7 @@ public class Order extends BaseEntity {
 		
 		return orderItems.stream()
 			.map(OrderItem::getTotalPrice)
+			.filter(price -> price != null) // null 값 필터링
 			.reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 	

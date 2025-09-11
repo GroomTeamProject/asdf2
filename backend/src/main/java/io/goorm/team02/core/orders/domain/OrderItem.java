@@ -55,8 +55,16 @@ public class OrderItem{
 	 * 주문 아이템 총액 계산 (메뉴 가격 × 수량 + 옵션 추가 가격)
 	 */
 	public void calculateTotalPrice() {
-		BigDecimal basePrice = this.menuPrice.multiply(BigDecimal.valueOf(this.quantity));
+		BigDecimal menuPrice = this.menuPrice != null ? this.menuPrice : BigDecimal.ZERO;
+		Integer quantity = this.quantity != null ? this.quantity : 0;
+		
+		BigDecimal basePrice = menuPrice.multiply(BigDecimal.valueOf(quantity));
 		BigDecimal optionPrice = calculateOptionPrice();
+		
+		// null 체크 추가
+		if (basePrice == null) basePrice = BigDecimal.ZERO;
+		if (optionPrice == null) optionPrice = BigDecimal.ZERO;
+		
 		this.totalPrice = basePrice.add(optionPrice);
 	}
 	
@@ -73,7 +81,8 @@ public class OrderItem{
 			.map(OrderItemOption::getAdditionalPrice)
 			.reduce(BigDecimal.ZERO, BigDecimal::add);
 		
-		return totalOptionPrice.multiply(BigDecimal.valueOf(this.quantity));
+		Integer quantity = this.quantity != null ? this.quantity : 0;
+		return totalOptionPrice.multiply(BigDecimal.valueOf(quantity));
 	}
 	
 	/**

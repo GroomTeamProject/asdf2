@@ -34,5 +34,12 @@ public class OrderItemOption{
 
 	@Column(precision = 10, scale = 2)
 	private BigDecimal additionalPrice = BigDecimal.ZERO;
+	
+	/**
+	 * null 값 안전 처리를 위한 setter
+	 */
+	public void setAdditionalPrice(BigDecimal additionalPrice) {
+		this.additionalPrice = additionalPrice != null ? additionalPrice : BigDecimal.ZERO;
+	}
 
 }

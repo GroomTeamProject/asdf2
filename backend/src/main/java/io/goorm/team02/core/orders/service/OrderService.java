@@ -53,17 +53,22 @@ public class OrderService {
         List<OrderItem> orderItems = createOrderItems(order, orderRequest.orderItems());
         order.setOrderItems(orderItems);
 
-        // 4. 배달비 및 할인 설정
+        // 4. 배달비 설정
         order.setDeliveryFee(store.getDeliveryFee() != null ? store.getDeliveryFee() : BigDecimal.ZERO);
+        
+        // 5. 도메인에서 메뉴 총액 계산
+        order.calculateTotalAmount();
+        
+        // 6. 할인 금액 계산 (메뉴 총액이 계산된 후)
         order.setDiscountAmount(calculateDiscount(user, order.getMenuTotalAmount()));
-
-        // 5. 도메인에서 총액 계산
+        
+        // 7. 최종 총액 계산
         order.calculateTotalAmount();
 
-        // 6. 주문 검증
+        // 8. 주문 검증
         order.validate();
 
-        // 7. 저장
+        // 9. 저장
         Order savedOrder = orderRepository.save(order);
         return OrderResponse.from(savedOrder);
     }
@@ -99,11 +104,21 @@ public class OrderService {
      */
     private List<OrderItemOption> createOrderItemOptions(OrderItem orderItem,
             List<OrderRequest.OrderItemOptionRequest> optionRequests) {
+        // 옵션이 없으면 빈 리스트 반환
+        if (optionRequests == null || optionRequests.isEmpty()) {
+            return new ArrayList<>();
+        }
+
         List<OrderItemOption> options = new ArrayList<>();
 
         for (OrderRequest.OrderItemOptionRequest optionRequest : optionRequests) {
+            // 필수 필드가 null이면 해당 옵션을 건너뛰기
+            if (optionRequest.optionName() == null || optionRequest.optionItemName() == null) {
+                continue;
+            }
+
             OrderItemOption option = new OrderItemOption();
-            option.setOrderItem(orderItem); // 🔥 이 부분이 누락되었습니다!
+            option.setOrderItem(orderItem);
             option.setOptionName(optionRequest.optionName());
             option.setOptionItemName(optionRequest.optionItemName());
             option.setAdditionalPrice(optionRequest.additionalPrice());
