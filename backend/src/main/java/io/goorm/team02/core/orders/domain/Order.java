@@ -80,12 +80,13 @@ public class Order extends BaseEntity {
 	private LocalDateTime cookingCompletedAt;
 	private LocalDateTime deliveredAt;
 	private LocalDateTime cancelledAt;
-
-	@Column(name = "reject_reason", length = 500)
-	private String rejectReason;
-
+	private LocalDateTime rejectedAt;
+	
 	@Column(name = "cancel_reason", length = 500)
 	private String cancelReason;
+	
+	@Column(name = "reject_reason", length = 500)
+	private String rejectReason;
 
 	@Column(name = "min_cooking_time")
 	private Integer minCookingTime;
@@ -112,14 +113,14 @@ public class Order extends BaseEntity {
 	public void calculateTotalAmount() {
 		BigDecimal menuTotal = calculateMenuTotalAmount();
 		this.menuTotalAmount = menuTotal;
-		
+
 		// null 값 처리
 		BigDecimal deliveryFee = this.deliveryFee != null ? this.deliveryFee : BigDecimal.ZERO;
 		BigDecimal discountAmount = this.discountAmount != null ? this.discountAmount : BigDecimal.ZERO;
-		
+
 		this.totalAmount = menuTotal.add(deliveryFee).subtract(discountAmount);
 	}
-	
+
 	/**
 	 * 메뉴 총액 계산
 	 */
@@ -127,21 +128,21 @@ public class Order extends BaseEntity {
 		if (orderItems == null || orderItems.isEmpty()) {
 			return BigDecimal.ZERO;
 		}
-		
+
 		return orderItems.stream()
-			.map(OrderItem::getTotalPrice)
-			.filter(price -> price != null) // null 값 필터링
-			.reduce(BigDecimal.ZERO, BigDecimal::add);
+				.map(OrderItem::getTotalPrice)
+				.filter(price -> price != null) // null 값 필터링
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
-	
+
 	/**
 	 * 주문 번호 생성
 	 */
 	public void generateOrderNumber() {
-		this.orderNumber = "ORD-" + System.currentTimeMillis() + "-" + 
-			java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+		this.orderNumber = "ORD-" + System.currentTimeMillis() + "-" +
+				java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 	}
-	
+
 	/**
 	 * 주문 상태 변경
 	 */
@@ -149,21 +150,94 @@ public class Order extends BaseEntity {
 		this.status = newStatus;
 		updateStatusTimestamp(newStatus);
 	}
-	
+
+	/**
+	 * 주문 수락 (예상 조리 시간 포함)
+	 */
+	public void accept(Integer minCookingTime, Integer maxCookingTime) {
+		if (this.status != OrderStatus.PENDING) {
+			throw new IllegalStateException("수락할 수 없는 주문 상태입니다. 현재 상태: " + this.status);
+		}
+		
+		this.minCookingTime = minCookingTime;
+		this.maxCookingTime = maxCookingTime;
+		changeStatus(OrderStatus.ACCEPTED);
+	}
+
+	/**
+	 * 조리 시작
+	 */
+	public void startCooking() {
+		if (this.status != OrderStatus.ACCEPTED) {
+			throw new IllegalStateException("조리를 시작할 수 없는 주문 상태입니다. 현재 상태: " + this.status);
+		}
+		
+		changeStatus(OrderStatus.COOKING);
+	}
+
+	/**
+	 * 조리 완료
+	 */
+	public void completeCooking() {
+		if (this.status != OrderStatus.COOKING) {
+			throw new IllegalStateException("조리 완료할 수 없는 주문 상태입니다. 현재 상태: " + this.status);
+		}
+		
+		changeStatus(OrderStatus.READY);
+	}
+
+	/**
+	 * 배달 완료
+	 */
+	public void deliver() {
+		if (this.status != OrderStatus.READY && this.status != OrderStatus.PICKED_UP) {
+			throw new IllegalStateException("배달 완료할 수 없는 주문 상태입니다. 현재 상태: " + this.status);
+		}
+		
+		changeStatus(OrderStatus.DELIVERED);
+	}
+
+	/**
+	 * 주문 취소
+	 */
+	public void cancel(String reason) {
+		if (this.status != OrderStatus.PENDING && this.status != OrderStatus.ACCEPTED) {
+			throw new IllegalStateException("취소할 수 없는 주문 상태입니다. 현재 상태: " + this.status);
+		}
+		
+		this.cancelReason = reason;
+		changeStatus(OrderStatus.CANCELLED);
+	}
+
+	/**
+	 * 주문 거절
+	 */
+	public void reject(String reason) {
+		if (this.status != OrderStatus.PENDING) {
+			throw new IllegalStateException("거절할 수 없는 주문 상태입니다. 현재 상태: " + this.status);
+		}
+		
+		this.rejectReason = reason;
+		changeStatus(OrderStatus.REJECTED);
+	}
+
 	/**
 	 * 상태별 타임스탬프 업데이트
 	 */
 	private void updateStatusTimestamp(OrderStatus status) {
 		LocalDateTime now = LocalDateTime.now();
+
+		// TODO: PICKED_UP 추가
 		switch (status) {
 			case ACCEPTED -> this.acceptedAt = now;
 			case COOKING -> this.cookingStartedAt = now;
 			case READY -> this.cookingCompletedAt = now;
 			case DELIVERED -> this.deliveredAt = now;
 			case CANCELLED -> this.cancelledAt = now;
+			case REJECTED -> this.rejectedAt = now;
 		}
 	}
-	
+
 	/**
 	 * 주문 검증
 	 */
@@ -180,6 +254,35 @@ public class Order extends BaseEntity {
 		if (totalAmount == null || totalAmount.compareTo(BigDecimal.ZERO) <= 0) {
 			throw new IllegalStateException("주문 금액이 올바르지 않습니다");
 		}
+	}
+
+	/**
+	 * 주문 생성 팩토리 메서드
+	 */
+	public static Order create(User user, Store store, String deliveryAddress, 
+			String deliveryDetailAddress, String phone, String orderMemo, 
+			List<OrderItem> orderItems, BigDecimal deliveryFee, BigDecimal discountAmount) {
+		
+		Order order = new Order();
+		order.setUser(user);
+		order.setStore(store);
+		order.setDeliveryAddress(deliveryAddress);
+		order.setDeliveryDetailAddress(deliveryDetailAddress);
+		order.setPhone(phone);
+		order.setOrderMemo(orderMemo);
+		order.setOrderItems(orderItems);
+		order.setDeliveryFee(deliveryFee != null ? deliveryFee : BigDecimal.ZERO);
+		order.setDiscountAmount(discountAmount != null ? discountAmount : BigDecimal.ZERO);
+		
+		// 주문 번호 생성
+		order.generateOrderNumber();
+		order.setOrderedAt(LocalDateTime.now());
+		order.setStatus(OrderStatus.PENDING);
+		
+		// 총액 계산
+		order.calculateTotalAmount();
+		
+		return order;
 	}
 
 }

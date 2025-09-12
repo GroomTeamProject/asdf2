@@ -42,55 +42,54 @@ public class OrderService {
         Store store = storeRepository.findById(orderRequest.storeId())
                 .orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다: " + orderRequest.storeId()));
 
-        // 2. Order 엔티티 생성
-        Order order = orderRequest.toEntity();
-        order.setUser(user);
-        order.setStore(store);
-        order.generateOrderNumber(); // 도메인에서 주문 번호 생성
-        order.setOrderedAt(LocalDateTime.now());
+        // 2. 주문 아이템 생성
+        List<OrderItem> orderItems = createOrderItems(orderRequest.orderItems());
 
-        // 3. 주문 아이템 생성 (도메인에서 처리)
-        List<OrderItem> orderItems = createOrderItems(order, orderRequest.orderItems());
-        order.setOrderItems(orderItems);
+        // 3. 할인 금액 계산
+        BigDecimal discountAmount = calculateDiscount(user, calculateMenuTotalAmount(orderItems));
 
-        // 4. 배달비 설정
-        order.setDeliveryFee(store.getDeliveryFee() != null ? store.getDeliveryFee() : BigDecimal.ZERO);
-        
-        // 5. 도메인에서 메뉴 총액 계산
-        order.calculateTotalAmount();
-        
-        // 6. 할인 금액 계산 (메뉴 총액이 계산된 후)
-        order.setDiscountAmount(calculateDiscount(user, order.getMenuTotalAmount()));
-        
-        // 7. 최종 총액 계산
-        order.calculateTotalAmount();
+        // 4. 도메인에서 주문 생성
+        Order order = Order.create(
+                user,
+                store,
+                orderRequest.deliveryAddress(),
+                orderRequest.deliveryDetailAddress(),
+                orderRequest.phone(),
+                orderRequest.orderMemo(),
+                orderItems,
+                store.getDeliveryFee(),
+                discountAmount);
 
-        // 8. 주문 검증
+        // 5. 주문 검증
         order.validate();
 
-        // 9. 저장
+        // 6. 저장
         Order savedOrder = orderRepository.save(order);
         return OrderResponse.from(savedOrder);
     }
 
     /**
-     * 주문 아이템들 생성 (도메인 팩토리 메서드 사용)
+     * 주문 아이템들 생성
      */
-    private List<OrderItem> createOrderItems(Order order, List<OrderRequest.OrderItemRequest> itemRequests) {
+    private List<OrderItem> createOrderItems(List<OrderRequest.OrderItemRequest> itemRequests) {
         List<OrderItem> orderItems = new ArrayList<>();
 
         for (OrderRequest.OrderItemRequest itemRequest : itemRequests) {
             Menu menu = menuRepository.findById(itemRequest.menuId())
                     .orElseThrow(() -> new IllegalArgumentException("메뉴를 찾을 수 없습니다: " + itemRequest.menuId()));
 
-            // 먼저 OrderItem 생성
-            OrderItem orderItem = OrderItem.create(order, menu, itemRequest.quantity(), new ArrayList<>());
+            // OrderItem 생성 (임시로 null order 설정)
+            OrderItem orderItem = new OrderItem();
+            orderItem.setMenu(menu);
+            orderItem.setMenuName(menu.getName());
+            orderItem.setMenuPrice(menu.getPrice());
+            orderItem.setQuantity(itemRequest.quantity());
 
-            // 옵션 생성 (OrderItem이 먼저 생성되어야 함)
+            // 옵션 생성
             List<OrderItemOption> options = createOrderItemOptions(orderItem, itemRequest.options());
             orderItem.setOptions(options);
 
-            // 총액 다시 계산
+            // 총액 계산
             orderItem.calculateTotalPrice();
 
             orderItems.add(orderItem);
@@ -129,6 +128,20 @@ public class OrderService {
     }
 
     /**
+     * 메뉴 총액 계산
+     */
+    private BigDecimal calculateMenuTotalAmount(List<OrderItem> orderItems) {
+        if (orderItems == null || orderItems.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        return orderItems.stream()
+                .map(OrderItem::getTotalPrice)
+                .filter(price -> price != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
      * 할인 금액 계산 (복잡한 비즈니스 로직)
      */
     private BigDecimal calculateDiscount(User user, BigDecimal amount) {
@@ -145,17 +158,8 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
 
-        // 주문 상태 검증
-        if (order.getStatus() != OrderStatus.PENDING) {
-            throw new IllegalStateException("수락할 수 없는 주문 상태입니다. 현재 상태: " + order.getStatus());
-        }
-
-        // 도메인에서 상태 변경
-        order.changeStatus(OrderStatus.ACCEPTED);
-        
-        // 예상 조리 시간 설정
-        order.setMinCookingTime(request.minCookingTime());
-        order.setMaxCookingTime(request.maxCookingTime());
+        // 도메인에서 주문 수락 처리
+        order.accept(request.minCookingTime(), request.maxCookingTime());
 
         Order savedOrder = orderRepository.save(order);
         return OrderResponse.from(savedOrder);
@@ -169,14 +173,8 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
 
-        // 주문 상태 검증
-        if (order.getStatus() != OrderStatus.PENDING) {
-            throw new IllegalStateException("거절할 수 없는 주문 상태입니다. 현재 상태: " + order.getStatus());
-        }
-
-        // 거절 처리
-        order.setRejectReason(request.reason());
-        order.changeStatus(OrderStatus.CANCELLED);
+        // 도메인에서 주문 거절 처리
+        order.reject(request.reason());
 
         Order savedOrder = orderRepository.save(order);
         return OrderResponse.from(savedOrder);
@@ -190,13 +188,8 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
 
-        // 주문 상태 검증
-        if (order.getStatus() != OrderStatus.ACCEPTED) {
-            throw new IllegalStateException("조리를 시작할 수 없는 주문 상태입니다. 현재 상태: " + order.getStatus());
-        }
-
-        // 도메인에서 상태 변경
-        order.changeStatus(OrderStatus.COOKING);
+        // 도메인에서 조리 시작 처리
+        order.startCooking();
 
         Order savedOrder = orderRepository.save(order);
         return OrderResponse.from(savedOrder);
@@ -210,13 +203,8 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
 
-        // 주문 상태 검증
-        if (order.getStatus() != OrderStatus.COOKING) {
-            throw new IllegalStateException("조리 완료할 수 없는 주문 상태입니다. 현재 상태: " + order.getStatus());
-        }
-
-        // 도메인에서 상태 변경
-        order.changeStatus(OrderStatus.READY);
+        // 도메인에서 조리 완료 처리
+        order.completeCooking();
 
         Order savedOrder = orderRepository.save(order);
         return OrderResponse.from(savedOrder);
@@ -230,13 +218,8 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
 
-        // 주문 상태 검증 (READY 또는 PICKED_UP 상태에서 배달 완료 가능)
-        if (order.getStatus() != OrderStatus.READY && order.getStatus() != OrderStatus.PICKED_UP) {
-            throw new IllegalStateException("배달 완료할 수 없는 주문 상태입니다. 현재 상태: " + order.getStatus());
-        }
-
-        // 도메인에서 상태 변경
-        order.changeStatus(OrderStatus.DELIVERED);
+        // 도메인에서 배달 완료 처리
+        order.deliver();
 
         Order savedOrder = orderRepository.save(order);
         return OrderResponse.from(savedOrder);
@@ -266,28 +249,22 @@ public class OrderService {
             orderItem.getOptions().size(); // 지연 로딩 트리거
         });
 
-		return OrderResponse.from(order);
-	}
+        return OrderResponse.from(order);
+    }
 
-	/**
-	 * 주문 취소
-	 */
-	@Transactional
-	public OrderResponse cancelOrder(Long orderId, OrderCancelRequest request) {
-		Order order = orderRepository.findById(orderId)
-				.orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
+    /**
+     * 주문 취소
+     */
+    @Transactional
+    public OrderResponse cancelOrder(Long orderId, OrderCancelRequest request) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
 
-		// 주문 상태 검증 (취소 가능한 상태: PENDING, ACCEPTED)
-		if (order.getStatus() != OrderStatus.PENDING && order.getStatus() != OrderStatus.ACCEPTED) {
-			throw new IllegalStateException("취소할 수 없는 주문 상태입니다. 현재 상태: " + order.getStatus());
-		}
+        // 도메인에서 주문 취소 처리
+        order.cancel(request.cancelReason());
 
-		// 취소 처리
-		order.setCancelReason(request.cancelReason());
-		order.changeStatus(OrderStatus.CANCELLED);
-
-		Order savedOrder = orderRepository.save(order);
-		return OrderResponse.from(savedOrder);
-	}
+        Order savedOrder = orderRepository.save(order);
+        return OrderResponse.from(savedOrder);
+    }
 
 }
