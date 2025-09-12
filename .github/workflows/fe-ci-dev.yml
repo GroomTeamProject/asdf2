@@ -9,6 +9,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: |
+      contains(github.event.pull_request.changed_files, 'frontend/') ||
+      contains(github.event.pull_request.changed_files, '.github/workflows/')
 
     steps:
       - name: Checkout repository
