@@ -1,38 +1,68 @@
 package io.goorm.team02.core.orders.dto;
 
-import io.goorm.team02.core.orders.domain.Order;
-import io.goorm.team02.core.orders.domain.OrderItem;
-import lombok.Getter;
-import lombok.Setter;
-
+import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
-@Getter
-@Setter
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class OrderRequest {
-    private String deliveryAddress;
-    private String detailAddress;
-    private String phone;
-    private String orderMemo;
+
+    private String customerName;
+    private String phoneNumber;
+    private String address;
+    private String requestMessage;
+    private BigDecimal totalAmount;
     private List<OrderItemRequest> items;
 
-    // Order 엔티티로 변환
-    public Order toOrder() {
-        Order order = new Order();
-        order.setDeliveryAddress(deliveryAddress);
-        order.setDetailAddress(detailAddress);
-        order.setPhone(phone);
-        order.setOrderMemo(orderMemo);
+    public OrderRequest() {
+    }
 
-        if (items != null) {
-            List<OrderItem> orderItems = items.stream()
-                    .map(OrderItemRequest::toOrderItem)
-                    .collect(Collectors.toList());
-            order.setItems(orderItems);
-            orderItems.forEach(i -> i.setOrder(order)); // 양방향 연관 설정
-        }
+    // Getter / Setter
+    public String getCustomerName() {
+        return customerName;
+    }
 
-        return order;
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getRequestMessage() {
+        return requestMessage;
+    }
+
+    public void setRequestMessage(String requestMessage) {
+        this.requestMessage = requestMessage;
+    }
+
+    public BigDecimal getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    public List<OrderItemRequest> getItems() {
+        return items;
+    }
+
+    public void setItems(List<OrderItemRequest> items) {
+        this.items = items;
     }
 }

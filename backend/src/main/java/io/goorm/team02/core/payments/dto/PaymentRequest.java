@@ -1,45 +1,111 @@
-// src/main/java/io/goorm/team02/core/payments/dto/PaymentRequest.java
 package io.goorm.team02.core.payments.dto;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public class PaymentRequest {
-    private String orderId;
-    private String orderName;
-    private int amount;
-
-    // 생성자
-    public PaymentRequest() {
-    }
-
-    public PaymentRequest(String orderId, String orderName, int amount) {
-        this.orderId = orderId;
-        this.orderName = orderName;
-        this.amount = amount;
-    }
+    private String paymentKey;
+    private String pgProvider;
+    private String pgTid;
+    private BigDecimal amount;
+    private Long orderId;
+    private List<Item> items;
 
     // Getter / Setter
-    public String getOrderId() {
-        return orderId;
+    public String getPaymentKey() {
+        return paymentKey;
     }
 
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
+    public void setPaymentKey(String paymentKey) {
+        this.paymentKey = paymentKey;
     }
 
-    public String getOrderName() {
-        return orderName;
+    public String getPgProvider() {
+        return pgProvider;
     }
 
-    public void setOrderName(String orderName) {
-        this.orderName = orderName;
+    public void setPgProvider(String pgProvider) {
+        this.pgProvider = pgProvider;
     }
 
-    public int getAmount() {
+    public String getPgTid() {
+        return pgTid;
+    }
+
+    public void setPgTid(String pgTid) {
+        this.pgTid = pgTid;
+    }
+
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(int amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
+    }
+
+    public Long getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(Long orderId) {
+        this.orderId = orderId;
+    }
+
+    public List<Item> getItems() {
+        return items;
+    }
+
+    public void setItems(List<Item> items) {
+        this.items = items;
+    }
+
+    public static class Item {
+        private Long productId;
+        private String name;
+        private BigDecimal price;
+        private int quantity;
+        private Long menuId;
+
+        // Getter / Setter
+        public Long getProductId() {
+            return productId;
+        }
+
+        public void setProductId(Long productId) {
+            this.productId = productId;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public BigDecimal getPrice() {
+            return price;
+        }
+
+        public void setPrice(BigDecimal price) {
+            this.price = price;
+        }
+
+        public int getQuantity() {
+            return quantity;
+        }
+
+        public void setQuantity(int quantity) {
+            this.quantity = quantity;
+        }
+
+        public Long getMenuId() {
+            return menuId;
+        }
+
+        public void setMenuId(Long menuId) {
+            this.menuId = menuId;
+        }
     }
 }

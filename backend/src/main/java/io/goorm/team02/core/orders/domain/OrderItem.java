@@ -23,6 +23,7 @@ import java.util.Map;
 @Table(name = "order_items")
 @Data
 public class OrderItem {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

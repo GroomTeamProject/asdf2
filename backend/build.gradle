@@ -60,12 +60,10 @@ dependencies {
 	implementation 'software.amazon.awssdk:auth:2.20.56'
 }
 
-// JUnit 5 사용
 tasks.named('test') {
     useJUnitPlatform()
 }
 
-// Flyway 설정 (MariaDB)
 flyway {
     url = 'jdbc:mariadb://localhost:3306/quickdeliver'
     user = 'root'
