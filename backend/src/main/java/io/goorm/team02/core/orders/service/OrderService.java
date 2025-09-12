@@ -2,9 +2,6 @@ package io.goorm.team02.core.orders.service;
 
 import io.goorm.team02.core.orders.controller.dto.OrderRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderResponse;
-import io.goorm.team02.core.orders.controller.dto.OrderRejectRequest;
-import io.goorm.team02.core.orders.controller.dto.OrderAcceptRequest;
-import io.goorm.team02.core.orders.controller.dto.OrderCancelRequest;
 import io.goorm.team02.core.orders.domain.Order;
 import io.goorm.team02.core.orders.repository.OrderRepository;
 import io.goorm.team02.core.users.domain.User;
@@ -29,6 +26,24 @@ public class OrderService {
     private final StoreRepository storeRepository;
     private final MenuRepository menuRepository;
 
+
+    // ================================
+    // API Methods
+    // ================================
+    public Order getOrderById(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
+    }
+
+    public List<Order> getAllOrdersByStoreId(Long storeId) {
+        return orderRepository.findAllByStoreIdWithDetails(storeId);
+
+    }
+
+
+    // ================================
+    // 비즈니스 로직
+    // ================================
     @Transactional
     public OrderResponse create(OrderRequest orderRequest) {
         // 1. 엔티티 참조 조회 및 검증 (서비스의 역할)
@@ -45,8 +60,8 @@ public class OrderService {
         Order order = Order.create(user, store, orderRequest, menuMap);
 
         // 4. 저장
-        Order savedOrder = orderRepository.save(order);
-        return OrderResponse.from(savedOrder);
+        Order dbOrder = orderRepository.save(order);
+        return OrderResponse.from(dbOrder);
     }
 
     /**
@@ -56,91 +71,21 @@ public class OrderService {
         List<Long> menuIds = itemRequests.stream()
                 .map(OrderRequest.OrderItemRequest::menuId)
                 .toList();
-        
+
         List<Menu> menus = menuRepository.findAllById(menuIds);
         return menus.stream()
                 .collect(Collectors.toMap(Menu::getId, menu -> menu));
     }
 
     /**
-     * 가게에서 주문 수락 (예상 조리 시간 포함)
+     * 가게의 모든 주문 조회
      */
-    @Transactional
-    public OrderResponse acceptOrder(Long orderId, OrderAcceptRequest request) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
-
-        // 도메인에서 주문 수락 처리
-        order.accept(request.minCookingTime(), request.maxCookingTime());
-
-        Order savedOrder = orderRepository.save(order);
-        return OrderResponse.from(savedOrder);
-    }
-
-    /**
-     * 가게에서 주문 거절
-     */
-    @Transactional
-    public OrderResponse rejectOrder(Long orderId, OrderRejectRequest request) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
-
-        // 도메인에서 주문 거절 처리
-        order.reject(request.reason());
-
-        Order savedOrder = orderRepository.save(order);
-        return OrderResponse.from(savedOrder);
-    }
-
-    /**
-     * 가게에서 조리 시작
-     */
-    @Transactional
-    public OrderResponse startCooking(Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
-
-        // 도메인에서 조리 시작 처리
-        order.startCooking();
-
-        Order savedOrder = orderRepository.save(order);
-        return OrderResponse.from(savedOrder);
-    }
-
-    /**
-     * 가게에서 조리 완료
-     */
-    @Transactional
-    public OrderResponse completeCooking(Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
-
-        // 도메인에서 조리 완료 처리
-        order.completeCooking();
-
-        Order savedOrder = orderRepository.save(order);
-        return OrderResponse.from(savedOrder);
-    }
-
-    /**
-     * 배달 완료
-     */
-    @Transactional
-    public OrderResponse deliverOrder(Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
-
-        // 도메인에서 배달 완료 처리
-        order.deliver();
-
-        Order savedOrder = orderRepository.save(order);
-        return OrderResponse.from(savedOrder);
-    }
-
+    // TODO: 모든 주문 조회에서는 상세 정보를 제공할 필요 없음
     public List<OrderResponse> getAll(Long storeId) {
-        List<Order> orders = orderRepository.findAllByStoreIdWithDetails(storeId);
+        List<Order> orders = getAllOrdersByStoreId(storeId);
 
         // JPA 지연 로딩으로 orderItems와 options를 가져옴
+        // TODO: 리팩터링 필요
         orders.forEach(order -> {
             order.getOrderItems().forEach(orderItem -> {
                 orderItem.getOptions().size(); // 지연 로딩 트리거
@@ -152,31 +97,16 @@ public class OrderService {
                 .toList();
     }
 
+    /**
+     * 주문 상세 조회
+     */
     public OrderResponse getOrderDetail(Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
+        Order order = getOrderById(orderId);
 
-        // JPA 지연 로딩으로 orderItems와 options를 가져옴
         order.getOrderItems().forEach(orderItem -> {
             orderItem.getOptions().size(); // 지연 로딩 트리거
         });
 
         return OrderResponse.from(order);
     }
-
-    /**
-     * 주문 취소
-     */
-    @Transactional
-    public OrderResponse cancelOrder(Long orderId, OrderCancelRequest request) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
-
-        // 도메인에서 주문 취소 처리
-        order.cancel(request.cancelReason());
-
-        Order savedOrder = orderRepository.save(order);
-        return OrderResponse.from(savedOrder);
-    }
-
 }

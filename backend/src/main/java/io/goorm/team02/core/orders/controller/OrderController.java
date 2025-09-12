@@ -5,6 +5,7 @@ import io.goorm.team02.core.orders.controller.dto.OrderResponse;
 import io.goorm.team02.core.orders.controller.dto.OrderRejectRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderAcceptRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderCancelRequest;
+import io.goorm.team02.core.orders.service.OrderStatusService;
 import io.goorm.team02.core.orders.service.OrderService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderController implements OrderControllerDocs {
 
 	private final OrderService orderService;
+	private final OrderStatusService orderStatusService;
 
 	@PostMapping
 	public OrderResponse create(@RequestBody OrderRequest order) {
@@ -44,7 +46,7 @@ public class OrderController implements OrderControllerDocs {
 	 */
 	@PutMapping("/{orderId}/accept")
 	public OrderResponse acceptOrder(@PathVariable Long orderId, @RequestBody OrderAcceptRequest request) {
-		return orderService.acceptOrder(orderId, request);
+		return orderStatusService.acceptOrder(orderId, request);
 	}
 
 	/**
@@ -52,7 +54,7 @@ public class OrderController implements OrderControllerDocs {
 	 */
 	@PutMapping("/{orderId}/reject")
 	public OrderResponse rejectOrder(@PathVariable Long orderId, @RequestBody OrderRejectRequest request) {
-		return orderService.rejectOrder(orderId, request);
+		return orderStatusService.rejectOrder(orderId, request);
 	}
 
 	/**
@@ -60,7 +62,7 @@ public class OrderController implements OrderControllerDocs {
 	 */
 	@PutMapping("/{orderId}/start-cooking")
 	public OrderResponse startCooking(@PathVariable Long orderId) {
-		return orderService.startCooking(orderId);
+		return orderStatusService.startCooking(orderId);
 	}
 
 	/**
@@ -68,7 +70,7 @@ public class OrderController implements OrderControllerDocs {
 	 */
 	@PutMapping("/{orderId}/complete-cooking")
 	public OrderResponse completeCooking(@PathVariable Long orderId) {
-		return orderService.completeCooking(orderId);
+		return orderStatusService.completeCooking(orderId);
 	}
 
 	/**
@@ -76,7 +78,7 @@ public class OrderController implements OrderControllerDocs {
 	 */
 	@PutMapping("/{orderId}/deliver")
 	public OrderResponse deliverOrder(@PathVariable Long orderId) {
-		return orderService.deliverOrder(orderId);
+		return orderStatusService.deliverOrder(orderId);
 	}
 
 	/**
@@ -84,7 +86,7 @@ public class OrderController implements OrderControllerDocs {
 	 */
 	@PutMapping("/{orderId}/cancel")
 	public OrderResponse cancelOrder(@PathVariable Long orderId, @RequestBody OrderCancelRequest request) {
-		return orderService.cancelOrder(orderId, request);
+		return orderStatusService.cancelOrder(orderId, request);
 	}
 
 }
