@@ -9,21 +9,31 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+<<<<<<< HEAD
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+=======
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+>>>>>>> 03e5b07998df6503c7b54e6197e80a032eb4e3ae
 
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "user_addresses")
+<<<<<<< HEAD
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+=======
+@Data
+@EqualsAndHashCode(callSuper = true)
+>>>>>>> 03e5b07998df6503c7b54e6197e80a032eb4e3ae
 public class UserAddress extends BaseEntity {
 
 	@Id

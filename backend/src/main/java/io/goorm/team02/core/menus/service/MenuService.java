@@ -1,5 +1,6 @@
 package io.goorm.team02.core.menus.service;
 
+import io.goorm.team02.core.auth.security.SecurityUtils;
 import io.goorm.team02.core.menus.controller.dto.categorycreate.CategoryMoveRequest;
 import io.goorm.team02.core.menus.controller.dto.categorycreate.CategoryOrderUpdateRequest;
 import io.goorm.team02.core.menus.controller.dto.categorycreate.MenuCategoryCreateRequest;
@@ -47,14 +48,14 @@ public class MenuService {
     private final StoreRepository storeRepository;
     //private final UserRepository userRepository;
 
-    /**
-     * 현재 로그인한 사용자 ID 조회
-     */
-    private Long getCurrentUserId() {
-        // TODO: Spring Security Context에서 현재 사용자 ID 조회
-        // 임시로 1L 반환
-        return 1L;
-    }
+//    /**
+//     * 현재 로그인한 사용자 ID 조회
+//     */
+//    private Long getCurrentUserId() {
+//
+//        // 임시로 1L 반환
+//        return 1L;
+//    }
     /**
      * 메뉴 카테고리 등록
      */
@@ -63,7 +64,7 @@ public class MenuService {
         log.info("=== 메뉴 카테고리 등록 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
 
         // 입력받은 값들 로그 출력
@@ -173,7 +174,7 @@ public class MenuService {
         log.info("=== 메뉴 등록 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
 
         // 입력받은 값들 로그 출력
@@ -407,7 +408,7 @@ public class MenuService {
      * 내 가게 정보 조회
      */
     private Store getMyStore() {
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.debug("내 가게 정보 조회 - 사용자 ID: {}", currentUserId);
 
         return storeRepository.findByOwnerIdAndIsActiveTrue(currentUserId)
@@ -424,7 +425,7 @@ public class MenuService {
     public List<MenuCategory> getMenuCategories() {
         log.info("=== 메뉴 카테고리 목록 조회 시작 ===");
 
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         Store store = getMyStore();
 
         log.info("메뉴 카테고리 전체 목록 조회 중... (비활성화 포함)");
@@ -453,7 +454,7 @@ public class MenuService {
         log.info("=== 메뉴 카테고리 수정 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("수정할 카테고리 ID: {}", categoryId);
 
@@ -630,7 +631,7 @@ public class MenuService {
         log.info("=== 메뉴 카테고리 삭제 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("삭제할 카테고리 ID: {}", categoryId);
 
@@ -758,7 +759,7 @@ public class MenuService {
     public void softDeleteCategory(Long categoryId) {
         log.info("=== 메뉴 카테고리 소프트 삭제 시작 ===");
 
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         Store store = getMyStore();
 
         MenuCategory category = menuCategoryRepository.findById(categoryId)
@@ -786,7 +787,7 @@ public class MenuService {
         log.info("=== 카테고리 순서 변경 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
 
         // 내 가게 조회
@@ -932,7 +933,7 @@ public class MenuService {
         log.info("=== 메뉴 목록 조회 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("카테고리 ID 필터: {}", categoryId);
 
@@ -995,7 +996,7 @@ public class MenuService {
         log.info("=== 메뉴 상세 조회 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("조회할 메뉴 ID: {}", menuId);
 
@@ -1072,7 +1073,7 @@ public class MenuService {
         log.info("=== 메뉴 수정 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("수정할 메뉴 ID: {}", menuId);
 
@@ -1291,7 +1292,7 @@ public class MenuService {
         log.info("=== 메뉴 삭제 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("삭제할 메뉴 ID: {}", menuId);
 
@@ -1397,7 +1398,7 @@ public class MenuService {
     public void softDeleteMenu(Long menuId) {
         log.info("=== 메뉴 소프트 삭제 시작 ===");
 
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         Store store = getMyStore();
 
         Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
@@ -1421,7 +1422,7 @@ public class MenuService {
         log.info("=== 메뉴 판매 상태 변경 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("상태 변경할 메뉴 ID: {}", menuId);
 
@@ -1621,7 +1622,7 @@ public class MenuService {
         log.info("=== 메뉴 순서 변경 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
 
         // 입력받은 값들 로그 출력
@@ -1841,7 +1842,7 @@ public class MenuService {
         log.info("=== 메뉴 이미지 업로드 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("이미지 업로드할 메뉴 ID: {}", menuId);
 
@@ -1904,7 +1905,7 @@ public class MenuService {
         log.info("=== 메뉴 이미지 삭제 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("이미지 삭제할 메뉴 ID: {}, 이미지 ID: {}", menuId, imageId);
 
@@ -2173,7 +2174,7 @@ public class MenuService {
         log.info("=== 메뉴 옵션 그룹 목록 조회 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("옵션 그룹을 조회할 메뉴 ID: {}", menuId);
 
@@ -2390,7 +2391,7 @@ public class MenuService {
         log.info("=== 메뉴 옵션 그룹 등록 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("옵션 그룹을 추가할 메뉴 ID: {}", menuId);
 
@@ -2613,7 +2614,7 @@ public class MenuService {
         log.info("=== 메뉴 옵션 그룹 수정 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("수정할 메뉴 ID: {}, 옵션 그룹 ID: {}", menuId, groupId);
 
@@ -2811,7 +2812,7 @@ public class MenuService {
         log.info("=== 메뉴 옵션 그룹 삭제 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("삭제할 메뉴 ID: {}, 옵션 그룹 ID: {}", menuId, groupId);
 
@@ -3003,7 +3004,7 @@ public class MenuService {
         log.info("=== 메뉴 옵션 아이템 목록 조회 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("옵션 아이템을 조회할 메뉴 ID: {}, 옵션 그룹 ID: {}", menuId, groupId);
 
@@ -3172,7 +3173,7 @@ public class MenuService {
         log.info("=== 메뉴 옵션 아이템 등록 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("옵션 아이템을 추가할 메뉴 ID: {}, 옵션 그룹 ID: {}", menuId, groupId);
 
@@ -3345,7 +3346,7 @@ public class MenuService {
         log.info("=== 메뉴 옵션 아이템 수정 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("수정할 메뉴 ID: {}, 옵션 그룹 ID: {}, 옵션 아이템 ID: {}", menuId, groupId, optionId);
 
@@ -3557,7 +3558,7 @@ public class MenuService {
         log.info("=== 메뉴 옵션 아이템 삭제 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("삭제할 메뉴 ID: {}, 옵션 그룹 ID: {}, 옵션 아이템 ID: {}", menuId, groupId, optionId);
 
@@ -3690,7 +3691,7 @@ public class MenuService {
     public void softDeleteOption(Long menuId, Long groupId, Long optionId) {
         log.info("=== 메뉴 옵션 아이템 소프트 삭제 시작 ===");
 
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         Store store = getMyStore();
 
         // 메뉴 권한 확인
@@ -3804,7 +3805,7 @@ public class MenuService {
         log.info("=== 메뉴 옵션 아이템 상태 변경 시작 ===");
 
         // 현재 로그인한 사용자 ID 가져오기
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         log.info("현재 사용자 ID: {}", currentUserId);
         log.info("상태를 변경할 메뉴 ID: {}, 옵션 그룹 ID: {}, 옵션 아이템 ID: {}", menuId, groupId, optionId);
 
@@ -3975,5 +3976,275 @@ public class MenuService {
                 "고객이 선택할 수 있는 상태" :
                 "고객에게 보이지 않거나 선택할 수 없는 상태";
         log.info("  - 상태 의미: {}", statusDescription);
+    }
+
+    /**
+     * 옵션 그룹 순서 변경
+     */
+    @Transactional
+    public MenuOption updateOptionGroupOrder(Long menuId, Long groupId, OptionGroupOrderUpdateRequest request) {
+        log.info("=== 옵션 그룹 순서 변경 시작 ===");
+
+        // 현재 로그인한 사용자 ID 가져오기
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        log.info("현재 사용자 ID: {}", currentUserId);
+
+        // 입력받은 값들 로그 출력
+        log.info("옵션 그룹 순서 변경 요청 정보:");
+        log.info("  - 메뉴 ID: {}", menuId);
+        log.info("  - 이동할 그룹 ID: {}", groupId);
+        log.info("  - 새로운 위치: {}", request.getNewPosition());
+        log.info("  - 변경 사유: {}", request.getReason());
+
+        // 내 가게 조회
+        log.info("가게 정보 조회 중...");
+        Store store = getMyStore();
+        log.info("가게 조회 완료 - 가게 ID: {}, 가게명: {}", store.getId(), store.getName());
+
+        // 메뉴 조회 및 권한 확인
+        log.info("메뉴 조회 중... 메뉴 ID: {}", menuId);
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> {
+                    log.error("메뉴를 찾을 수 없습니다. 메뉴 ID: {}, 가게 ID: {}", menuId, store.getId());
+                    return new RuntimeException("메뉴를 찾을 수 없습니다");
+                });
+
+        log.info("메뉴 확인 완료 - 메뉴명: {}", menu.getName());
+
+        // 이동할 옵션 그룹 조회 및 권한 확인
+        log.info("이동할 옵션 그룹 조회 중... 그룹 ID: {}", groupId);
+        MenuOption targetGroup = menuOptionRepository.findById(groupId)
+                .orElseThrow(() -> {
+                    log.error("옵션 그룹을 찾을 수 없습니다. 그룹 ID: {}", groupId);
+                    return new RuntimeException("옵션 그룹을 찾을 수 없습니다");
+                });
+
+        // 옵션 그룹이 해당 메뉴에 속하는지 확인
+        if (!targetGroup.getMenu().getId().equals(menuId)) {
+            log.error("옵션 그룹이 해당 메뉴에 속하지 않습니다. 그룹 메뉴 ID: {}, 요청 메뉴 ID: {}",
+                    targetGroup.getMenu().getId(), menuId);
+            throw new RuntimeException("옵션 그룹이 해당 메뉴에 속하지 않습니다");
+        }
+
+        log.info("이동할 옵션 그룹 확인 완료 - 그룹명: {}, 현재 순서: {}",
+                targetGroup.getName(), targetGroup.getDisplayOrder());
+
+        // 해당 메뉴의 모든 옵션 그룹들을 현재 순서대로 조회
+        List<MenuOption> optionGroups = menuOptionRepository.findByMenuIdOrderByDisplayOrderAsc(menuId);
+
+        if (optionGroups.isEmpty()) {
+            log.warn("순서를 변경할 옵션 그룹이 없습니다");
+            throw new IllegalArgumentException("순서를 변경할 옵션 그룹이 없습니다");
+        }
+
+        log.info("메뉴 '{}' 의 옵션 그룹 조회 완료 - 총 {}개", menu.getName(), optionGroups.size());
+
+        // 새로운 위치 유효성 검증
+        if (request.getNewPosition() < 1 || request.getNewPosition() > optionGroups.size()) {
+            log.error("잘못된 위치입니다. 요청 위치: {}, 총 그룹 수: {}", request.getNewPosition(), optionGroups.size());
+            throw new IllegalArgumentException(
+                    String.format("위치는 1부터 %d 사이여야 합니다", optionGroups.size())
+            );
+        }
+
+        // 현재 위치 찾기
+        int currentPosition = -1;
+        for (int i = 0; i < optionGroups.size(); i++) {
+            if (optionGroups.get(i).getId().equals(groupId)) {
+                currentPosition = i + 1; // 1부터 시작
+                break;
+            }
+        }
+
+        if (currentPosition == -1) {
+            log.error("옵션 그룹을 목록에서 찾을 수 없습니다. 그룹 ID: {}", groupId);
+            throw new RuntimeException("옵션 그룹을 해당 메뉴에서 찾을 수 없습니다");
+        }
+
+        log.info("옵션 그룹 이동: {} (ID: {}) - 위치 {} -> {}",
+                targetGroup.getName(), targetGroup.getId(),
+                currentPosition, request.getNewPosition());
+
+        // 위치가 같으면 변경하지 않음
+        if (currentPosition == request.getNewPosition()) {
+            log.info("이미 같은 위치입니다. 변경하지 않습니다.");
+            return targetGroup;
+        }
+
+        // 옵션 그룹 리스트에서 이동할 그룹 제거
+        MenuOption movingGroup = optionGroups.remove(currentPosition - 1);
+
+        // 새로운 위치에 삽입 (인덱스는 0부터 시작하므로 -1)
+        optionGroups.add(request.getNewPosition() - 1, movingGroup);
+
+        // 모든 옵션 그룹의 displayOrder를 새로 설정
+        List<MenuOption> updatedGroups = new ArrayList<>();
+
+        for (int i = 0; i < optionGroups.size(); i++) {
+            MenuOption group = optionGroups.get(i);
+            int newDisplayOrder = i + 1;
+
+            if (!group.getDisplayOrder().equals(newDisplayOrder)) {
+                log.info("옵션 그룹 순서 업데이트: {} (ID: {}) - {} -> {}",
+                        group.getName(), group.getId(),
+                        group.getDisplayOrder(), newDisplayOrder);
+                group.updateDisplayOrder(newDisplayOrder);
+                updatedGroups.add(group);
+            }
+        }
+
+        // 변경된 옵션 그룹들만 저장
+        if (!updatedGroups.isEmpty()) {
+            menuOptionRepository.saveAll(updatedGroups);
+            log.info("총 {}개 옵션 그룹 순서가 업데이트되었습니다", updatedGroups.size());
+        }
+
+        log.info("=== 옵션 그룹 순서 변경 완료 ===");
+
+        return targetGroup;
+    }
+
+    /**
+     * 옵션 아이템 순서 변경
+     */
+    @Transactional
+    public MenuOptionItem updateOptionItemOrder(Long menuId, Long groupId, Long optionId, OptionItemOrderUpdateRequest request) {
+        log.info("=== 옵션 아이템 순서 변경 시작 ===");
+
+        // 현재 로그인한 사용자 ID 가져오기
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        log.info("현재 사용자 ID: {}", currentUserId);
+
+        // 입력받은 값들 로그 출력
+        log.info("옵션 아이템 순서 변경 요청 정보:");
+        log.info("  - 메뉴 ID: {}", menuId);
+        log.info("  - 그룹 ID: {}", groupId);
+        log.info("  - 이동할 아이템 ID: {}", optionId);
+        log.info("  - 새로운 위치: {}", request.getNewPosition());
+        log.info("  - 변경 사유: {}", request.getReason());
+
+        // 내 가게 조회
+        log.info("가게 정보 조회 중...");
+        Store store = getMyStore();
+        log.info("가게 조회 완료 - 가게 ID: {}, 가게명: {}", store.getId(), store.getName());
+
+        // 메뉴 조회 및 권한 확인
+        log.info("메뉴 조회 중... 메뉴 ID: {}", menuId);
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> {
+                    log.error("메뉴를 찾을 수 없습니다. 메뉴 ID: {}, 가게 ID: {}", menuId, store.getId());
+                    return new RuntimeException("메뉴를 찾을 수 없습니다");
+                });
+
+        log.info("메뉴 확인 완료 - 메뉴명: {}", menu.getName());
+
+        // 옵션 그룹 조회 및 권한 확인
+        log.info("옵션 그룹 조회 중... 그룹 ID: {}", groupId);
+        MenuOption optionGroup = menuOptionRepository.findById(groupId)
+                .orElseThrow(() -> {
+                    log.error("옵션 그룹을 찾을 수 없습니다. 그룹 ID: {}", groupId);
+                    return new RuntimeException("옵션 그룹을 찾을 수 없습니다");
+                });
+
+        // 옵션 그룹이 해당 메뉴에 속하는지 확인
+        if (!optionGroup.getMenu().getId().equals(menuId)) {
+            log.error("옵션 그룹이 해당 메뉴에 속하지 않습니다. 그룹 메뉴 ID: {}, 요청 메뉴 ID: {}",
+                    optionGroup.getMenu().getId(), menuId);
+            throw new RuntimeException("옵션 그룹이 해당 메뉴에 속하지 않습니다");
+        }
+
+        log.info("옵션 그룹 확인 완료 - 그룹명: {}", optionGroup.getName());
+
+        // 이동할 옵션 아이템 조회 및 권한 확인
+        log.info("이동할 옵션 아이템 조회 중... 아이템 ID: {}", optionId);
+        MenuOptionItem targetItem = menuOptionItemRepository.findById(optionId)
+                .orElseThrow(() -> {
+                    log.error("옵션 아이템을 찾을 수 없습니다. 아이템 ID: {}", optionId);
+                    return new RuntimeException("옵션 아이템을 찾을 수 없습니다");
+                });
+
+        // 👇 수정된 부분: targetItem.getOption().getId() 사용
+        if (!targetItem.getOption().getId().equals(groupId)) {
+            log.error("옵션 아이템이 해당 그룹에 속하지 않습니다. 아이템 그룹 ID: {}, 요청 그룹 ID: {}",
+                    targetItem.getOption().getId(), groupId);
+            throw new RuntimeException("옵션 아이템이 해당 그룹에 속하지 않습니다");
+        }
+
+        log.info("이동할 옵션 아이템 확인 완료 - 아이템명: {}, 현재 순서: {}",
+                targetItem.getName(), targetItem.getDisplayOrder());
+
+        // 해당 그룹의 모든 옵션 아이템들을 현재 순서대로 조회
+        List<MenuOptionItem> optionItems = menuOptionItemRepository.findByOptionIdOrderByDisplayOrderAsc(groupId);
+
+        if (optionItems.isEmpty()) {
+            log.warn("순서를 변경할 옵션 아이템이 없습니다");
+            throw new IllegalArgumentException("순서를 변경할 옵션 아이템이 없습니다");
+        }
+
+        log.info("그룹 '{}' 의 옵션 아이템 조회 완료 - 총 {}개", optionGroup.getName(), optionItems.size());
+
+        // 새로운 위치 유효성 검증
+        if (request.getNewPosition() < 1 || request.getNewPosition() > optionItems.size()) {
+            log.error("잘못된 위치입니다. 요청 위치: {}, 총 아이템 수: {}", request.getNewPosition(), optionItems.size());
+            throw new IllegalArgumentException(
+                    String.format("위치는 1부터 %d 사이여야 합니다", optionItems.size())
+            );
+        }
+
+        // 현재 위치 찾기
+        int currentPosition = -1;
+        for (int i = 0; i < optionItems.size(); i++) {
+            if (optionItems.get(i).getId().equals(optionId)) {
+                currentPosition = i + 1; // 1부터 시작
+                break;
+            }
+        }
+
+        if (currentPosition == -1) {
+            log.error("옵션 아이템을 목록에서 찾을 수 없습니다. 아이템 ID: {}", optionId);
+            throw new RuntimeException("옵션 아이템을 해당 그룹에서 찾을 수 없습니다");
+        }
+
+        log.info("옵션 아이템 이동: {} (ID: {}) - 위치 {} -> {}",
+                targetItem.getName(), targetItem.getId(),
+                currentPosition, request.getNewPosition());
+
+        // 위치가 같으면 변경하지 않음
+        if (currentPosition == request.getNewPosition()) {
+            log.info("이미 같은 위치입니다. 변경하지 않습니다.");
+            return targetItem;
+        }
+
+        // 옵션 아이템 리스트에서 이동할 아이템 제거
+        MenuOptionItem movingItem = optionItems.remove(currentPosition - 1);
+
+        // 새로운 위치에 삽입 (인덱스는 0부터 시작하므로 -1)
+        optionItems.add(request.getNewPosition() - 1, movingItem);
+
+        // 모든 옵션 아이템의 displayOrder를 새로 설정
+        List<MenuOptionItem> updatedItems = new ArrayList<>();
+
+        for (int i = 0; i < optionItems.size(); i++) {
+            MenuOptionItem item = optionItems.get(i);
+            int newDisplayOrder = i + 1;
+
+            if (!item.getDisplayOrder().equals(newDisplayOrder)) {
+                log.info("옵션 아이템 순서 업데이트: {} (ID: {}) - {} -> {}",
+                        item.getName(), item.getId(),
+                        item.getDisplayOrder(), newDisplayOrder);
+                item.updateDisplayOrder(newDisplayOrder);
+                updatedItems.add(item);
+            }
+        }
+
+        // 변경된 옵션 아이템들만 저장
+        if (!updatedItems.isEmpty()) {
+            menuOptionItemRepository.saveAll(updatedItems);
+            log.info("총 {}개 옵션 아이템 순서가 업데이트되었습니다", updatedItems.size());
+        }
+
+        log.info("=== 옵션 아이템 순서 변경 완료 ===");
+
+        return targetItem;
     }
 }
