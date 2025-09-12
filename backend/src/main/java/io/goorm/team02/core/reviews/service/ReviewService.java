@@ -8,6 +8,7 @@ import io.goorm.team02.core.reviews.domain.Review;
 import io.goorm.team02.core.reviews.repository.ReviewRepository;
 import io.goorm.team02.core.stores.domain.Store;
 import io.goorm.team02.core.users.domain.User;
+import io.goorm.team02.core.users.repository.UserinfoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final OrderRepository orderRepository;
+    private final UserinfoRepository userRepository;
 
     // ================================
     // API Methods
@@ -30,23 +32,31 @@ public class ReviewService {
      */
     @Transactional
     public ReviewResponse create(ReviewRequest reviewRequest) {
-        // 1. 주문 조회 및 검증
+        // 1. 사용자 조회 및 검증
+        User user = userRepository.findById(reviewRequest.userId())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + reviewRequest.userId()));
+
+        // 2. 주문 조회 및 검증
         Order order = orderRepository.findById(reviewRequest.orderId())
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + reviewRequest.orderId()));
 
-        // 2. 이미 리뷰가 작성되었는지 확인
+        // 3. 주문이 해당 사용자의 것인지 확인
+        if (!order.getUser().getId().equals(reviewRequest.userId())) {
+            throw new IllegalStateException("본인의 주문에만 리뷰를 작성할 수 있습니다");
+        }
+
+        // 4. 이미 리뷰가 작성되었는지 확인
         if (reviewRepository.findByOrderId(reviewRequest.orderId()).isPresent()) {
             throw new IllegalStateException("이미 리뷰가 작성된 주문입니다");
         }
 
-        // 3. 엔티티 참조 조회
-        User user = order.getUser();
+        // 5. 엔티티 참조 조회
         Store store = order.getStore();
 
-        // 4. Review 도메인에 위임
+        // 6. Review 도메인에 위임
         Review review = Review.create(order, user, store, reviewRequest.rating(), reviewRequest.content());
 
-        // 5. 저장
+        // 7. 저장
         Review savedReview = reviewRepository.save(review);
         return ReviewResponse.from(savedReview);
     }

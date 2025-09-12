@@ -21,8 +21,9 @@ public interface ReviewControllerDocs {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "리뷰 생성 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
-            @ApiResponse(responseCode = "404", description = "주문을 찾을 수 없음"),
-            @ApiResponse(responseCode = "409", description = "이미 리뷰가 작성된 주문")
+            @ApiResponse(responseCode = "404", description = "사용자 또는 주문을 찾을 수 없음"),
+            @ApiResponse(responseCode = "409", description = "이미 리뷰가 작성된 주문"),
+            @ApiResponse(responseCode = "403", description = "본인의 주문에만 리뷰 작성 가능")
     })
     public ReviewResponse create(@RequestBody ReviewRequest reviewRequest);
 
