@@ -37,6 +37,16 @@ class OrderApiManager {
 const orderApiManager = new OrderApiManager();
 
 export const orderApi = {
+
+  getStoreInfo: () => orderApiManager.queueRequest(async () => {
+    console.log('🔄 가게 정보 조회 중...');
+    // storeApi에서 이미 구현된 getMyStore 사용
+    const { storeApi } = await import('./storeApi.js');
+    const storeData = await storeApi.getMyStore();
+    console.log('✅ 가게 정보 조회 성공');
+    return storeData;
+  }),
+
   // 주문 목록 조회 (가게별)
   getOrders: (storeId) => orderApiManager.queueRequest(async () => {
     console.log('🔄 주문 목록 조회 중..., 가게 ID:', storeId);
@@ -53,10 +63,32 @@ export const orderApi = {
     return response.data;
   }),
 
-  // 주문 수락
-  acceptOrder: (orderId, acceptData) => orderApiManager.queueRequest(async () => {
+  // 주문 수락 - 가게 배달시간 자동 적용 기능 추가
+  acceptOrder: (orderId, acceptData, storeInfo = null) => orderApiManager.queueRequest(async () => {
     console.log('🔄 주문 수락 처리 중..., 주문 ID:', orderId);
-    const response = await api.put(`/orders/${orderId}/accept`, acceptData);
+    
+    // 배달시간이 없고 가게 정보가 있으면 가게의 기본 배달시간 사용
+    let finalAcceptData = { ...acceptData };
+    
+    if (!finalAcceptData.minCookingTime || !finalAcceptData.maxCookingTime) {
+      if (storeInfo && storeInfo.deliveryTimeMin && storeInfo.deliveryTimeMax) {
+        console.log('📋 가게 기본 배달시간 사용:', {
+          min: storeInfo.deliveryTimeMin,
+          max: storeInfo.deliveryTimeMax
+        });
+        
+        finalAcceptData.minCookingTime = finalAcceptData.minCookingTime || storeInfo.deliveryTimeMin;
+        finalAcceptData.maxCookingTime = finalAcceptData.maxCookingTime || storeInfo.deliveryTimeMax;
+      } else {
+        // 기본값 설정
+        finalAcceptData.minCookingTime = finalAcceptData.minCookingTime || 20;
+        finalAcceptData.maxCookingTime = finalAcceptData.maxCookingTime || 40;
+        console.log('⚠️ 기본 배달시간 사용: 20-40분');
+      }
+    }
+    
+    console.log('📤 최종 수락 데이터:', finalAcceptData);
+    const response = await api.put(`/orders/${orderId}/accept`, finalAcceptData);
     console.log('✅ 주문 수락 완료');
     return response.data;
   }),

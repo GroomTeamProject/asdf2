@@ -79,6 +79,7 @@ const loading = ref(false)
 const error = ref(null)
 const statusFilter = ref('')
 const refreshInterval = ref(null)
+const storeInfo = ref(null)
 
 // 필터링된 주문 목록
 const filteredOrders = computed(() => {
@@ -88,10 +89,26 @@ const filteredOrders = computed(() => {
   return orders.value.filter(order => order.status === statusFilter.value)
 })
 
+// 가게 정보 로드
+const loadStoreInfo = async () => {
+  try {
+    console.log('🏪 가게 정보 로드 중...')
+    storeInfo.value = await orderApi.getStoreInfo()
+    console.log('✅ 가게 정보 로드 완료:', {
+      name: storeInfo.value.name,
+      deliveryTime: `${storeInfo.value.deliveryTimeMin}-${storeInfo.value.deliveryTimeMax}분`
+    })
+  } catch (error) {
+    console.warn('⚠️ 가게 정보 로드 실패:', error)
+    storeInfo.value = null
+  }
+}
+
 // 주문 목록 로드
 const loadOrders = async () => {
   if (!props.storeId) {
-    console.warn('⚠️ storeId가 없어서 주문을 불러올 수 없습니다.')
+    console.warn('⚠️ storeId가 설정되지 않았습니다. 가게 정보를 먼저 불러와주세요.')
+    orders.value = []
     return
   }
 
@@ -100,8 +117,16 @@ const loadOrders = async () => {
   
   try {
     console.log('📋 주문 목록 로드, 가게 ID:', props.storeId)
-    orders.value = await orderApi.getOrders(props.storeId)
+    
+    // 가게 정보와 주문 목록을 병렬로 로드
+    const [ordersData] = await Promise.all([
+      orderApi.getOrders(props.storeId),
+      storeInfo.value ? Promise.resolve() : loadStoreInfo() // 가게 정보가 없으면 로드
+    ])
+    
+    orders.value = ordersData
     console.log('✅ 주문 목록 로드 완료:', orders.value.length, '개')
+    
   } catch (err) {
     console.error('❌ 주문 목록 로드 실패:', err)
     error.value = err.response?.data?.message || err.message || '주문 목록을 불러오는데 실패했습니다.'
@@ -115,14 +140,16 @@ const filterOrders = () => {
   console.log('🔍 주문 필터 변경:', statusFilter.value || '전체')
 }
 
-// 주문 수락 처리
+// 주문 수락 처리 - 가게 정보 활용
 const handleAcceptOrder = async (data) => {
   try {
     console.log('✅ 주문 수락 요청:', data)
+    
+    // 가게 정보를 함께 전달
     await orderApi.acceptOrder(data.orderId, {
       minCookingTime: data.minCookingTime,
       maxCookingTime: data.maxCookingTime
-    })
+    }, storeInfo.value)
     
     alert('주문이 수락되었습니다!')
     await loadOrders() // 목록 새로고침

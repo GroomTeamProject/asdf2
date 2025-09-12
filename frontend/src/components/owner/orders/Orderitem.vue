@@ -142,6 +142,16 @@
     <div class="bg-white p-6 rounded-lg max-w-md w-full mx-4">
       <h3 class="text-lg font-semibold mb-4">주문 수락</h3>
       
+      <!-- 가게 기본 배달시간 안내 추가 -->
+      <div v-if="storeInfo && storeInfo.deliveryTimeMin && storeInfo.deliveryTimeMax" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+        <p class="text-sm text-blue-700">
+          <strong>가게 기본 배달시간:</strong> {{ storeInfo.deliveryTimeMin }}-{{ storeInfo.deliveryTimeMax }}분
+        </p>
+        <p class="text-xs text-blue-600 mt-1">
+          아래 입력란이 비어있으면 기본 배달시간이 자동으로 설정됩니다.
+        </p>
+      </div>
+
       <div class="space-y-4">
         <div>
           <label class="block text-sm font-medium mb-1">최소 조리 시간 (분)</label>
@@ -177,8 +187,7 @@
         </button>
         <button 
           @click="acceptOrder"
-          :disabled="!acceptForm.minCookingTime || !acceptForm.maxCookingTime"
-          class="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
         >
           수락
         </button>
@@ -228,6 +237,10 @@ const props = defineProps({
   order: {
     type: Object,
     required: true
+  },
+  storeInfo: { // 가게 정보 props 추가
+    type: Object,
+    default: null
   }
 })
 
@@ -244,11 +257,34 @@ const emit = defineEmits([
 const showAcceptDialog = ref(false)
 const showRejectDialog = ref(false)
 
-// 폼 데이터
+// 폼 데이터 - 가게 기본 배달시간으로 초기화
 const acceptForm = ref({
-  minCookingTime: 20,
-  maxCookingTime: 40
+  minCookingTime: null,
+  maxCookingTime: null
 })
+
+// 가게 기본시간 사용 함수
+const useStoreDefaultTime = () => {
+  if (props.storeInfo) {
+    acceptForm.value.minCookingTime = props.storeInfo.deliveryTimeMin
+    acceptForm.value.maxCookingTime = props.storeInfo.deliveryTimeMax
+  }
+}
+
+// 다이얼로그 열 때 기본값 설정
+const openAcceptDialog = () => {
+  // 가게 정보가 있으면 기본값으로 설정
+  if (props.storeInfo && props.storeInfo.deliveryTimeMin && props.storeInfo.deliveryTimeMax) {
+    acceptForm.value.minCookingTime = props.storeInfo.deliveryTimeMin
+    acceptForm.value.maxCookingTime = props.storeInfo.deliveryTimeMax
+  } else {
+    // 기본값
+    acceptForm.value.minCookingTime = 20
+    acceptForm.value.maxCookingTime = 40
+  }
+  
+  showAcceptDialog.value = true
+}
 
 const rejectForm = ref({
   reason: ''
@@ -256,15 +292,31 @@ const rejectForm = ref({
 
 // 주문 수락
 const acceptOrder = () => {
-  if (acceptForm.value.minCookingTime > acceptForm.value.maxCookingTime) {
+  // 입력값이 없으면 가게 기본값 또는 시스템 기본값 사용
+  let minTime = acceptForm.value.minCookingTime
+  let maxTime = acceptForm.value.maxCookingTime
+  
+  // 빈값이면 가게 기본값 사용
+  if (!minTime || !maxTime) {
+    if (props.storeInfo && props.storeInfo.deliveryTimeMin && props.storeInfo.deliveryTimeMax) {
+      minTime = minTime || props.storeInfo.deliveryTimeMin
+      maxTime = maxTime || props.storeInfo.deliveryTimeMax
+    } else {
+      // 가게 정보가 없으면 시스템 기본값
+      minTime = minTime || 20
+      maxTime = maxTime || 40
+    }
+  }
+  
+  if (minTime > maxTime) {
     alert('최소 조리 시간이 최대 조리 시간보다 클 수 없습니다.')
     return
   }
   
   emit('accept-order', {
     orderId: props.order.id,
-    minCookingTime: acceptForm.value.minCookingTime,
-    maxCookingTime: acceptForm.value.maxCookingTime
+    minCookingTime: minTime,
+    maxCookingTime: maxTime
   })
   
   showAcceptDialog.value = false
