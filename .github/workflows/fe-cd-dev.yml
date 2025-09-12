@@ -19,6 +19,9 @@ jobs:
         with:
           name: frontend-build
           path: frontend/dist/
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.pull_request.head.sha }}
         
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
