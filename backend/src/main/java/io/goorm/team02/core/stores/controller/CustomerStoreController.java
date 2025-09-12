@@ -1,6 +1,6 @@
 package io.goorm.team02.core.stores.controller;
 
-import io.goorm.team02.core.stores.controller.dto.StoreResponse;
+import io.goorm.team02.core.stores.controller.dto.storemanagement.StoreResponse;
 import io.goorm.team02.core.stores.domain.Store;
 import io.goorm.team02.core.stores.service.CustomerStoreService;
 import lombok.RequiredArgsConstructor;
