@@ -20,15 +20,16 @@ spring:
 
 cors:
   allowed-origins: http://localhost:5173
+---
 
 cloud:
   aws:
     credentials:
-      access-key: ${AWS_ACCESS_KEY}
-      secret-key: ${AWS_SECRET_KEY}
+      access-key: ${AWS_ACCESS_KEY:test-access-key}
+      secret-key: ${AWS_SECRET_KEY:test-secret-key}
     s3:
-      bucket: ${AWS_S3_BUCKET}
+      bucket: ${AWS_S3_BUCKET:test-bucket}
     region:
-      static: ${AWS_REGION}
+      static: ${AWS_REGION:us-east-1}
     stack:
       auto: false
