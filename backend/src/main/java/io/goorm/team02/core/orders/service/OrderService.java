@@ -4,6 +4,7 @@ import io.goorm.team02.core.orders.controller.dto.OrderRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderResponse;
 import io.goorm.team02.core.orders.controller.dto.OrderRejectRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderAcceptRequest;
+import io.goorm.team02.core.orders.controller.dto.OrderCancelRequest;
 import io.goorm.team02.core.orders.domain.Order;
 import io.goorm.team02.core.orders.domain.OrderItem;
 import io.goorm.team02.core.orders.domain.OrderItemOption;
@@ -251,6 +252,27 @@ public class OrderService {
         });
 
 		return OrderResponse.from(order);
+	}
+
+	/**
+	 * 주문 취소
+	 */
+	@Transactional
+	public OrderResponse cancelOrder(Long orderId, OrderCancelRequest request) {
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
+
+		// 주문 상태 검증 (취소 가능한 상태: PENDING, ACCEPTED)
+		if (order.getStatus() != OrderStatus.PENDING && order.getStatus() != OrderStatus.ACCEPTED) {
+			throw new IllegalStateException("취소할 수 없는 주문 상태입니다. 현재 상태: " + order.getStatus());
+		}
+
+		// 취소 처리
+		order.setCancelReason(request.cancelReason());
+		order.changeStatus(OrderStatus.CANCELLED);
+
+		Order savedOrder = orderRepository.save(order);
+		return OrderResponse.from(savedOrder);
 	}
 
 }

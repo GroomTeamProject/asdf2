@@ -32,6 +32,7 @@ public record OrderResponse(
         LocalDateTime deliveredAt,
         LocalDateTime cancelledAt,
         String rejectReason,
+        String cancelReason,
         Integer minCookingTime,
         Integer maxCookingTime,
         List<OrderItemResponse> orderItems
@@ -61,6 +62,7 @@ public record OrderResponse(
                 order.getDeliveredAt(),
                 order.getCancelledAt(),
                 order.getRejectReason(),
+                order.getCancelReason(),
                 order.getMinCookingTime(),
                 order.getMaxCookingTime(),
                 order.getOrderItems().stream()
