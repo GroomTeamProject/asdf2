@@ -4,6 +4,8 @@ on:
   pull_request:
     types: [closed]
     branches: [ develop ]
+    paths:
+      - 'backend/**'
 
 env:
   REGISTRY: docker.io

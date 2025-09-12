@@ -3,6 +3,8 @@ name: Springboot CI - Build & Test (develop)
 on:
   pull_request:
     branches: [ develop ]
+    paths:
+      - 'backend/**'
 
 env:
   REGISTRY: docker.io
