@@ -80,6 +80,14 @@ public class OrderController implements OrderControllerDocs {
     }
 
     /**
+     * 배달 시작
+     */
+    @PutMapping("/{orderId}/start-delivery")
+    public OrderResponse startDelivery(@PathVariable Long orderId) {
+        return orderStatusService.startDelivery(orderId);
+    }
+
+    /**
      * 배달 완료
      */
     @PutMapping("/{orderId}/deliver")
