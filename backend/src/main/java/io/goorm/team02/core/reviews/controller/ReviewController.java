@@ -3,6 +3,7 @@ package io.goorm.team02.core.reviews.controller;
 import io.goorm.team02.core.reviews.controller.dto.OwnerReplyRequest;
 import io.goorm.team02.core.reviews.controller.dto.ReviewRequest;
 import io.goorm.team02.core.reviews.controller.dto.ReviewResponse;
+import io.goorm.team02.core.reviews.domain.Review;
 import io.goorm.team02.core.reviews.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -18,27 +19,36 @@ public class ReviewController implements ReviewControllerDocs {
 
     @PostMapping
     public ReviewResponse create(@RequestBody ReviewRequest reviewRequest) {
-        return reviewService.create(reviewRequest);
+        Review review = reviewService.create(reviewRequest);
+        return ReviewResponse.from(review);
     }
 
     @GetMapping("/store")
     public List<ReviewResponse> getAllByStoreId(@RequestParam("storeId") Long storeId) {
-        return reviewService.getAllByStoreId(storeId);
+        List<Review> reviews = reviewService.getAllByStoreId(storeId);
+        return reviews.stream()
+                .map(ReviewResponse::from)
+                .toList();
     }
 
     @GetMapping("/user")
     public List<ReviewResponse> getAllByUserId(@RequestParam("userId") Long userId) {
-        return reviewService.getAllByUserId(userId);
+        List<Review> reviews = reviewService.getAllByUserId(userId);
+        return reviews.stream()
+                .map(ReviewResponse::from)
+                .toList();
     }
 
     @GetMapping("/{reviewId}")
     public ReviewResponse getById(@PathVariable Long reviewId) {
-        return reviewService.getById(reviewId);
+        Review review = reviewService.getById(reviewId);
+        return ReviewResponse.from(review);
     }
 
     @PutMapping("/{reviewId}")
     public ReviewResponse update(@PathVariable Long reviewId, @RequestBody ReviewRequest reviewRequest) {
-        return reviewService.update(reviewId, reviewRequest);
+        Review review = reviewService.update(reviewId, reviewRequest);
+        return ReviewResponse.from(review);
     }
 
     @DeleteMapping("/{reviewId}")
@@ -48,12 +58,14 @@ public class ReviewController implements ReviewControllerDocs {
 
     @PostMapping("/{reviewId}/reply")
     public ReviewResponse addOwnerReply(@PathVariable Long reviewId, @RequestBody OwnerReplyRequest request) {
-        return reviewService.addOwnerReply(reviewId, request.reply());
+        Review review = reviewService.addOwnerReply(reviewId, request.reply());
+        return ReviewResponse.from(review);
     }
 
     @PostMapping("/{reviewId}/report")
     public ReviewResponse report(@PathVariable Long reviewId) {
-        return reviewService.report(reviewId);
+        Review review = reviewService.report(reviewId);
+        return ReviewResponse.from(review);
     }
 
     @GetMapping("/store/rating")

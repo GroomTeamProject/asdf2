@@ -57,7 +57,7 @@ public class Review extends BaseEntity {
 
 
 	// ================================
-	// 도메인 비즈니스 로직
+	// Domain Logic
 	// ================================
 
 	/**
@@ -96,8 +96,19 @@ public class Review extends BaseEntity {
 		this.isReported = true;
 	}
 
+	/**
+	 * 리뷰 수정
+	 */
+	public void update(Integer rating, String content) {
+		if (rating == null || rating < 1 || rating > 5) {
+			throw new IllegalArgumentException("평점은 1~5 사이여야 합니다");
+		}
+		this.rating = rating;
+		this.content = content;
+	}
+
 	// ================================
-	// 팩토리 메서드
+	// Factory Method
 	// ================================
 	public static Review create(Order order, User user, Store store, Integer rating, String content) {
 		Review review = new Review();
