@@ -9,12 +9,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Debug - Check changed files
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            frontend/**
+            .github/workflows/**
+      
+      - name: Debug - Check changed files result
         run: |
-          echo "Changed files: ${{ github.event.pull_request.changed_files }}"
-          echo "Changed files count: ${{ github.event.pull_request.changed_files == 0 }}"
-          echo "Contains frontend: ${{ contains(github.event.pull_request.changed_files, 'frontend/') }}"
-          echo "Contains workflows: ${{ contains(github.event.pull_request.changed_files, '.github/workflows/') }}"
+          echo "Frontend changed: ${{ steps.changed-files }}"
           
       - name: Checkout repository
         uses: actions/checkout@v4
