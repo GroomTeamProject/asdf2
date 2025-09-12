@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -147,7 +148,8 @@ public class ReviewService {
      * 가게별 평균 평점 조회
      */
     public Double getAverageRatingByStoreId(Long storeId) {
-        return reviewRepository.findAverageRatingByStoreId(storeId).doubleValue();
+        BigDecimal averageRating = reviewRepository.findAverageRatingByStoreId(storeId);
+        return averageRating != null ? averageRating.doubleValue() : 0.0;
     }
 
     /**
