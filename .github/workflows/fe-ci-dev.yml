@@ -17,6 +17,11 @@ jobs:
           files: |
             frontend/**
             .github/workflows/**
+            
+      - name: Debug - Check changed files result
+        run: |
+          echo "Changed files: ${{ toJson(steps.changed-files.outputs) }}"
+          echo "Should build: ${{ steps.changed-files.outputs.any_changed }}"
 
   build:
     runs-on: ubuntu-latest
