@@ -1,4 +1,4 @@
-name: Springboot CD - Deploy (develop)
+name: (develop) Springboot CD - Deploy 
 
 on:
   pull_request:
