@@ -1,4 +1,4 @@
-name: Springboot CI - Build & Test (develop)
+name: (develop) Springboot CI - Build & Test 
 
 on:
   pull_request:
