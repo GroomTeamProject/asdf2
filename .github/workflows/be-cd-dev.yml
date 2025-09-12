@@ -6,6 +6,7 @@ on:
     branches: [ develop ]
     paths:
       - 'backend/**'
+      - '.github/workflows/**'
 
 env:
   REGISTRY: docker.io

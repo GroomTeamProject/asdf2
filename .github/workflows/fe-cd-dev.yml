@@ -6,6 +6,7 @@ on:
     branches: [ develop ]
     paths:
       - 'frontend/**'
+      - '.github/workflows/**'
 
 jobs:
   deploy:
