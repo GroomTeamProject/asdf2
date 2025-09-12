@@ -1,5 +1,6 @@
 package io.goorm.team02.core.stores.controller;
 
+import io.goorm.team02.core.stores.controller.dto.dashboard.StoreDashboardResponse;
 import io.goorm.team02.core.stores.controller.dto.ordermanagement.*;
 import io.goorm.team02.core.stores.controller.dto.storemanagement.*;
 import io.goorm.team02.core.stores.domain.Store;
@@ -307,6 +308,23 @@ public class StoreController {
 
         StoreStatusModifyResponse response = storeService.updateStoreStatus(request);
         return ResponseEntity.ok(response);
+    }
+
+    // ================================
+    // 대시보드 (Dashboard)
+    // ================================
+
+    @GetMapping("/dashboard")
+    @Operation(summary = "가게 대시보드 조회", description = "가게 운영에 필요한 통계 정보를 조회합니다")
+    @Tag(name = "Store Dashboard")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "대시보드 조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
+    })
+    public ResponseEntity<StoreDashboardResponse> getDashboard() {
+        StoreDashboardResponse dashboard = storeService.getDashboard();
+        return ResponseEntity.ok(dashboard);
     }
 
        // ================================
