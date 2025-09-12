@@ -19,7 +19,8 @@ jobs:
       
       - name: Debug - Check changed files result
         run: |
-          echo "Frontend changed: ${{ steps.changed-files }}"
+          echo "Changed files: ${{ toJson(steps.changed-files.outputs) }}"
+          echo "Any changed: ${{ steps.changed-files.outputs.any_changed }}"
           
       - name: Checkout repository
         uses: actions/checkout@v4
