@@ -48,13 +48,10 @@
         />
       </div>
 
-      <!-- Orders Tab -->
-      <div v-if="activeTab === 'orders'" class="tab-content">
-        <OrdersList 
-          :orders="orders" 
-          @update-status="updateOrderStatus"
-        />
-      </div>
+ <!-- 주문 관리 탭 -->
+  <div v-if="activeTab === 'orders'" class="tab-content">
+    <OrdersList :store-id="currentStoreId" />
+  </div>
 
       <!-- Menu Tab -->
       <div v-if="activeTab === 'menu'" class="tab-content">
@@ -72,6 +69,7 @@
       :restaurant="restaurant"
       :store-hours="storeHours"
       @edit="openEditRestaurantModal"
+      @edit-hours="openEditHoursModal"
       @refresh="handleRefresh"
     />
   </div>
@@ -91,6 +89,14 @@
       @close="cancelEdit"
       @save="saveRestaurantInfo"
     />
+
+    <EditStoreHoursModal
+    v-if="showEditHoursModal"
+    :store-hours="storeHours"
+    :loading="loading || isProcessing"
+    @close="cancelEditHours"
+    @save="saveStoreHours"
+  />
   </div>
 </template>
 
@@ -110,6 +116,7 @@ import MenuList from '@/components/owner/menu/MenuList.vue'
 import RestaurantInfo from '@/components/owner/restaurant/RestaurantInfo.vue'
 import AddMenuModal from '@/components/owner/menu/AddMenuModal.vue'
 import EditRestaurantModal from '@/components/owner/restaurant/EditRestaurantModal.vue'
+import EditStoreHoursModal from '@/components/owner/restaurant/EditStoreHoursModal.vue'
 
 const router = useRouter()
 
@@ -120,10 +127,14 @@ const showEditRestaurantModal = ref(false)
 const loading = ref(false)
 const error = ref(null)
 const storeHours = ref([])
+const showEditHoursModal = ref(false)
 
 // 순차 처리를 위한 상태 관리
 const isProcessing = ref(false)
 const currentOperation = ref('')
+
+// 👇 currentStoreId 추가
+const currentStoreId = ref(null)
 
 // 가게 정보
 const restaurant = ref({
@@ -149,66 +160,13 @@ const restaurant = ref({
   isActive: true
 })
 
-// 목업 데이터 (나중에 실제 API로 교체 예정)
+// 기존 목업 데이터들...
 const orders = ref([
-  {
-    id: '1',
-    customerName: '김고객',
-    items: [
-      { name: '후라이드 치킨', quantity: 1, price: 18000 },
-      { name: '치킨무', quantity: 1, price: 2000 }
-    ],
-    total: 20000,
-    status: 'pending',
-    orderTime: '2024-01-15 14:30'
-  },
-  {
-    id: '2',
-    customerName: '이고객',
-    items: [
-      { name: '양념 치킨', quantity: 2, price: 20000 }
-    ],
-    total: 40000,
-    status: 'preparing',
-    orderTime: '2024-01-15 14:25'
-  },
-  {
-    id: '3',
-    customerName: '박고객',
-    items: [
-      { name: '후라이드 치킨', quantity: 1, price: 18000 }
-    ],
-    total: 18000,
-    status: 'ready',
-    orderTime: '2024-01-15 14:20'
-  }
+  // 기존 데이터...
 ])
 
 const menuItems = ref([
-  {
-    id: '1',
-    name: '후라이드 치킨',
-    description: '바삭바삭한 클래식 후라이드',
-    price: 18000,
-    category: '치킨',
-    available: true
-  },
-  {
-    id: '2',
-    name: '양념 치킨',
-    description: '달콤매콤한 양념치킨',
-    price: 20000,
-    category: '치킨',
-    available: true
-  },
-  {
-    id: '3',
-    name: '치킨무',
-    description: '아삭한 치킨무',
-    price: 2000,
-    category: '사이드',
-    available: false
-  }
+  // 기존 데이터...
 ])
 
 // 계산된 속성
@@ -235,6 +193,9 @@ const loadStoreInfo = async () => {
     const response = await storeApi.getMyStore()
     console.log('📦 API 응답:', response)
     
+    // 👇 currentStoreId 설정
+    currentStoreId.value = response.id
+
     // 백엔드 응답에 맞게 데이터 설정
     restaurant.value = {
       id: response.id || null,
@@ -269,11 +230,12 @@ const loadStoreInfo = async () => {
     }
     
     console.log('✅ 가게 정보 로드 완료:', restaurant.value.name)
+    console.log('🏪 현재 가게 ID:', currentStoreId.value)
     
   } catch (err) {
     console.error('❌ 가게 정보 로딩 실패:', err);
     
-    // 👈 404 에러면 가게 등록 페이지로 리다이렉트
+    // 404 에러면 가게 등록 페이지로 리다이렉트
     if (err.response?.status === 404) {
       console.log('📝 등록된 가게가 없음 - 가게 등록 페이지로 이동');
       alert('등록된 가게가 없습니다. 가게를 등록해주세요.');
@@ -282,7 +244,11 @@ const loadStoreInfo = async () => {
     }
     
     console.log('❌ API 연결 실패 - 목업 데이터 사용')
+    // 👇 목업 데이터 사용 시에도 임시 ID 설정
+    currentStoreId.value = 1
+    
     // 목업 데이터로 fallback
+    restaurant.value.id = 1
     restaurant.value.name = '테스트 치킨집'
     restaurant.value.category = 'CHICKEN'
     restaurant.value.rating = 4.5
@@ -295,27 +261,7 @@ const loadStoreInfo = async () => {
   }
 }
 
-const handleRefresh = async () => {
-  console.log('🔄 가게 정보 새로고침 요청됨')
-  await loadStoreInfo()
-}
-
-const openEditRestaurantModal = () => {
-  if (isProcessing.value) {
-    alert('다른 작업이 진행 중입니다. 잠시 후 다시 시도해주세요.')
-    return
-  }
-  showEditRestaurantModal.value = true
-}
-
-const cancelEdit = () => {
-  if (isProcessing.value) {
-    const confirmed = confirm('작업이 진행 중입니다. 정말 취소하시겠습니까?')
-    if (!confirmed) return
-  }
-  showEditRestaurantModal.value = false
-}
-
+// saveRestaurantInfo 함수에서도 currentStoreId 업데이트
 const saveRestaurantInfo = async (formData) => {
   if (isProcessing.value) {
     alert('다른 작업이 진행 중입니다. 잠시 후 다시 시도해주세요.')
@@ -363,6 +309,9 @@ const saveRestaurantInfo = async (formData) => {
     const freshData = await storeApi.getMyStore()
     console.log('📦 최신 데이터:', freshData)
     
+    // 👇 currentStoreId도 업데이트
+    currentStoreId.value = freshData.id
+    
     // 명시적으로 모든 필드 업데이트
     restaurant.value = {
       id: freshData.id || null,
@@ -386,6 +335,7 @@ const saveRestaurantInfo = async (formData) => {
     }
     
     console.log('✅ 업데이트된 restaurant 데이터:', restaurant.value)
+    console.log('🏪 업데이트된 가게 ID:', currentStoreId.value)
     
     showEditRestaurantModal.value = false
     console.log('🎉 모든 정보 저장 및 업데이트 완료!')
@@ -394,6 +344,79 @@ const saveRestaurantInfo = async (formData) => {
   } catch (err) {
     console.error('❌ 서버 저장 실패:', err)
     alert('서버 저장에 실패했습니다: ' + (err.message || '알 수 없는 오류'))
+  } finally {
+    loading.value = false
+    isProcessing.value = false
+    currentOperation.value = ''
+  }
+}
+
+// 나머지 함수들은 그대로...
+const handleRefresh = async () => {
+  console.log('🔄 가게 정보 새로고침 요청됨')
+  await loadStoreInfo()
+}
+
+const openEditRestaurantModal = () => {
+  if (isProcessing.value) {
+    alert('다른 작업이 진행 중입니다. 잠시 후 다시 시도해주세요.')
+    return
+  }
+  showEditRestaurantModal.value = true
+}
+
+const cancelEdit = () => {
+  if (isProcessing.value) {
+    const confirmed = confirm('작업이 진행 중입니다. 정말 취소하시겠습니까?')
+    if (!confirmed) return
+  }
+  showEditRestaurantModal.value = false
+}
+
+const openEditHoursModal = () => {
+  if (isProcessing.value) {
+    alert('다른 작업이 진행 중입니다. 잠시 후 다시 시도해주세요.')
+    return
+  }
+  showEditHoursModal.value = true
+}
+
+const cancelEditHours = () => {
+  if (isProcessing.value) {
+    const confirmed = confirm('작업이 진행 중입니다. 정말 취소하시겠습니까?')
+    if (!confirmed) return
+  }
+  showEditHoursModal.value = false
+}
+
+const saveStoreHours = async (hoursData) => {
+  if (isProcessing.value) {
+    alert('다른 작업이 진행 중입니다. 잠시 후 다시 시도해주세요.')
+    return
+  }
+
+  try {
+    isProcessing.value = true
+    loading.value = true
+    currentOperation.value = '운영시간 저장'
+    
+    console.log('🔄 운영시간 저장 시작...', hoursData)
+    
+    await storeApi.updateStoreHours(hoursData)
+    
+    alert('운영시간이 성공적으로 저장되었습니다!')
+    showEditHoursModal.value = false
+    
+    // 최신 데이터 다시 로드
+    currentOperation.value = '최신 운영시간 불러오기'
+    const freshHours = await storeApi.getStoreHours()
+    storeHours.value = freshHours || []
+    
+    console.log('✅ 운영시간 저장 및 업데이트 완료!')
+    
+  } catch (error) {
+    console.error('❌ 운영시간 저장 실패:', error)
+    alert('운영시간 저장에 실패했습니다: ' + (error.message || '알 수 없는 오류'))
   } finally {
     loading.value = false
     isProcessing.value = false

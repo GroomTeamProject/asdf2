@@ -1,19 +1,23 @@
 package io.goorm.team02.core.stores.service;
 
-import io.goorm.team02.core.auth.security.JwtTokenProvider;
-import io.goorm.team02.core.auth.security.SecurityUtils;
-import io.goorm.team02.core.stores.controller.dto.StoreContactRequest;
-import io.goorm.team02.core.stores.controller.dto.StoreCreateRequest;
-import io.goorm.team02.core.stores.controller.dto.StoreDeliveryRequest;
-import io.goorm.team02.core.stores.controller.dto.StoreHolidayRequest;
-import io.goorm.team02.core.stores.controller.dto.StoreHolidayResponse;
-import io.goorm.team02.core.stores.controller.dto.StoreHourRequest;
-import io.goorm.team02.core.stores.controller.dto.StoreHourResponse;
-import io.goorm.team02.core.stores.controller.dto.StoreLocationRequest;
-import io.goorm.team02.core.stores.controller.dto.StoreStatusModifyResponse;
-import io.goorm.team02.core.stores.controller.dto.StoreStatusRequest;
-import io.goorm.team02.core.stores.controller.dto.StoreStatusResponse;
-import io.goorm.team02.core.stores.controller.dto.StoreUpdateRequest;
+import io.goorm.team02.core.orders.controller.dto.OrderResponse;
+import io.goorm.team02.core.orders.service.OrderService;
+import io.goorm.team02.core.stores.controller.dto.ordermanagement.StoreOrderDetailResponse;
+import io.goorm.team02.core.stores.controller.dto.ordermanagement.StoreOrderItemDetailResponse;
+import io.goorm.team02.core.stores.controller.dto.ordermanagement.StoreOrderOptionResponse;
+import io.goorm.team02.core.stores.controller.dto.ordermanagement.StoreOrderResponse;
+import io.goorm.team02.core.stores.controller.dto.storemanagement.StoreContactRequest;
+import io.goorm.team02.core.stores.controller.dto.storemanagement.StoreCreateRequest;
+import io.goorm.team02.core.stores.controller.dto.storemanagement.StoreDeliveryRequest;
+import io.goorm.team02.core.stores.controller.dto.storemanagement.StoreHolidayRequest;
+import io.goorm.team02.core.stores.controller.dto.storemanagement.StoreHolidayResponse;
+import io.goorm.team02.core.stores.controller.dto.storemanagement.StoreHourRequest;
+import io.goorm.team02.core.stores.controller.dto.storemanagement.StoreHourResponse;
+import io.goorm.team02.core.stores.controller.dto.storemanagement.StoreLocationRequest;
+import io.goorm.team02.core.stores.controller.dto.storemanagement.StoreStatusModifyResponse;
+import io.goorm.team02.core.stores.controller.dto.storemanagement.StoreStatusRequest;
+import io.goorm.team02.core.stores.controller.dto.storemanagement.StoreStatusResponse;
+import io.goorm.team02.core.stores.controller.dto.storemanagement.StoreUpdateRequest;
 import io.goorm.team02.core.stores.domain.Store;
 import io.goorm.team02.core.stores.domain.StoreHoliday;
 import io.goorm.team02.core.stores.domain.StoreHour;
@@ -53,6 +57,7 @@ public class StoreService {
     private final UserRepository userRepository;
     private final StoreHourRepository storeHourRepository;
     private final StoreHolidayRepository storeHolidayRepository;
+    private final OrderService orderService;
 
     /**
      * 가게 등록 (최초 1회)
@@ -783,5 +788,85 @@ public class StoreService {
         }
 
         return "영업시간 정보를 확인해주세요";
+    }
+
+    /**
+     * 주문 상세 조회 (가게 사장용)
+     */
+    public StoreOrderDetailResponse getOrderDetail(Long orderId) {
+        log.info("=== 주문 상세 조회 시작 ===");
+        log.info("조회 요청 주문 ID: {}", orderId);
+
+        Long currentUserId = getCurrentUserId();
+        log.info("JWT에서 추출한 사용자 ID: {}", currentUserId);
+
+        Store store = getMyStore();
+        if (store == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없음");
+        }
+
+        try {
+            OrderResponse order = orderService.getOrderDetail(orderId);
+
+            // 해당 주문이 내 가게의 주문인지 확인
+            if (!order.storeId().equals(store.getId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "다른 가게의 주문은 조회할 수 없습니다");
+            }
+
+            StoreOrderDetailResponse response = convertToStoreOrderDetailResponse(order);
+
+            log.info("주문 상세 조회 완료 - 주문번호: {}, 고객: {}",
+                    order.orderNumber(), order.userName());
+            log.info("=== 주문 상세 조회 완료 ===");
+
+            return response;
+
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("주문 상세 조회 실패: {}", e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "주문 상세 조회 중 오류가 발생했습니다");
+        }
+    }
+
+    /**
+     * OrderResponse -> StoreOrderDetailResponse 변환
+     */
+    private StoreOrderDetailResponse convertToStoreOrderDetailResponse(OrderResponse order) {
+        List<StoreOrderItemDetailResponse> orderItems = order.orderItems().stream()
+                .map(item -> new StoreOrderItemDetailResponse(
+                        item.menuName(),
+                        item.quantity(),
+                        item.menuPrice(),
+                        item.totalPrice(),
+                        item.options().stream()
+                                .map(option -> new StoreOrderOptionResponse(
+                                        option.optionName(),
+                                        option.optionItemName(),
+                                        option.additionalPrice()
+                                ))
+                                .collect(Collectors.toList())
+                ))
+                .collect(Collectors.toList());
+
+        return new StoreOrderDetailResponse(
+                order.id(),
+                order.orderNumber(),
+                order.userName(),
+                order.phone(),
+                order.deliveryAddress(),
+                order.deliveryDetailAddress(),
+                order.orderMemo(),
+                order.status(),
+                order.menuTotalAmount(),
+                order.deliveryFee(),
+                order.totalAmount(),
+                order.orderedAt(),
+                order.acceptedAt(),
+                order.minCookingTime(),
+                order.maxCookingTime(),
+                order.rejectReason(),
+                orderItems
+        );
     }
 }
