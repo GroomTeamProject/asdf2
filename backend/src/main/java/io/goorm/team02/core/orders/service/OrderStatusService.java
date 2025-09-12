@@ -55,6 +55,18 @@ public class OrderStatusService {
     }
 
     /**
+     * 배달 시작
+     */
+    @Transactional
+    public OrderResponse startDelivery(Long orderId) {
+        Order order = orderService.getOrderById(orderId);
+        order.startDelivery();
+
+        Order dbOrder = orderRepository.save(order);
+        return OrderResponse.from(dbOrder);
+    }
+
+    /**
      * 배달 완료
      */
     @Transactional

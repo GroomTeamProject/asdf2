@@ -49,4 +49,5 @@ public record OrderRequest(
 
 			@Schema(description = "추가 가격", example = "2000.00") BigDecimal additionalPrice) {
 	}
+
 }

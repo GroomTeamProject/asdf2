@@ -1,7 +1,6 @@
 package io.goorm.team02.core.orders.service;
 
 import io.goorm.team02.core.orders.controller.dto.OrderRequest;
-import io.goorm.team02.core.orders.controller.dto.OrderResponse;
 import io.goorm.team02.core.orders.domain.Order;
 import io.goorm.team02.core.orders.repository.OrderRepository;
 import io.goorm.team02.core.users.domain.User;
@@ -26,7 +25,6 @@ public class OrderService {
     private final StoreRepository storeRepository;
     private final MenuRepository menuRepository;
 
-
     // ================================
     // API Methods
     // ================================
@@ -40,28 +38,23 @@ public class OrderService {
 
     }
 
-
     // ================================
-    // 비즈니스 로직
+    // Business Logic
     // ================================
     @Transactional
-    public OrderResponse create(OrderRequest orderRequest) {
-        // 1. 엔티티 참조 조회 및 검증 (서비스의 역할)
-        User user = userRepository.findById(orderRequest.userId())
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + orderRequest.userId()));
-
-        Store store = storeRepository.findById(orderRequest.storeId())
-                .orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다: " + orderRequest.storeId()));
+    public Order create(OrderRequest orderRequest) {
+        // 1. 엔티티 참조 조회 & 검증
+        User user = getUserById(orderRequest.userId());
+        Store store = getStoreById(orderRequest.storeId());
 
         // 2. 메뉴 정보 조회 (주문 시점에서의 메뉴 정보 스냅샷)
         Map<Long, Menu> menuMap = getMenuMap(orderRequest.orderItems());
 
-        // 3. Order 도메인에 위임
+        // 3. Order 도메인에 생성 요청
         Order order = Order.create(user, store, orderRequest, menuMap);
 
         // 4. 저장
-        Order dbOrder = orderRepository.save(order);
-        return OrderResponse.from(dbOrder);
+        return orderRepository.save(order);
     }
 
     /**
@@ -81,7 +74,7 @@ public class OrderService {
      * 가게의 모든 주문 조회
      */
     // TODO: 모든 주문 조회에서는 상세 정보를 제공할 필요 없음
-    public List<OrderResponse> getAll(Long storeId) {
+    public List<Order> getAll(Long storeId) {
         List<Order> orders = getAllOrdersByStoreId(storeId);
 
         // JPA 지연 로딩으로 orderItems와 options를 가져옴
@@ -92,21 +85,33 @@ public class OrderService {
             });
         });
 
-        return orders.stream()
-                .map(OrderResponse::from)
-                .toList();
+        return orders;
     }
 
     /**
      * 주문 상세 조회
      */
-    public OrderResponse getOrderDetail(Long orderId) {
+    public Order getOrderDetail(Long orderId) {
         Order order = getOrderById(orderId);
 
         order.getOrderItems().forEach(orderItem -> {
             orderItem.getOptions().size(); // 지연 로딩 트리거
         });
 
-        return OrderResponse.from(order);
+        return order;
     }
+
+    // ================================
+    // Internal Methods
+    // ================================
+    private User getUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+    }
+
+    private Store getStoreById(Long storeId) {
+        return storeRepository.findById(storeId)
+                .orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다: " + storeId));
+    }
+
 }

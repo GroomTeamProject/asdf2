@@ -203,17 +203,29 @@ class OrderTest {
     }
 
     @Test
-    @DisplayName("deliver - 배달 완료 (READY 상태)")
-    void deliverFromReady() {
+    @DisplayName("startDelivery - 배달 시작 (READY 상태)")
+    void startDeliveryFromReady() {
         // given
         order.setStatus(OrderStatus.READY);
 
         // when
-        order.deliver();
+        order.startDelivery();
 
         // then
-        assertThat(order.getStatus()).isEqualTo(OrderStatus.DELIVERED);
-        assertThat(order.getDeliveredAt()).isNotNull();
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PICKED_UP);
+        assertThat(order.getPickedUpAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("startDelivery - 배달 시작 불가능한 상태에서 예외 발생")
+    void startDeliveryWithInvalidStatus() {
+        // given
+        order.setStatus(OrderStatus.COOKING);
+
+        // when & then
+        assertThatThrownBy(() -> order.startDelivery())
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("배달을 시작할 수 없는 주문 상태입니다");
     }
 
     @Test
@@ -234,7 +246,7 @@ class OrderTest {
     @DisplayName("deliver - 배달 불가능한 상태에서 예외 발생")
     void deliverWithInvalidStatus() {
         // given
-        order.setStatus(OrderStatus.COOKING);
+        order.setStatus(OrderStatus.READY);
 
         // when & then
         assertThatThrownBy(() -> order.deliver())

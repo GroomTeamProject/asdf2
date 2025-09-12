@@ -81,6 +81,7 @@ public class Order extends BaseEntity {
 	private LocalDateTime cookingStartedAt;
 	private LocalDateTime cookingCompletedAt;
 	private LocalDateTime deliveredAt;
+	private LocalDateTime pickedUpAt;
 	private LocalDateTime cancelledAt;
 	private LocalDateTime rejectedAt;
 
@@ -186,11 +187,23 @@ public class Order extends BaseEntity {
 		changeStatus(OrderStatus.READY);
 	}
 
+
+    /**
+     * 배달 시작
+     */
+    public void startDelivery() {
+        if (this.status != OrderStatus.READY) {
+            throw new IllegalStateException("배달을 시작할 수 없는 주문 상태입니다. 현재 상태: " + this.status);
+        }
+
+        changeStatus(OrderStatus.PICKED_UP);
+    }
+
 	/**
 	 * 배달 완료
 	 */
 	public void deliver() {
-		if (this.status != OrderStatus.READY && this.status != OrderStatus.PICKED_UP) {
+		if (this.status != OrderStatus.PICKED_UP) {
 			throw new IllegalStateException("배달 완료할 수 없는 주문 상태입니다. 현재 상태: " + this.status);
 		}
 
@@ -227,15 +240,13 @@ public class Order extends BaseEntity {
 	private void updateStatusTimestamp(OrderStatus status) {
 		LocalDateTime now = LocalDateTime.now();
 
-		// TODO: PICKED_UP 추가
 		switch (status) {
 			case PENDING -> {
 			} // PENDING은 타임스탬프 없음
 			case ACCEPTED -> this.acceptedAt = now;
 			case COOKING -> this.cookingStartedAt = now;
 			case READY -> this.cookingCompletedAt = now;
-			case PICKED_UP -> {
-			} // PICKED_UP은 타임스탬프 없음 (필요시 추가)
+			case PICKED_UP -> this.pickedUpAt = now;
 			case DELIVERED -> this.deliveredAt = now;
 			case CANCELLED -> this.cancelledAt = now;
 			case REJECTED -> this.rejectedAt = now;
