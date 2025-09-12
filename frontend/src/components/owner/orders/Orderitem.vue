@@ -129,11 +129,18 @@
       
       <!-- 주문 상세 보기 -->
       <button 
-        @click="showOrderDetail"
-        class="border border-gray-400 px-3 py-2 rounded text-sm hover:bg-gray-100 transition-colors"
-      >
-        📋 상세보기
-      </button>
+  @click="showOrderDetailModal = true"
+  class="border border-gray-400 px-3 py-2 rounded text-sm hover:bg-gray-100 transition-colors"
+>
+  📋 상세보기
+</button>
+
+      <!-- 주문 상세 모달 추가 -->
+      <OrderDetail 
+        :show="showOrderDetailModal"
+        :orderId="order.id"
+        @close="showOrderDetailModal = false"
+      />
     </div>
   </div>
 
@@ -232,6 +239,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import OrderDetail from './OrderDetail.vue'
 
 const props = defineProps({
   order: {
@@ -256,6 +264,7 @@ const emit = defineEmits([
 // 다이얼로그 상태
 const showAcceptDialog = ref(false)
 const showRejectDialog = ref(false)
+const showOrderDetailModal = ref(false)
 
 // 폼 데이터 - 가게 기본 배달시간으로 초기화
 const acceptForm = ref({
@@ -331,12 +340,6 @@ const rejectOrder = () => {
   
   showRejectDialog.value = false
   rejectForm.value.reason = ''
-}
-
-// 주문 상세 보기 (추후 구현)
-const showOrderDetail = () => {
-  // TODO: 주문 상세 모달 또는 페이지로 이동
-  console.log('주문 상세 보기:', props.order.id)
 }
 
 // 유틸리티 함수들
