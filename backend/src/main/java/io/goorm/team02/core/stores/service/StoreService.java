@@ -812,35 +812,45 @@ public class StoreService {
         }
 
         try {
-            // 1. 오늘 주문 개수
+            // 1. 오늘 통계 데이터
             Long todayOrderCount = storeRepository.countTodayOrdersByStoreId(store.getId());
-
-            // 2. 오늘 매출
             BigDecimal todayRevenue = storeRepository.getTodayRevenueByStoreId(store.getId());
 
-            // 3. 가게 평점 및 리뷰 개수 (수정됨)
+            StoreDashboardResponse.TodayStats todayStats = new StoreDashboardResponse.TodayStats(todayOrderCount, todayRevenue);
+
+            // 2. 가게 정보
             BigDecimal storeRating = reviewRepository.findAverageRatingByStoreId(store.getId());
             if (storeRating == null) {
                 storeRating = BigDecimal.ZERO;
             }
             Long reviewCount = reviewRepository.countByStoreId(store.getId());
-
-            // 4. 오늘 운영시간
-            String todayOperatingHours = getTodayOperatingHours(store);
-
-            // 5. 총 주문 수
             Long totalOrderCount = storeRepository.countTotalOrdersByStoreId(store.getId());
 
-            // 6. 최근 주문 정보 (최대 5개)
-            List<RecentOrderInfo> recentOrders = getRecentOrdersInfo(store.getId());
+            StoreDashboardResponse.RestaurantInfo restaurant = new StoreDashboardResponse.RestaurantInfo(
+                    store.getId(),
+                    store.getName(),
+                    storeRating.setScale(1, java.math.RoundingMode.HALF_UP),
+                    reviewCount,
+                    totalOrderCount
+            );
+
+            // 3. 운영시간 정보
+            List<StoreDashboardResponse.StoreHourInfo> storeHours = store.getStoreHours().stream()
+                    .map(hour -> new StoreDashboardResponse.StoreHourInfo(
+                            hour.getDayOfWeek(),
+                            hour.getOpenTime() != null ? hour.getOpenTime().toString() : null,
+                            hour.getCloseTime() != null ? hour.getCloseTime().toString() : null,
+                            hour.getIsClosed()
+                    ))
+                    .collect(Collectors.toList());
+
+            // 4. 최근 주문 정보
+            List<StoreDashboardResponse.RecentOrderInfo> recentOrders = getRecentOrdersForDashboard(store.getId());
 
             StoreDashboardResponse response = new StoreDashboardResponse(
-                    todayOrderCount,
-                    todayRevenue,
-                    storeRating.setScale(1, java.math.RoundingMode.HALF_UP), // 소수점 1자리로 반올림
-                    reviewCount,
-                    todayOperatingHours,
-                    totalOrderCount,
+                    todayStats,
+                    restaurant,
+                    storeHours,
                     recentOrders
             );
 
@@ -857,10 +867,9 @@ public class StoreService {
     }
 
     /**
-     * 최근 주문 정보 조회 (StoreRepository 사용)
+     * 대시보드용 최근 주문 정보 조회
      */
-    private List<RecentOrderInfo> getRecentOrdersInfo(Long storeId) {
-        // 최근 5개 주문 조회
+    private List<StoreDashboardResponse.RecentOrderInfo> getRecentOrdersForDashboard(Long storeId) {
         org.springframework.data.domain.Pageable pageable =
                 org.springframework.data.domain.PageRequest.of(0, 5);
 
@@ -868,20 +877,47 @@ public class StoreService {
 
         return recentOrders.stream()
                 .map(order -> {
-                    // 긴급 주문 여부 판단 (30분 이상 대기 중인 PENDING 상태)
-                    boolean isUrgent = isUrgentOrder(order);
+                    // 주문 상태를 프론트엔드 형식으로 변환
+                    String frontendStatus = convertOrderStatusToFrontend(order.getStatus());
 
-                    return new RecentOrderInfo(
+                    // 주문 아이템 정보
+                    List<StoreDashboardResponse.OrderItemInfo> items = order.getOrderItems().stream()
+                            .map(item -> new StoreDashboardResponse.OrderItemInfo(
+                                    item.getMenuName(),
+                                    item.getQuantity()
+                            ))
+                            .collect(Collectors.toList());
+
+                    // 주문 시간 포맷팅
+                    String orderTime = order.getOrderedAt().format(
+                            java.time.format.DateTimeFormatter.ofPattern("MM월 dd일 HH:mm")
+                    );
+
+                    return new StoreDashboardResponse.RecentOrderInfo(  // 여기도 수정!
                             order.getId(),
                             order.getOrderNumber(),
                             order.getUser() != null ? order.getUser().getName() : "알 수 없음",
                             order.getTotalAmount(),
-                            order.getStatus().toString(),
-                            order.getOrderedAt(),
-                            isUrgent
+                            frontendStatus,
+                            orderTime,
+                            items
                     );
                 })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 주문 상태를 프론트엔드 형식으로 변환
+     */
+    private String convertOrderStatusToFrontend(io.goorm.team02.core.orders.domain.enums.OrderStatus status) {
+        switch (status) {
+            case PENDING: return "pending";
+            case ACCEPTED: return "preparing";
+            case COOKING: return "preparing";
+            case READY: return "ready";
+            case DELIVERED: return "delivered";
+            default: return status.toString().toLowerCase();
+        }
     }
 
     /**
