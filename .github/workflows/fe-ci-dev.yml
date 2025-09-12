@@ -3,8 +3,6 @@ name: Vue.js CI - Build (develop)
 on:
   pull_request:
     branches: [ develop ]
-    paths:
-      - 'frontend/**'
 
 jobs:
   build:
