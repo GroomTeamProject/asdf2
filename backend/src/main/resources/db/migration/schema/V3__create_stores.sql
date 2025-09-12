@@ -67,6 +67,6 @@ ALTER TABLE `stores`
 ALTER TABLE `store_hours`
     ADD FOREIGN KEY (`store_id`) REFERENCES `stores` (`id`) ON DELETE CASCADE;
 
--- 👈 휴무일 테이블 외래키 추가
+-- 휴무일 테이블 외래키 추가
 ALTER TABLE `store_holidays`
     ADD FOREIGN KEY (`store_id`) REFERENCES `stores` (`id`) ON DELETE CASCADE;
