@@ -7,11 +7,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: |
-      contains(github.event.pull_request.changed_files, 'frontend/') ||
-      contains(github.event.pull_request.changed_files, '.github/workflows/')
 
     steps:
+      - name: Debug - Check changed files
+        run: |
+          echo "Changed files: ${{ github.event.pull_request.changed_files }}"
+          echo "Changed files count: ${{ github.event.pull_request.changed_files == 0 }}"
+          echo "Contains frontend: ${{ contains(github.event.pull_request.changed_files, 'frontend/') }}"
+          echo "Contains workflows: ${{ contains(github.event.pull_request.changed_files, '.github/workflows/') }}"
+          
       - name: Checkout repository
         uses: actions/checkout@v4
 
