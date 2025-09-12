@@ -52,3 +52,7 @@ jobs:
           docker logs springboot-app
           exit 1
         fi
+
+    - name: Clean up unused Docker images
+      run: docker image prune -af
+
