@@ -2,6 +2,8 @@ package io.goorm.team02.core.orders.domain;
 
 import io.goorm.team02.core.common.domain.BaseEntity;
 import io.goorm.team02.core.deliveries.domain.Delivery;
+import io.goorm.team02.core.menus.domain.Menu;
+import io.goorm.team02.core.orders.controller.dto.OrderRequest;
 import io.goorm.team02.core.orders.domain.enums.OrderStatus;
 import io.goorm.team02.core.payments.domain.Payment;
 import io.goorm.team02.core.reviews.domain.Review;
@@ -23,6 +25,7 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -60,20 +63,19 @@ public class Order extends BaseEntity {
 	private String orderMemo;
 
 	@Column(nullable = false, precision = 10, scale = 2)
-	private BigDecimal menuTotalAmount;
-
-	@Column(precision = 10, scale = 2)
-	private BigDecimal deliveryFee = BigDecimal.ZERO;
+	private BigDecimal menuTotalAmount = BigDecimal.ZERO;
 
 	@Column(precision = 10, scale = 2)
 	private BigDecimal discountAmount = BigDecimal.ZERO;
+
+	@Column(precision = 10, scale = 2)
+	private BigDecimal deliveryFee = BigDecimal.ZERO;
 
 	@Column(nullable = false, precision = 10, scale = 2)
 	private BigDecimal totalAmount;
 
 	@Enumerated(EnumType.STRING)
 	private OrderStatus status = OrderStatus.PENDING;
-
 	private LocalDateTime orderedAt = LocalDateTime.now();
 	private LocalDateTime acceptedAt;
 	private LocalDateTime cookingStartedAt;
@@ -81,16 +83,14 @@ public class Order extends BaseEntity {
 	private LocalDateTime deliveredAt;
 	private LocalDateTime cancelledAt;
 	private LocalDateTime rejectedAt;
-	
+
 	@Column(name = "cancel_reason", length = 500)
 	private String cancelReason;
-	
 	@Column(name = "reject_reason", length = 500)
 	private String rejectReason;
 
 	@Column(name = "min_cooking_time")
 	private Integer minCookingTime;
-
 	@Column(name = "max_cooking_time")
 	private Integer maxCookingTime;
 
@@ -158,7 +158,7 @@ public class Order extends BaseEntity {
 		if (this.status != OrderStatus.PENDING) {
 			throw new IllegalStateException("수락할 수 없는 주문 상태입니다. 현재 상태: " + this.status);
 		}
-		
+
 		this.minCookingTime = minCookingTime;
 		this.maxCookingTime = maxCookingTime;
 		changeStatus(OrderStatus.ACCEPTED);
@@ -171,7 +171,7 @@ public class Order extends BaseEntity {
 		if (this.status != OrderStatus.ACCEPTED) {
 			throw new IllegalStateException("조리를 시작할 수 없는 주문 상태입니다. 현재 상태: " + this.status);
 		}
-		
+
 		changeStatus(OrderStatus.COOKING);
 	}
 
@@ -182,7 +182,7 @@ public class Order extends BaseEntity {
 		if (this.status != OrderStatus.COOKING) {
 			throw new IllegalStateException("조리 완료할 수 없는 주문 상태입니다. 현재 상태: " + this.status);
 		}
-		
+
 		changeStatus(OrderStatus.READY);
 	}
 
@@ -193,7 +193,7 @@ public class Order extends BaseEntity {
 		if (this.status != OrderStatus.READY && this.status != OrderStatus.PICKED_UP) {
 			throw new IllegalStateException("배달 완료할 수 없는 주문 상태입니다. 현재 상태: " + this.status);
 		}
-		
+
 		changeStatus(OrderStatus.DELIVERED);
 	}
 
@@ -204,7 +204,7 @@ public class Order extends BaseEntity {
 		if (this.status != OrderStatus.PENDING && this.status != OrderStatus.ACCEPTED) {
 			throw new IllegalStateException("취소할 수 없는 주문 상태입니다. 현재 상태: " + this.status);
 		}
-		
+
 		this.cancelReason = reason;
 		changeStatus(OrderStatus.CANCELLED);
 	}
@@ -216,7 +216,7 @@ public class Order extends BaseEntity {
 		if (this.status != OrderStatus.PENDING) {
 			throw new IllegalStateException("거절할 수 없는 주문 상태입니다. 현재 상태: " + this.status);
 		}
-		
+
 		this.rejectReason = reason;
 		changeStatus(OrderStatus.REJECTED);
 	}
@@ -229,9 +229,13 @@ public class Order extends BaseEntity {
 
 		// TODO: PICKED_UP 추가
 		switch (status) {
+			case PENDING -> {
+			} // PENDING은 타임스탬프 없음
 			case ACCEPTED -> this.acceptedAt = now;
 			case COOKING -> this.cookingStartedAt = now;
 			case READY -> this.cookingCompletedAt = now;
+			case PICKED_UP -> {
+			} // PICKED_UP은 타임스탬프 없음 (필요시 추가)
 			case DELIVERED -> this.deliveredAt = now;
 			case CANCELLED -> this.cancelledAt = now;
 			case REJECTED -> this.rejectedAt = now;
@@ -248,21 +252,15 @@ public class Order extends BaseEntity {
 		if (store == null) {
 			throw new IllegalStateException("가게 정보가 필요합니다");
 		}
-		if (orderItems == null || orderItems.isEmpty()) {
-			throw new IllegalStateException("주문 아이템이 필요합니다");
-		}
-		if (totalAmount == null || totalAmount.compareTo(BigDecimal.ZERO) <= 0) {
-			throw new IllegalStateException("주문 금액이 올바르지 않습니다");
-		}
 	}
 
 	/**
 	 * 주문 생성 팩토리 메서드
 	 */
-	public static Order create(User user, Store store, String deliveryAddress, 
-			String deliveryDetailAddress, String phone, String orderMemo, 
-			List<OrderItem> orderItems, BigDecimal deliveryFee, BigDecimal discountAmount) {
-		
+	public static Order create(User user, Store store, String deliveryAddress,
+			String deliveryDetailAddress, String phone, String orderMemo,
+			BigDecimal deliveryFee) {
+
 		Order order = new Order();
 		order.setUser(user);
 		order.setStore(store);
@@ -270,18 +268,45 @@ public class Order extends BaseEntity {
 		order.setDeliveryDetailAddress(deliveryDetailAddress);
 		order.setPhone(phone);
 		order.setOrderMemo(orderMemo);
-		order.setOrderItems(orderItems);
 		order.setDeliveryFee(deliveryFee != null ? deliveryFee : BigDecimal.ZERO);
-		order.setDiscountAmount(discountAmount != null ? discountAmount : BigDecimal.ZERO);
-		
+
 		// 주문 번호 생성
 		order.generateOrderNumber();
 		order.setOrderedAt(LocalDateTime.now());
 		order.setStatus(OrderStatus.PENDING);
-		
-		// 총액 계산
+
+		// 주문 검증
+		order.validate();
+
+		return order;
+	}
+
+	/**
+	 * 주문과 주문 아이템들을 함께 생성하는 팩토리 메서드
+	 */
+	public static Order create(User user, Store store, OrderRequest orderRequest, Map<Long, Menu> menuMap) {
+
+		// 1. Order 생성
+		Order order = new Order();
+		order.setUser(user);
+		order.setStore(store);
+		order.setDeliveryAddress(orderRequest.deliveryAddress());
+		order.setDeliveryDetailAddress(orderRequest.deliveryDetailAddress());
+		order.setPhone(orderRequest.phone());
+		order.setOrderMemo(orderRequest.orderMemo());
+		order.setDeliveryFee(store.getDeliveryFee());
+
+		order.generateOrderNumber();
+		order.setOrderedAt(LocalDateTime.now());
+		order.setStatus(OrderStatus.PENDING);
+
+		// 2. OrderItem들 생성 (OrderItem 도메인에 위임)
+		List<OrderItem> orderItems = OrderItem.create(order, orderRequest.orderItems(), menuMap);
+		order.setOrderItems(orderItems);
+
+		// 3. 가격 계산
 		order.calculateTotalAmount();
-		
+
 		return order;
 	}
 

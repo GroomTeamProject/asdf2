@@ -6,9 +6,6 @@ import io.goorm.team02.core.orders.controller.dto.OrderRejectRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderAcceptRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderCancelRequest;
 import io.goorm.team02.core.orders.domain.Order;
-import io.goorm.team02.core.orders.domain.OrderItem;
-import io.goorm.team02.core.orders.domain.OrderItemOption;
-import io.goorm.team02.core.orders.domain.enums.OrderStatus;
 import io.goorm.team02.core.orders.repository.OrderRepository;
 import io.goorm.team02.core.users.domain.User;
 import io.goorm.team02.core.users.repository.UserinfoRepository;
@@ -16,10 +13,9 @@ import io.goorm.team02.core.stores.domain.Store;
 import io.goorm.team02.core.stores.repository.StoreRepository;
 import io.goorm.team02.core.menus.domain.Menu;
 import io.goorm.team02.core.menus.repository.MenuRepository;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,119 +31,35 @@ public class OrderService {
 
     @Transactional
     public OrderResponse create(OrderRequest orderRequest) {
-        // 1. 엔티티 조회 및 검증
+        // 1. 엔티티 참조 조회 및 검증 (서비스의 역할)
         User user = userRepository.findById(orderRequest.userId())
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + orderRequest.userId()));
 
         Store store = storeRepository.findById(orderRequest.storeId())
                 .orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다: " + orderRequest.storeId()));
 
-        // 2. 주문 아이템 생성
-        List<OrderItem> orderItems = createOrderItems(orderRequest.orderItems());
+        // 2. 메뉴 정보 조회 (주문 시점에서의 메뉴 정보 스냅샷)
+        Map<Long, Menu> menuMap = getMenuMap(orderRequest.orderItems());
 
-        // 3. 할인 금액 계산
-        BigDecimal discountAmount = calculateDiscount(user, calculateMenuTotalAmount(orderItems));
+        // 3. Order 도메인에 위임
+        Order order = Order.create(user, store, orderRequest, menuMap);
 
-        // 4. 도메인에서 주문 생성
-        Order order = Order.create(
-                user,
-                store,
-                orderRequest.deliveryAddress(),
-                orderRequest.deliveryDetailAddress(),
-                orderRequest.phone(),
-                orderRequest.orderMemo(),
-                orderItems,
-                store.getDeliveryFee(),
-                discountAmount);
-
-        // 5. 주문 검증
-        order.validate();
-
-        // 6. 저장
+        // 4. 저장
         Order savedOrder = orderRepository.save(order);
         return OrderResponse.from(savedOrder);
     }
 
     /**
-     * 주문 아이템들 생성
+     * 메뉴 정보를 Map으로 조회 (서비스의 역할)
      */
-    private List<OrderItem> createOrderItems(List<OrderRequest.OrderItemRequest> itemRequests) {
-        List<OrderItem> orderItems = new ArrayList<>();
-
-        for (OrderRequest.OrderItemRequest itemRequest : itemRequests) {
-            Menu menu = menuRepository.findById(itemRequest.menuId())
-                    .orElseThrow(() -> new IllegalArgumentException("메뉴를 찾을 수 없습니다: " + itemRequest.menuId()));
-
-            // OrderItem 생성 (임시로 null order 설정)
-            OrderItem orderItem = new OrderItem();
-            orderItem.setMenu(menu);
-            orderItem.setMenuName(menu.getName());
-            orderItem.setMenuPrice(menu.getPrice());
-            orderItem.setQuantity(itemRequest.quantity());
-
-            // 옵션 생성
-            List<OrderItemOption> options = createOrderItemOptions(orderItem, itemRequest.options());
-            orderItem.setOptions(options);
-
-            // 총액 계산
-            orderItem.calculateTotalPrice();
-
-            orderItems.add(orderItem);
-        }
-
-        return orderItems;
-    }
-
-    /**
-     * 주문 아이템 옵션들 생성
-     */
-    private List<OrderItemOption> createOrderItemOptions(OrderItem orderItem,
-            List<OrderRequest.OrderItemOptionRequest> optionRequests) {
-        // 옵션이 없으면 빈 리스트 반환
-        if (optionRequests == null || optionRequests.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        List<OrderItemOption> options = new ArrayList<>();
-
-        for (OrderRequest.OrderItemOptionRequest optionRequest : optionRequests) {
-            // 필수 필드가 null이면 해당 옵션을 건너뛰기
-            if (optionRequest.optionName() == null || optionRequest.optionItemName() == null) {
-                continue;
-            }
-
-            OrderItemOption option = new OrderItemOption();
-            option.setOrderItem(orderItem);
-            option.setOptionName(optionRequest.optionName());
-            option.setOptionItemName(optionRequest.optionItemName());
-            option.setAdditionalPrice(optionRequest.additionalPrice());
-            options.add(option);
-        }
-
-        return options;
-    }
-
-    /**
-     * 메뉴 총액 계산
-     */
-    private BigDecimal calculateMenuTotalAmount(List<OrderItem> orderItems) {
-        if (orderItems == null || orderItems.isEmpty()) {
-            return BigDecimal.ZERO;
-        }
-
-        return orderItems.stream()
-                .map(OrderItem::getTotalPrice)
-                .filter(price -> price != null)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    /**
-     * 할인 금액 계산 (복잡한 비즈니스 로직)
-     */
-    private BigDecimal calculateDiscount(User user, BigDecimal amount) {
-        // TODO: 등급별 할인, 쿠폰, 이벤트 등 복잡한 할인 로직 구현
-        // 현재는 기본 할인 없음
-        return BigDecimal.ZERO;
+    private Map<Long, Menu> getMenuMap(List<OrderRequest.OrderItemRequest> itemRequests) {
+        List<Long> menuIds = itemRequests.stream()
+                .map(OrderRequest.OrderItemRequest::menuId)
+                .toList();
+        
+        List<Menu> menus = menuRepository.findAllById(menuIds);
+        return menus.stream()
+                .collect(Collectors.toMap(Menu::getId, menu -> menu));
     }
 
     /**

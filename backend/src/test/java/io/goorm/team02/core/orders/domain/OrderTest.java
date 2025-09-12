@@ -317,8 +317,6 @@ class OrderTest {
         // given
         order.setUser(user);
         order.setStore(store);
-        order.setOrderItems(orderItems);
-        order.setTotalAmount(new BigDecimal("38000.00"));
 
         // when & then
         // 예외가 발생하지 않아야 함
@@ -331,8 +329,6 @@ class OrderTest {
         // given
         order.setUser(null);
         order.setStore(store);
-        order.setOrderItems(orderItems);
-        order.setTotalAmount(new BigDecimal("38000.00"));
 
         // when & then
         assertThatThrownBy(() -> order.validate())
@@ -346,8 +342,6 @@ class OrderTest {
         // given
         order.setUser(user);
         order.setStore(null);
-        order.setOrderItems(orderItems);
-        order.setTotalAmount(new BigDecimal("38000.00"));
 
         // when & then
         assertThatThrownBy(() -> order.validate())
@@ -355,35 +349,6 @@ class OrderTest {
                 .hasMessageContaining("가게 정보가 필요합니다");
     }
 
-    @Test
-    @DisplayName("validate - orderItems가 null인 경우 예외 발생")
-    void validateWithNullOrderItems() {
-        // given
-        order.setUser(user);
-        order.setStore(store);
-        order.setOrderItems(null);
-        order.setTotalAmount(new BigDecimal("38000.00"));
-
-        // when & then
-        assertThatThrownBy(() -> order.validate())
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("주문 아이템이 필요합니다");
-    }
-
-    @Test
-    @DisplayName("validate - totalAmount가 0 이하인 경우 예외 발생")
-    void validateWithInvalidTotalAmount() {
-        // given
-        order.setUser(user);
-        order.setStore(store);
-        order.setOrderItems(orderItems);
-        order.setTotalAmount(BigDecimal.ZERO);
-
-        // when & then
-        assertThatThrownBy(() -> order.validate())
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("주문 금액이 올바르지 않습니다");
-    }
 
     @Test
     @DisplayName("create - 팩토리 메서드로 Order 생성")
@@ -394,12 +359,11 @@ class OrderTest {
         String phone = "010-1234-5678";
         String orderMemo = "문 앞에 놓아주세요";
         BigDecimal deliveryFee = new BigDecimal("3000.00");
-        BigDecimal discountAmount = new BigDecimal("1000.00");
 
         // when
         Order createdOrder = Order.create(
                 user, store, deliveryAddress, deliveryDetailAddress,
-                phone, orderMemo, orderItems, deliveryFee, discountAmount);
+                phone, orderMemo, deliveryFee);
 
         // then
         assertThat(createdOrder.getUser()).isEqualTo(user);
@@ -408,15 +372,12 @@ class OrderTest {
         assertThat(createdOrder.getDeliveryDetailAddress()).isEqualTo(deliveryDetailAddress);
         assertThat(createdOrder.getPhone()).isEqualTo(phone);
         assertThat(createdOrder.getOrderMemo()).isEqualTo(orderMemo);
-        assertThat(createdOrder.getOrderItems()).isEqualTo(orderItems);
         assertThat(createdOrder.getDeliveryFee()).isEqualByComparingTo(deliveryFee);
-        assertThat(createdOrder.getDiscountAmount()).isEqualByComparingTo(discountAmount);
 
         // 자동 설정된 값들
         assertThat(createdOrder.getOrderNumber()).isNotNull();
         assertThat(createdOrder.getOrderedAt()).isNotNull();
         assertThat(createdOrder.getStatus()).isEqualTo(OrderStatus.PENDING);
-        assertThat(createdOrder.getTotalAmount()).isEqualByComparingTo(new BigDecimal("38000.00"));
     }
 
     @Test
@@ -424,8 +385,7 @@ class OrderTest {
     void createOrderWithNullDeliveryFee() {
         // when
         Order createdOrder = Order.create(
-                user, store, "주소", "상세주소", "전화번호", "메모",
-                orderItems, null, BigDecimal.ZERO);
+                user, store, "주소", "상세주소", "전화번호", "메모", null);
 
         // then
         assertThat(createdOrder.getDeliveryFee()).isEqualByComparingTo(BigDecimal.ZERO);
@@ -436,8 +396,7 @@ class OrderTest {
     void createOrderWithNullDiscountAmount() {
         // when
         Order createdOrder = Order.create(
-                user, store, "주소", "상세주소", "전화번호", "메모",
-                orderItems, BigDecimal.ZERO, null);
+                user, store, "주소", "상세주소", "전화번호", "메모", BigDecimal.ZERO);
 
         // then
         assertThat(createdOrder.getDiscountAmount()).isEqualByComparingTo(BigDecimal.ZERO);
