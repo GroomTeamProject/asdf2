@@ -14,30 +14,30 @@
 
         <!-- 결제하기 버튼 -->
         <button class="button" :disabled="!widgetsReady" @click="requestPayment">
-            결제하기
+            결제하기 ({{ displayAmount.toLocaleString() }}원)
         </button>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
-import axios from "axios";
+import { ref, onMounted, computed, watch } from "vue";
 
 const couponApplied = ref(false);
 const widgetsReady = ref(false);
 let widgets = null;
 
+const orderInfo = JSON.parse(localStorage.getItem("orderInfo") || "{}");
+const baseAmount = ref(orderInfo?.totalAmount || 0);
+const displayAmount = computed(() => (couponApplied.value ? baseAmount.value - 5000 : baseAmount.value));
+
 onMounted(async () => {
-    if (!window.TossPayments) {
-        console.error("TossPayments SDK가 로딩되지 않았습니다.");
-        return;
-    }
+    if (!window.TossPayments) return;
 
     const tossPayments = window.TossPayments("test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm");
     const customerKey = "Pu_CmJW3lO06qzdfilC8J";
     widgets = tossPayments.widgets({ customerKey });
 
-    await widgets.setAmount({ currency: "KRW", value: 50000 });
+    await widgets.setAmount({ currency: "KRW", value: displayAmount.value });
 
     await Promise.all([
         widgets.renderPaymentMethods({ selector: "#payment-method", variantKey: "DEFAULT" }),
@@ -49,40 +49,25 @@ onMounted(async () => {
 
 watch(couponApplied, async (newVal) => {
     if (!widgets) return;
-    await widgets.setAmount({ currency: "KRW", value: newVal ? 45000 : 50000 });
+    await widgets.setAmount({ currency: "KRW", value: displayAmount.value });
 });
 
+// 결제 요청 (결제 완료 후 SuccessPage로 redirect)
 const requestPayment = async () => {
     if (!widgets) return;
 
-    try {
-        const paymentResult = await widgets.requestPayment({
-            orderId: "order-" + Date.now(),
-            orderName: "토스 티셔츠 외 2건",
-            successUrl: window.location.origin + "/success",
-            failUrl: window.location.origin + "/fail",
-            customerEmail: "customer123@gmail.com",
-            customerName: "김토스",
-            customerMobilePhone: "01012341234",
-        });
-
-        // 결제 완료 후 백엔드 저장
-        await axios.post("http://localhost:8080/api/payments", {
-            orderId: paymentResult.orderId,
-            orderName: paymentResult.orderName,
-            amount: paymentResult.amount.value,
-            paymentMethod: paymentResult.method,
-            pgProvider: paymentResult.pgProvider,
-            pgTid: paymentResult.pgTid,
-        });
-
-        alert("결제가 완료되었습니다!");
-    } catch (err) {
-        console.error(err);
-        alert("결제 실패!");
-    }
+    await widgets.requestPayment({
+        orderId: "order-" + Date.now(),
+        orderName: "장바구니 주문",
+        successUrl: window.location.origin + "/success", // ✅ redirect
+        failUrl: window.location.origin + "/fail",
+        customerEmail: orderInfo.customerEmail || "customer123@gmail.com",
+        customerName: orderInfo.customerName || "홍길동",
+        customerMobilePhone: orderInfo.phoneNumber || "01012341234",
+    });
 };
 </script>
+
 
 <style scoped>
 .payment-container {

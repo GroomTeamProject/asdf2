@@ -1,41 +1,33 @@
-// src/main/java/io/goorm/team02/core/payments/dto/PaymentResponse.java
 package io.goorm.team02.core.payments.dto;
 
+import java.math.BigDecimal;
+
 public class PaymentResponse {
-    private String paymentId;
-    private int amount;
+    private String paymentKey;
+    private Long orderId;
+    private BigDecimal amount;
     private String status;
 
-    public PaymentResponse() {
-    }
-
-    public PaymentResponse(String paymentId, int amount, String status) {
-        this.paymentId = paymentId;
+    public PaymentResponse(String paymentKey, Long orderId, BigDecimal amount, String status) {
+        this.paymentKey = paymentKey;
+        this.orderId = orderId;
         this.amount = amount;
         this.status = status;
     }
 
-    public String getPaymentId() {
-        return paymentId;
+    public String getPaymentKey() {
+        return paymentKey;
     }
 
-    public void setPaymentId(String paymentId) {
-        this.paymentId = paymentId;
+    public Long getOrderId() {
+        return orderId;
     }
 
-    public int getAmount() {
+    public BigDecimal getAmount() {
         return amount;
-    }
-
-    public void setAmount(int amount) {
-        this.amount = amount;
     }
 
     public String getStatus() {
         return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
 }

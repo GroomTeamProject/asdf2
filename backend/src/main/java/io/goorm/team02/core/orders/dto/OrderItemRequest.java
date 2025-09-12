@@ -1,19 +1,38 @@
 package io.goorm.team02.core.orders.dto;
 
-import io.goorm.team02.core.orders.domain.OrderItem;
-import lombok.Getter;
-import lombok.Setter;
+import java.math.BigDecimal;
 
-@Getter
-@Setter
 public class OrderItemRequest {
-    private String name;
-    private int quantity;
 
-    public OrderItem toOrderItem() {
-        OrderItem item = new OrderItem();
-        item.setName(name);
-        item.setQuantity(quantity);
-        return item;
+    private String productName;
+    private Integer quantity;
+    private BigDecimal price;
+
+    public OrderItemRequest() {
+    }
+
+    // Getter / Setter
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
     }
 }

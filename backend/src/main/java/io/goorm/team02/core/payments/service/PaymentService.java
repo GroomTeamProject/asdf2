@@ -1,19 +1,43 @@
-// src/main/java/io/goorm/team02/core/payments/service/PaymentService.java
 package io.goorm.team02.core.payments.service;
 
-import io.goorm.team02.core.payments.dto.PaymentRequest;
-import io.goorm.team02.core.payments.dto.PaymentResponse;
+import io.goorm.team02.core.orders.domain.Order;
+import io.goorm.team02.core.orders.repository.OrderRepository;
+import io.goorm.team02.core.payments.domain.Payment;
+import io.goorm.team02.core.payments.domain.enums.PaymentStatus;
+import io.goorm.team02.core.payments.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
 
 @Service
 public class PaymentService {
 
-    public PaymentResponse createPayment(PaymentRequest request) {
-        // 실제로는 Toss API 호출 또는 DB 저장
-        // 여기서는 예제용으로 간단히 mock 데이터 반환
-        String paymentId = "pay-" + System.currentTimeMillis();
-        String status = "READY"; // 결제 대기 상태
+    private final PaymentRepository paymentRepository;
+    private final OrderRepository orderRepository;
 
-        return new PaymentResponse(paymentId, request.getAmount(), status);
+    public PaymentService(PaymentRepository paymentRepository, OrderRepository orderRepository) {
+        this.paymentRepository = paymentRepository;
+        this.orderRepository = orderRepository;
+    }
+
+    @Transactional
+    
+    public Payment completePayment(String paymentKey, String pgProvider, String pgTid, BigDecimal amount) {
+        // paymentKey로 결제 조회
+        Payment payment = paymentRepository.findByPaymentKey(paymentKey)
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found: " + paymentKey));
+
+        // 결제 금액 설정 (Order에서 가져오기)
+        Order order = payment.getOrder();
+        BigDecimal totalAmount = order.getTotalAmount();
+        payment.setAmount(totalAmount);
+
+        // 결제 승인 처리
+        payment.setStatus(PaymentStatus.COMPLETED);
+        payment.setPgProvider(pgProvider);
+        payment.setPgTid(pgTid);
+        payment.setAmount(amount);
+
+        return paymentRepository.save(payment);
     }
 }

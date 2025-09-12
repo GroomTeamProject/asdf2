@@ -38,7 +38,10 @@ const placeOrder = async () => {
     if (confirmed) {
         // 결제 페이지에서 사용할 데이터 저장
         localStorage.setItem("cartForCheckout", JSON.stringify(cart.value));
-        router.push("/ordercheck");
+        router.push({
+            path: "/ordercheck",
+            query: { amount: totalPrice.value.toString() }
+        });
     }
 };
 

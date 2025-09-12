@@ -2,12 +2,10 @@ package io.goorm.team02.core.orders.service;
 
 import io.goorm.team02.core.orders.domain.Order;
 import io.goorm.team02.core.orders.domain.OrderItem;
-import io.goorm.team02.core.orders.domain.enums.OrderStatus;
+import io.goorm.team02.core.orders.dto.OrderRequest;
+import io.goorm.team02.core.orders.dto.OrderItemRequest;
 import io.goorm.team02.core.orders.repository.OrderRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 public class OrderService {
@@ -18,34 +16,24 @@ public class OrderService {
 		this.orderRepository = orderRepository;
 	}
 
-	@Transactional
-	public Order createOrder(Order order) {
-		order.setStatus(OrderStatus.COOKING);
-		order.getItems().forEach(item -> item.setOrder(order));
-		return orderRepository.save(order);
-	}
+	public Order createOrder(OrderRequest orderRequest) {
+		Order order = new Order();
+		order.setCustomerName(orderRequest.getCustomerName());
+		order.setPhoneNumber(orderRequest.getPhoneNumber());
+		order.setAddress(orderRequest.getAddress());
+		order.setOrderMemo(orderRequest.getRequestMessage());
+		order.setTotalAmount(orderRequest.getTotalAmount());
 
-	public List<Order> getAllOrders() {
-		return orderRepository.findAll();
-	}
-
-	@Transactional
-	public void cancelOrder(Long orderId) {
-		Order order = orderRepository.findById(orderId)
-				.orElseThrow(() -> new RuntimeException("주문이 존재하지 않습니다."));
-		if (order.getStatus() == OrderStatus.COOKING) {
-			order.setStatus(OrderStatus.CANCELLED);
-			orderRepository.save(order);
-		} else {
-			throw new RuntimeException("이미 완료된 주문은 취소할 수 없습니다.");
+		// 주문 아이템 추가
+		for (OrderItemRequest itemReq : orderRequest.getItems()) {
+			OrderItem item = new OrderItem();
+			item.setProductName(itemReq.getProductName());
+			item.setPrice(itemReq.getPrice());
+			item.setQuantity(itemReq.getQuantity());
+			order.addItem(item);
 		}
-	}
 
-	@Transactional
-	public void updateStatus(Long orderId, OrderStatus status) {
-		Order order = orderRepository.findById(orderId)
-				.orElseThrow(() -> new RuntimeException("주문이 존재하지 않습니다."));
-		order.setStatus(status);
-		orderRepository.save(order);
+		Order savedOrder = orderRepository.save(order);
+		return savedOrder;
 	}
 }

@@ -1,35 +1,47 @@
-// src/main/java/io/goorm/team02/core/payments/controller/PaymentController.java
 package io.goorm.team02.core.payments.controller;
 
+import io.goorm.team02.core.orders.domain.Order;
+import io.goorm.team02.core.orders.repository.OrderRepository;
+import io.goorm.team02.core.payments.domain.Payment;
+import io.goorm.team02.core.payments.domain.enums.PaymentStatus;
 import io.goorm.team02.core.payments.dto.PaymentRequest;
-import io.goorm.team02.core.payments.dto.PaymentResponse;
-import io.goorm.team02.core.payments.service.PaymentService;
+import io.goorm.team02.core.payments.repository.PaymentRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 
 @RestController
 @RequestMapping("/api/payments")
 public class PaymentController {
 
-    private final PaymentService paymentService;
+    private final PaymentRepository paymentRepository;
+    private final OrderRepository orderRepository;
 
-    public PaymentController(PaymentService paymentService) {
-        this.paymentService = paymentService;
+    public PaymentController(PaymentRepository paymentRepository, OrderRepository orderRepository) {
+        this.paymentRepository = paymentRepository;
+        this.orderRepository = orderRepository;
     }
 
-    @PostMapping
-    public PaymentResponse createPayment(@RequestBody PaymentRequest request) {
-        return paymentService.createPayment(request);
-    }
+    @PostMapping("/callback")
+    @Transactional
+    public ResponseEntity<String> completePayment(@RequestBody PaymentRequest request) {
+        // 주문 조회
+        Order order = orderRepository.findById(request.getOrderId())
+                .orElseThrow(() -> new IllegalArgumentException("Order not found: " + request.getOrderId()));
 
-    @GetMapping("/{paymentId}")
-    public PaymentResponse getPayment(@PathVariable String paymentId) {
-        // DB 조회 로직 예제
-        return new PaymentResponse(paymentId, 50000, "READY");
-    }
+        System.out.println("paymentKey: " + request.getPaymentKey());
 
-    @PostMapping("/{paymentId}/cancel")
-    public PaymentResponse cancelPayment(@PathVariable String paymentId) {
-        // DB 결제 취소 로직 예제
-        return new PaymentResponse(paymentId, 50000, "CANCELLED");
+        // 결제 저장
+        Payment payment = new Payment();
+        payment.setPaymentKey(request.getPaymentKey()); 
+        payment.setPgProvider(request.getPgProvider());
+        payment.setPgTid(request.getPgTid());
+        payment.setAmount(request.getAmount());
+        payment.setOrder(order);
+        payment.setStatus(PaymentStatus.COMPLETED); 
+
+        paymentRepository.save(payment);
+
+        return ResponseEntity.ok("Payment completed and order saved!");
     }
 }
