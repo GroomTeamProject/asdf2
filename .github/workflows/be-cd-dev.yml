@@ -4,13 +4,16 @@ on:
   pull_request:
     types: [closed]
     branches: [ develop ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/**'
 
 env:
   REGISTRY: docker.io
   IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/team02-backend
 
 jobs:
-  deploy:
+  deploy_backend:
     runs-on: [self-hosted, ec2, dev]
     if: github.event.pull_request.merged == true
     steps:
