@@ -321,6 +321,10 @@ public class Order extends BaseEntity {
         return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getCustomerName() {
         return customerName;
     }
@@ -377,8 +381,14 @@ public class Order extends BaseEntity {
         this.items = items;
     }
 
+    // 연관관계 편의 메서드
     public void addItem(OrderItem item) {
         items.add(item);
         item.setOrder(this);
+    }
+
+    public void removeItem(OrderItem item) {
+        items.remove(item);
+        item.setOrder(null);
     }
 }

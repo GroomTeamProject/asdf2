@@ -10,6 +10,7 @@ const orderMemo = ref("");
 
 onMounted(() => {
     items.value = JSON.parse(localStorage.getItem("cartForCheckout") || "[]");
+    console.log("장바구니 데이터 확인:", items.value);
 });
 
 const totalAmount = computed(() =>
@@ -29,9 +30,12 @@ const goToPayment = () => {
             requestMessage: orderMemo.value,
             totalAmount: totalAmount.value,
             items: items.value.map(item => ({
-                productName: item.menu_name || item.productName,
-                quantity: item.quantity,
+                menuId: item.id, //
+                name: item.name,
+                productId: item.id,
+                productName: item.name,
                 price: item.price,
+                quantity: item.quantity
             }))
         })
     );
@@ -63,7 +67,7 @@ const goToPayment = () => {
         <!-- 전화번호 -->
         <div class="mb-4">
             <label class="block font-semibold mb-1">전화번호</label>
-            <input v-model="phone" type="tel" placeholder="010-1234-5678" class="w-full border px-3 py-2 rounded" />
+            <input v-model="phone" type="tel" placeholder="01012345678" class="w-full border px-3 py-2 rounded" />
         </div>
 
         <!-- 주문 메모 -->
@@ -77,7 +81,7 @@ const goToPayment = () => {
             <h2 class="font-semibold mb-2">주문 상품</h2>
             <ul>
                 <li v-for="item in items" :key="item.id" class="flex justify-between mb-1">
-                    <span>{{ item.menu_name || item.productName }} x {{ item.quantity }}</span>
+                    <span>{{ item.name || item.productName }} x {{ item.quantity }}</span>
                     <span>{{ (item.price * item.quantity).toLocaleString() }}원</span>
                 </li>
             </ul>

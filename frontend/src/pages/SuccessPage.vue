@@ -4,39 +4,29 @@ import { useRouter } from "vue-router";
 import axios from "axios";
 
 const router = useRouter();
-const orderId = ref(1);
+const orderId = ref(null);
 const amount = ref(0);
 const message = ref("결제를 확인 중입니다...");
+const orderItems = ref([]); // ✅ 주문 상품 배열 추가
 
 onMounted(async () => {
     const orderInfo = JSON.parse(localStorage.getItem("orderInfo") || "{}");
-    const cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
 
     amount.value = orderInfo.totalAmount || 0;
-    orderId.value = orderInfo.orderId || 1;
-
-    const orderRequest = {
-        customerName: orderInfo.customerName || "테스트 고객",
-        phone: orderInfo.phoneNumber || "010-0000-0000", // DTO와 매칭
-        address: orderInfo.address || "테스트 주소",
-        requestMessage: orderInfo.requestMessage || "",
-        totalAmount: amount.value,
-        items: cartItems.map(item => ({
-            productName: item.name, // DTO와 일치
-            productId: item.productId || null,
-            menuId: item.menuId || null,
-            price: item.price,
-            quantity: item.quantity
-        }))
-    };
 
     try {
+        // 주문 생성 API 호출
         const orderResponse = await axios.post("http://localhost:8080/api/orders/create", orderInfo);
-        const createdOrder = orderResponse.data;
+        orderId.value = orderResponse.data.id;
 
-        console.log("✅ 주문 저장 성공:", response.data);
+        // ✅ 주문 상품 배열 가져오기
+        orderItems.value = orderInfo.items || [];
+
+        console.log("주문번호: ", orderId.value);
+        console.log("주문 상품:", orderItems.value);
 
         localStorage.removeItem("cart");
+        localStorage.removeItem("orderInfo");
 
         message.value = "주문이 완료되었습니다! 5초 후 고객 페이지로 이동합니다.";
         setTimeout(() => router.push("/customer"), 5000);
@@ -51,11 +41,22 @@ onMounted(async () => {
     <div class="payment-success p-6 text-center">
         <h2 class="text-2xl font-bold mb-4">결제 성공</h2>
         <p class="mb-2">주문번호: {{ orderId }}</p>
-        <p class="mb-2">결제금액: {{ amount }}원</p>
-        <p class="text-lg text-blue-600">{{ message }}</p>
+        <p class="mb-2">결제금액: {{ amount.toLocaleString() }}원</p>
+
+        <!-- 주문 상품 목록 -->
+        <div v-if="orderItems.length > 0" class="mt-4 text-left">
+            <h3 class="font-semibold mb-2">주문 상품</h3>
+            <ul>
+                <li v-for="(item, index) in orderItems" :key="index" class="flex justify-between mb-1">
+                    <span>{{ item.productName }} x {{ item.quantity }}</span>
+                    <span>{{ (item.price * item.quantity).toLocaleString() }}원</span>
+                </li>
+            </ul>
+        </div>
+
+        <p class="text-lg text-blue-600 mt-4">{{ message }}</p>
     </div>
 </template>
-
 
 <style scoped>
 .payment-success {
