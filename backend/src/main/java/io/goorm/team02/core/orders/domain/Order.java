@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "orders")
@@ -33,12 +32,19 @@ public class Order {
     private String orderMemo;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference // 부모 → 자식 참조
     private List<OrderItem> items = new ArrayList<>();
+
+    // 기본 생성자
+    public Order() {
+    }
 
     // Getter / Setter
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getCustomerName() {
@@ -97,8 +103,14 @@ public class Order {
         this.items = items;
     }
 
+    // 연관관계 편의 메서드
     public void addItem(OrderItem item) {
         items.add(item);
         item.setOrder(this);
+    }
+
+    public void removeItem(OrderItem item) {
+        items.remove(item);
+        item.setOrder(null);
     }
 }

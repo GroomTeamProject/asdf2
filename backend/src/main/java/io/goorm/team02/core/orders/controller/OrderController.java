@@ -4,6 +4,7 @@ import io.goorm.team02.core.orders.domain.Order;
 import io.goorm.team02.core.orders.dto.OrderRequest;
 import io.goorm.team02.core.orders.service.OrderService;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
@@ -13,17 +14,19 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/orders")
 public class OrderController {
 
-	private final OrderService orderService;
+    private final OrderService orderService;
 
-	public OrderController(OrderService orderService) {
-		this.orderService = orderService;
-	}
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
+    }
 
-	@PostMapping("/create")
-	public ResponseEntity<?> createOrder(@RequestBody OrderRequest orderRequest) {
-		Order savedOrder = orderService.createOrder(orderRequest);
-		System.out.println("생성된 주문 ID: " + savedOrder.getId()); // 🔹 로그 확인
-		return ResponseEntity.ok(savedOrder);
-	}
+    @PostMapping("/create")
+    public ResponseEntity<Map<String, Object>> createOrder(@RequestBody OrderRequest orderRequest) {
+        Order savedOrder = orderService.createOrder(orderRequest);
 
+        Map<String, Object> response = new HashMap<>();
+        response.put("orderId", savedOrder.getId());
+
+        return ResponseEntity.ok(response);
+    }
 }
