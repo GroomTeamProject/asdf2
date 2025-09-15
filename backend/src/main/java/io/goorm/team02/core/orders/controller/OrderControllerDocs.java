@@ -5,6 +5,7 @@ import io.goorm.team02.core.orders.controller.dto.OrderResponse;
 import io.goorm.team02.core.orders.controller.dto.OrderRejectRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderAcceptRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderCancelRequest;
+import io.goorm.team02.core.orders.controller.dto.OrderSearchRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -26,13 +27,12 @@ public interface OrderControllerDocs {
     })
     public OrderResponse create(@RequestBody OrderRequest order);
 
-    @Operation(summary = "주문 목록 조회", description = "가게별 주문 목록을 조회합니다")
+    @Operation(summary = "주문 목록 조회", description = "다양한 조건으로 주문 목록을 조회합니다")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "주문 목록 조회 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 파라미터")
     })
-    public List<OrderResponse> getAll(
-            @Parameter(description = "가게 ID", required = true) @RequestParam("storeId") Long storeId);
+    public List<OrderResponse> getAllByParams(OrderSearchRequest searchRequest);
 
     @Operation(summary = "주문 상세 조회", description = "특정 주문의 상세 정보를 조회합니다")
     @ApiResponses({

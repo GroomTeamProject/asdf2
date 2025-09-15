@@ -2,6 +2,7 @@ package io.goorm.team02.core.orders.service;
 
 import io.goorm.team02.core.orders.controller.dto.OrderRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderResponse;
+import io.goorm.team02.core.orders.controller.dto.OrderSearchRequest;
 import io.goorm.team02.core.orders.domain.Order;
 import io.goorm.team02.core.orders.domain.enums.OrderStatus;
 import io.goorm.team02.core.orders.repository.OrderRepository;
@@ -37,7 +38,10 @@ public class OrderService {
 
     public List<Order> getAllOrdersByStoreId(Long storeId) {
         return orderRepository.findAllByStoreIdWithDetails(storeId);
+    }
 
+    public List<Order> getAllOrdersByUserId(Long userId) {
+        return orderRepository.findAllByUserId(userId);
     }
 
     // ================================
@@ -73,14 +77,24 @@ public class OrderService {
     }
 
     /**
-     * 가게의 모든 주문 조회
+     * 주문 목록 조회
      */
-    // TODO: 모든 주문 조회에서는 상세 정보를 제공할 필요 없음
-    public List<Order> getAll(Long storeId) {
-        List<Order> orders = getAllOrdersByStoreId(storeId);
-
+    public List<Order> getAllByParams(OrderSearchRequest searchRequest) {
+        List<Order> orders;
+        
+        // 검색 조건에 따라 다른 메서드 호출
+        if (searchRequest.hasStoreId()) {
+            orders = orderRepository.findAllByStoreId(searchRequest.getStoreId());
+        } else if (searchRequest.hasUserId()) {
+            orders = orderRepository.findAllByUserId(searchRequest.getUserId());
+        } else {
+            // 모든 주문 조회
+            // TODO: 추후 필터링 로직 추가
+            orders = orderRepository.findAll();
+        }
+        
         // JPA 지연 로딩으로 orderItems와 options를 가져옴
-        // TODO: 리팩터링 필요
+        // TODO: 모든 주문 조회에서는 상세 정보를 제공할 필요 없음
         orders.forEach(order -> {
             order.getOrderItems().forEach(orderItem -> {
                 orderItem.getOptions().size(); // 지연 로딩 트리거
