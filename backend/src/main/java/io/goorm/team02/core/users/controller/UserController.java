@@ -82,4 +82,13 @@ public class UserController implements UserControllerDocs {
     public void deleteUserAddress(@PathVariable Long userId, @PathVariable Long addressId) {
         userService.deleteUserAddress(userId, addressId);
     }
+
+    /**
+     * 기본 배송지 설정
+     */
+    @PutMapping("/{userId}/addresses/{addressId}/default")
+    public UserAddressResponse setDefaultAddress(@PathVariable Long userId, @PathVariable Long addressId) {
+        UserAddress address = userService.setDefaultAddress(userId, addressId);
+        return UserAddressResponse.from(address);
+    }
 }

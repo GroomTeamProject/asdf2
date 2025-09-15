@@ -72,4 +72,13 @@ public interface UserControllerDocs {
     void deleteUserAddress(
             @Parameter(description = "사용자 ID", required = true) @PathVariable Long userId,
             @Parameter(description = "주소 ID", required = true) @PathVariable Long addressId);
+
+    @Operation(summary = "기본 배송지 설정", description = "특정 주소를 기본 배송지로 설정합니다")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "기본 배송지 설정 성공"),
+            @ApiResponse(responseCode = "404", description = "사용자 또는 주소를 찾을 수 없음")
+    })
+    UserAddressResponse setDefaultAddress(
+            @Parameter(description = "사용자 ID", required = true) @PathVariable Long userId,
+            @Parameter(description = "주소 ID", required = true) @PathVariable Long addressId);
 }

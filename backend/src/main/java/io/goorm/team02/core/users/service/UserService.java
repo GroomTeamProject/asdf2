@@ -167,6 +167,52 @@ public class UserService {
         userAddressRepository.delete(address);
     }
 
+    /**
+     * 기본 배송지 설정
+     */
+    @Transactional
+    public UserAddress setDefaultAddress(Long userId, Long addressId) {
+        try {
+            System.out.println("setDefaultAddress called with userId: " + userId + ", addressId: " + addressId);
+            
+            // 사용자 존재 확인
+            User user = getUserById(userId);
+            System.out.println("User found with ID: " + user.getId());
+            
+            // 주소 존재 확인
+            UserAddress address = userAddressRepository.findById(addressId)
+                    .orElseThrow(() -> new RuntimeException("주소를 찾을 수 없습니다: " + addressId));
+            System.out.println("Address found with ID: " + address.getId());
+            
+            // 주소가 해당 사용자의 것인지 확인
+            if (!address.getUser().getId().equals(userId)) {
+                throw new RuntimeException("해당 사용자의 주소가 아닙니다.");
+            }
+            
+            // 기존 기본 주소들을 모두 false로 변경
+            List<UserAddress> existingAddresses = userAddressRepository.findByUserId(userId);
+            System.out.println("Found " + existingAddresses.size() + " existing addresses");
+            
+            for (UserAddress existingAddr : existingAddresses) {
+                existingAddr.setIsDefault(false);
+            }
+            userAddressRepository.saveAll(existingAddresses);
+            
+            // 선택한 주소를 기본 주소로 설정
+            address.setIsDefault(true);
+            System.out.println("Setting address " + addressId + " as default");
+            
+            UserAddress savedAddress = userAddressRepository.save(address);
+            System.out.println("Address saved successfully with ID: " + savedAddress.getId());
+            
+            return savedAddress;
+        } catch (Exception e) {
+            System.err.println("Error in setDefaultAddress: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
     public SignupResponse registerUser(SignupRequest request) {
         // 이메일 중복 체크
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
