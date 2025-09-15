@@ -155,7 +155,7 @@ export default {
     }
 
     const goToHome = () => {
-      router.push('/')
+      router.push('/customer')
     }
 
     // 페이지 로드 시 주문 정보 설정
