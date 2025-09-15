@@ -77,11 +77,11 @@
         <div class="space-y-3">
           <div class="flex items-center gap-2">
             <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
-            <span class="text-sm text-blue-700">주문 접수 완료</span>
+            <span class="text-sm text-blue-700">주문 접수 대기</span>
           </div>
           <div class="flex items-center gap-2">
             <div class="w-3 h-3 bg-gray-300 rounded-full"></div>
-            <span class="text-sm text-gray-500">가게에서 주문 확인 중</span>
+            <span class="text-sm text-gray-500">주문 접수됨</span>
           </div>
           <div class="flex items-center gap-2">
             <div class="w-3 h-3 bg-gray-300 rounded-full"></div>
