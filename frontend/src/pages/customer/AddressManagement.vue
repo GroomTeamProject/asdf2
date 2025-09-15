@@ -122,34 +122,24 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">우편번호</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1">주소</label>
               <div class="flex gap-2">
                 <input
-                  v-model="addressForm.zipcode"
+                  v-model="addressForm.address"
                   type="text"
-                  class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="우편번호"
+                  class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+                  placeholder="주소를 검색해주세요."
                   required
+                  readonly
                 />
                 <button
                   type="button"
                   @click="searchZipcode"
-                  class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
                 >
-                  검색
+                  주소 검색
                 </button>
               </div>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">주소</label>
-              <input
-                v-model="addressForm.address"
-                type="text"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="기본 주소"
-                required
-              />
             </div>
 
             <div>
@@ -158,8 +148,20 @@
                 v-model="addressForm.detailAddress"
                 type="text"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="상세 주소"
+                placeholder="상세주소를 입력하세요 (예: 101호, 2층)"
                 required
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">우편번호</label>
+              <input
+                v-model="addressForm.zipcode"
+                type="text"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+                placeholder="주소 검색 시 자동으로 입력됩니다"
+                required
+                readonly
               />
             </div>
 
@@ -279,6 +281,27 @@ export default {
     }
 
     const saveAddress = async () => {
+      // 폼 유효성 검사
+      if (!addressForm.value.addressName.trim()) {
+        alert('배송지명을 입력해주세요.')
+        return
+      }
+      
+      if (!addressForm.value.zipcode.trim()) {
+        alert('우편번호를 검색해주세요.')
+        return
+      }
+      
+      if (!addressForm.value.address.trim()) {
+        alert('주소를 입력해주세요.')
+        return
+      }
+      
+      if (!addressForm.value.detailAddress.trim()) {
+        alert('상세주소를 입력해주세요.')
+        return
+      }
+
       try {
         isSaving.value = true
         const userId = localStorage.getItem('userId')
@@ -330,8 +353,46 @@ export default {
     }
 
     const searchZipcode = () => {
-      // TODO: 우편번호 검색 API 연동
-      alert('우편번호 검색 기능은 추후 구현 예정입니다.')
+      new daum.Postcode({
+        oncomplete: function(data) {
+          // 팝업에서 검색결과 항목을 클릭했을때 실행할 코드
+          let addr = '' // 주소 변수
+          let extraAddr = '' // 참고항목 변수
+
+          // 사용자가 선택한 주소 타입에 따라 해당 주소 값을 가져온다.
+          if (data.userSelectedType === 'R') { // 사용자가 도로명 주소를 선택했을 경우
+            addr = data.roadAddress
+          } else { // 사용자가 지번 주소를 선택했을 경우(J)
+            addr = data.jibunAddress
+          }
+
+          // 사용자가 선택한 주소가 도로명 타입일때 참고항목을 조합한다.
+          if(data.userSelectedType === 'R'){
+            // 법정동명이 있을 경우 추가한다. (법정리는 제외)
+            // 법정동의 경우 마지막 문자가 "동/로/가"로 끝난다.
+            if(data.bname !== '' && /[동|로|가]$/g.test(data.bname)){
+              extraAddr += data.bname
+            }
+            // 건물명이 있고, 공동주택일 경우 추가한다.
+            if(data.buildingName !== '' && data.apartment === 'Y'){
+              extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName)
+            }
+            // 표시할 참고항목이 있을 경우, 괄호까지 추가한 최종 문자열을 만든다.
+            if(extraAddr !== ''){
+              extraAddr = ' (' + extraAddr + ')'
+            }
+          }
+
+          // 우편번호와 주소 정보를 해당 필드에 넣는다.
+          addressForm.value.zipcode = data.zonecode
+          addressForm.value.address = addr
+          
+          // 참고항목 문자열이 있을 경우 해당 필드에 넣는다.
+          if(extraAddr !== ''){
+            addressForm.value.address += extraAddr
+          }
+        }
+      }).open()
     }
 
     onMounted(() => {
