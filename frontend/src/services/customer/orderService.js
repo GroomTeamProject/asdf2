@@ -122,7 +122,7 @@ export class OrderService {
     
     // 백엔드 OrderRequest 구조에 맞춤
     return {
-      userId: 1, // TODO: 실제 사용자 ID로 교체
+      userId: localStorage.getItem('userId'),
       storeId: orderItems[0]?.storeId || 1, // TODO: 실제 가게 ID로 교체
       deliveryAddress: deliveryAddress,
       deliveryDetailAddress: deliveryDetailAddress || '',
