@@ -1,7 +1,8 @@
 <!-- src/pages/driver/DriverMain.vue -->
 <script>
 const API_BASE = 'http://localhost:8080';
-const REJECT_KEY_PREFIX = 'rejectedOrders'; // ✅ rider별 거절목록 보존
+const REJECT_KEY_PREFIX = 'rejectedOrders';
+
 export default {
   data() {
     return {
@@ -11,16 +12,17 @@ export default {
       riderId: null,
       deliveries: [],
       availableOrders: [],
-      currentOrder: null,          // ✅ 객체로 유지
+      currentOrder: null,
       completedDeliveries: [],
       poll: null,
-      // ✅ 추가
       rejectedOrders: [],
       rejectKey: null,
-      todayEarnings: 0,   // ✅ 오늘 수익
-      todayCount: 0,      // ✅ 오늘 건수
+      todayEarnings: 0,
+      todayCount: 0,
+      isAccepting: false,
     }
   },
+
   mounted() {
     const token = localStorage.getItem('jwt');
     if (!token) { alert('로그인이 필요합니다.'); return; }
@@ -28,98 +30,113 @@ export default {
     const riderStr = localStorage.getItem('rider');
     if (riderStr) { try { this.riderId = JSON.parse(riderStr).riderId; } catch {} }
 
-    // ✅ 거절목록 로드
     this.rejectKey = `${REJECT_KEY_PREFIX}:${this.riderId ?? 'unknown'}`;
-    const saved = localStorage.getItem(this.rejectKey);
-    if (saved) { try { this.rejectedOrders = JSON.parse(saved); } catch {} }
+    const savedRejects = localStorage.getItem(this.rejectKey);
+    if (savedRejects) { try { this.rejectedOrders = JSON.parse(savedRejects); } catch {} }
+
+    const savedCurrent = localStorage.getItem('currentOrder');
+    if (savedCurrent) { try { this.currentOrder = JSON.parse(savedCurrent); } catch {} }
 
     this.userName = localStorage.getItem('userName') || '게스트';
     this.refreshLocation();
     this.$nextTick(() => window.lucide?.createIcons?.());
   },
+
   beforeUnmount() {
     if (this.poll) clearInterval(this.poll);
   },
 
+  watch: {
+    currentOrder: {
+      deep: true,
+      handler(v) {
+        if (v) localStorage.setItem('currentOrder', JSON.stringify(v));
+        else localStorage.removeItem('currentOrder');
+      }
+    }
+  },
+
   methods: {
     async refreshLocation() {
-      console.log("refreshLocation")
-      if (!navigator.geolocation) {
-        this.riderAddress = '위치 지원 안됨'
-        return
-      }
+      if (!navigator.geolocation) { this.riderAddress = '위치 지원 안됨'; return; }
       navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const { latitude, longitude } = pos.coords
-          try {
-            const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=ko`
-            )
-            const data = await res.json()
-            this.riderAddress = data.display_name || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
-          } catch {
-            this.riderAddress = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
-          }
-        },
-        () => { this.riderAddress = '위치 접근 거부됨' },
-        { enableHighAccuracy: true, timeout: 10000 }
-      )
+          async (pos) => {
+            const { latitude, longitude } = pos.coords;
+            try {
+              const res = await fetch(
+                  `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=ko`
+              );
+              const data = await res.json();
+              this.riderAddress = data.display_name || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+            } catch {
+              this.riderAddress = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+            }
+          },
+          () => { this.riderAddress = '위치 접근 거부됨' },
+          { enableHighAccuracy: true, timeout: 10000 }
+      );
     },
-    toggleOnlineStatus(next) {
-      if (typeof next === 'boolean')
-        this.isOnline = next;
-      else
-        this.isOnline = !!this.isOnline;
-      console.log("toggleOnlineStatus:" + this.isOnline)
 
+    toggleOnlineStatus(next) {
+      this.isOnline = typeof next === 'boolean' ? next : !!this.isOnline;
       if (this.isOnline) {
         this.fetchDeliveries();
         this.startPolling();
       } else {
         this.availableOrders = [];
-        this.currentOrder = null;
         if (this.poll) clearInterval(this.poll);
       }
     },
+
     async acceptOrder(deliveryId) {
+      if (this.currentOrder) { alert('이미 진행 중인 배달이 있습니다.'); return; }
+      if (this.isAccepting) return;
+      this.isAccepting = true;
       try {
         const token = localStorage.getItem('jwt');
         const riderId = this.riderId || JSON.parse(localStorage.getItem('rider') || '{}').riderId;
 
-        await fetch(`${API_BASE}/api/rider/deliveries/${deliveryId}/accept`, {
+        const resp = await fetch(`${API_BASE}/api/rider/deliveries/${deliveryId}/accept`, {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ riderId }),
         });
+        if (!resp.ok) {
+          if (resp.status === 409) alert('동시에 여러 건 수락이 불가합니다.');
+          else alert(`수락 실패: ${resp.status}`);
+          return;
+        }
 
-        // ✅ 객체로 세팅
-        const picked = this.availableOrders.find(o => o.id === deliveryId);
-        this.currentOrder = picked || null;
-        this.availableOrders = this.availableOrders.filter(o => o.id !== deliveryId);
+        const picked = this.availableOrders.find(o => String(o.id) === String(deliveryId)) || null;
+        this.currentOrder = picked;
+        this.availableOrders = this.availableOrders.filter(o => String(o.id) !== String(deliveryId));
+        if (picked) localStorage.setItem('currentOrder', JSON.stringify(picked));
       } catch (e) {
         console.error('수락 실패:', e);
         alert('수락 실패');
+      } finally {
+        this.isAccepting = false;
       }
     },
+
     rejectOrder(deliveryId) {
       const id = String(deliveryId);
       if (!this.rejectedOrders.includes(id)) {
         this.rejectedOrders.push(id);
         if (this.rejectKey) {
-          localStorage.setItem(this.rejectKey, JSON.stringify(this.rejectedOrders)); // ✅ 영구 저장
+          localStorage.setItem(this.rejectKey, JSON.stringify(this.rejectedOrders));
         }
       }
-      this.availableOrders = this.availableOrders.filter(o => String(o.id) !== id); // ✅ 화면 제거
+      this.availableOrders = this.availableOrders.filter(o => String(o.id) !== id);
     },
+
     startPolling() {
       if (this.poll) clearInterval(this.poll);
       this.poll = setInterval(() => {
         if (this.isOnline) this.fetchDeliveries();
       }, 3000);
     },
+
     async fetchDeliveries() {
       try {
         const token = localStorage.getItem('jwt');
@@ -127,14 +144,18 @@ export default {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         });
         const json = await res.json();
+
+        // 여기부터 ↓↓↓
         const items = json?.data?.items ?? json?.data ?? [];
 
-        const rejectedSet = new Set(this.rejectedOrders.map(String)); // ✅ 필터 기준
-
-        this.deliveries = items;
-        this.availableOrders = items
-          .map(d => ({
-            id: d.deliveryId ?? d.id,
+        const mapped = items.map((d, idx) => {
+          const id = d.deliveryId ?? d.id ?? `temp-${idx}`;
+          const key = `ord:${id}|${d.requestedAt ?? idx}|${d.pickupAddress ?? ''}|${d.deliveryAddress ?? ''}`;
+          return {
+            _key: key,                // 렌더용 고유키
+            id,                       // 로직용 ID
+            status: d.status,         // REQUESTED 여부 확인
+            riderId: d.riderId,
             restaurantName: d.restaurantName || '가게',
             restaurantAddress: d.pickupAddress,
             customerAddress: d.deliveryAddress,
@@ -144,37 +165,42 @@ export default {
             deliveryFee: d.fee ?? 0,
             items: d.items ?? [],
             total: d.totalPrice ?? 0,
-          }))
-          .filter(o => !rejectedSet.has(String(o.id))); // ✅ 거절 주문 숨김
+          };
+        });
+
+        // REQUESTED 상태만 노출
+        this.availableOrders = mapped.filter(o => o.status === 'REQUESTED');
+
+        // 디버그 로그
+        console.log('[final ids]', this.availableOrders.map(o => o.id), 'len=', this.availableOrders.length);
+        // 여기까지 ↑↑↑
       } catch (e) {
         console.error('배달 목록 오류:', e);
         alert('배달 목록을 불러오지 못했습니다.');
       }
     },
+
     completeCurrentOrder() {
       if (!this.currentOrder) return;
-
       const now = new Date();
-      const completed = {
+      this.completedDeliveries.unshift({
         ...this.currentOrder,
         completedTime: now.toISOString(),
         completedTimeText: now.toLocaleString(),
         earnings: this.currentOrder.deliveryFee,
-      };
-
-      this.completedDeliveries.unshift(completed);
+      });
       this.currentOrder = null;
-
-      // ✅ Vue 데이터 갱신
+      localStorage.removeItem('currentOrder');
       this.updateStats();
     },
+
     updateStats() {
       const today = new Date();
       const todayDeliveries = this.completedDeliveries.filter(d => {
         const dt = new Date(d.completedTime);
         return dt.getFullYear() === today.getFullYear()
-          && dt.getMonth() === today.getMonth()
-          && dt.getDate() === today.getDate();
+            && dt.getMonth() === today.getMonth()
+            && dt.getDate() === today.getDate();
       });
       const earnings = todayDeliveries.reduce((sum, d) => sum + d.earnings, 0);
 
@@ -185,8 +211,8 @@ export default {
     },
   },
 }
-
 </script>
+
 
 
 
@@ -287,17 +313,9 @@ export default {
       <h3 class="mb-2 text-gray-800">새로운 주문 대기 중</h3>
       <p class="text-gray-600">새로운 배달 주문이 들어오면 알림을 보내드립니다.</p>
     </div>
-    <!-- 온라인 + 대기중 -->
-    <div v-else-if="availableOrders.length === 0"
-         class="border-2 border-gray-400 bg-white rounded-lg p-8 text-center">
-      <i data-lucide="bell" class="w-12 h-12 mx-auto text-gray-500 mb-4"></i>
-      <h3 class="mb-2 text-gray-800">새로운 주문 대기 중</h3>
-      <p class="text-gray-600">새로운 배달 주문이 들어오면 알림을 보내드립니다.</p>
-    </div>
-
     <!-- 온라인 + 주문 리스트 -->
     <div v-else class="space-y-4">
-      <div v-for="order in availableOrders" :key="order.id"
+      <div v-for="order in availableOrders" :key="order._key"
            class="border-2 border-gray-400 hover:bg-gray-200 transition-colors bg-white rounded-lg p-6">
         <div class="flex justify-between items-start mb-4">
           <div>
@@ -349,8 +367,9 @@ export default {
 
         <div class="flex gap-2">
           <button
-            @click="acceptOrder(order.id)"
-            class="flex-1 bg-gray-600 text-white border-2 border-gray-800 hover:bg-gray-700 py-2 rounded transition-colors">
+              @click="acceptOrder(order.id)"
+              :disabled="!!currentOrder || isAccepting"
+              class="flex-1 bg-gray-600 text-white border-2 border-gray-800 hover:bg-gray-700 py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
             주문 수락
           </button>
           <button
