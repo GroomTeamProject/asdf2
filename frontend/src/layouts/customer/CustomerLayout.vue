@@ -7,10 +7,14 @@
     </main>
 
     <Footer />
+    
+    <!-- 플로팅 장바구니 버튼 -->
+    <FloatingCartButton />
   </div>
 </template>
 
 <script setup>
 import CustomerHeader from './CustomerHeader.vue'
 import Footer from '../Footer.vue'
+import FloatingCartButton from '@/components/customer/cart/FloatingCartButton.vue'
 </script>
