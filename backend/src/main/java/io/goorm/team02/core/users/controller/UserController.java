@@ -109,11 +109,11 @@ public class UserController implements UserControllerDocs {
         return ResponseEntity.ok("Password changed successfully");
     }
 
-    /*/ 계정 삭제
+    // 계정 삭제
     @DeleteMapping("/me/deactivate")
     public ResponseEntity<Void> deactivateUser() {
         Long userId = SecurityUtils.getCurrentUserId(); // 로그인한 사용자 ID 가져오기
         userService.deactivateUser(userId);
         return ResponseEntity.noContent().build();
-    }*/
+    }
 }
