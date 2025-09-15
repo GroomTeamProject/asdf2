@@ -12,13 +12,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 @Entity
 @Table(name = "social_accounts")
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class SocialAccount extends io.goorm.team02.core.common.domain.BaseEntity {
+public class SocialAccount {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
