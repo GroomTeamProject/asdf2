@@ -105,20 +105,22 @@ export default {
         if (result.success) {
           alert(result.message)
 
-          // 장바구니 비우기
-          orderService.clearCartAfterOrder()
-
-          // 주문 완료 페이지로 이동
+          // 주문 완료 페이지로 이동 (장바구니 정보를 먼저 전달)
           router.push({
             path: '/customer/order-complete',
             query: {
               orderNumber: result.orderNumber,
               totalAmount: finalAmount.value,
-              storeName: orderItems.value[0]?.storeName || '알 수 없는 가게',
+              storeName: orderItems.value[0]?.storeName,
               deliveryAddress: deliveryAddress.value,
               phoneNumber: phoneNumber.value,
             },
           })
+
+          // 주문 완료 페이지로 이동한 후 장바구니 비우기
+          setTimeout(() => {
+            orderService.clearCartAfterOrder()
+          }, 100)
         }
       } catch (error) {
         console.error('주문 제출 실패:', error)
