@@ -123,7 +123,8 @@ export default {
         // 에러 메시지 표시
         const errorMessage = error.message || '주문 처리 중 오류가 발생했습니다. 다시 시도해주세요.'
         alert(errorMessage)
-      } finally {
+        
+        // 에러 발생 시에도 submitting 상태 해제
         orderStore.setSubmitting(false)
       }
     }
