@@ -34,7 +34,7 @@ public class AuthService {
             String token = jwtTokenProvider.generateToken(authentication,user.getId());
 
             // LoginResponse 반환
-            return new LoginResponse(user.getEmail(), user.getName(), user.getUserType(), token);
+            return new LoginResponse(user.getId(), user.getEmail(), user.getName(), user.getUserType(), token);
 
         } catch (AuthenticationException e) {
             throw new RuntimeException("Invalid email or password");

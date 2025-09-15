@@ -8,6 +8,7 @@ import io.goorm.team02.core.users.domain.enums.UserType;
 @Getter
 @AllArgsConstructor
 public class LoginResponse {
+    private Long id;
     private String email;
     private String name;
     private UserType userType;
