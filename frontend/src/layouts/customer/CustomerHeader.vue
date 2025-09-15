@@ -1,6 +1,6 @@
 <script setup>
 import Logo from '@/components/Logo.vue'
-import { LucideShoppingCart, LucideHome } from 'lucide-vue-next'
+import { LucideShoppingCart, LucideHome, LucideSquareMenu } from 'lucide-vue-next'
 </script>
 
 <template>
@@ -16,6 +16,9 @@ import { LucideShoppingCart, LucideHome } from 'lucide-vue-next'
       <router-link to="/customer/cart" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
         <lucide-shopping-cart />
       </router-link>
+      <router-link to="/customer/order-history" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+        <lucide-square-menu />
+      </router-link>  
     </div>
   </header>
 </template>

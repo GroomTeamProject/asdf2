@@ -30,6 +30,9 @@ export default {
     const orderStore = useOrderStore()
     const cartStore = useCartStore()
     
+    // 컴포넌트 마운트 시 주문 제출 상태 초기화
+    orderStore.setSubmitting(false)
+    
     // store에서 필요한 상태들만 추출
     const {
       deliveryAddress,
@@ -102,20 +105,22 @@ export default {
         if (result.success) {
           alert(result.message)
 
-          // 장바구니 비우기
-          orderService.clearCartAfterOrder()
-
-          // 주문 완료 페이지로 이동
+          // 주문 완료 페이지로 이동 (장바구니 정보를 먼저 전달)
           router.push({
             path: '/customer/order-complete',
             query: {
               orderNumber: result.orderNumber,
               totalAmount: finalAmount.value,
-              storeName: orderItems.value[0]?.storeName || '알 수 없는 가게',
+              storeName: orderItems.value[0]?.storeName,
               deliveryAddress: deliveryAddress.value,
               phoneNumber: phoneNumber.value,
             },
           })
+
+          // 주문 완료 페이지로 이동한 후 장바구니 비우기
+          setTimeout(() => {
+            orderService.clearCartAfterOrder()
+          }, 100)
         }
       } catch (error) {
         console.error('주문 제출 실패:', error)
@@ -123,7 +128,8 @@ export default {
         // 에러 메시지 표시
         const errorMessage = error.message || '주문 처리 중 오류가 발생했습니다. 다시 시도해주세요.'
         alert(errorMessage)
-      } finally {
+        
+        // 에러 발생 시에도 submitting 상태 해제
         orderStore.setSubmitting(false)
       }
     }

@@ -131,12 +131,14 @@
 <script>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useCartStore } from '@/stores/customer/cart'
 
 export default {
   name: 'OrderComplete',
   setup() {
     const route = useRoute()
     const router = useRouter()
+    const cartStore = useCartStore()
 
     // 주문 정보 (실제로는 API에서 받아와야 함)
     const orderNumber = ref('')
@@ -162,7 +164,14 @@ export default {
       if (route.query.orderNumber) {
         orderNumber.value = route.query.orderNumber
         totalAmount.value = parseInt(route.query.totalAmount) || 0
-        storeName.value = route.query.storeName || '알 수 없는 가게'
+        
+        // 가게명 우선순위: 장바구니 > query > fallback
+        if (cartStore.items.length > 0) {
+          storeName.value = cartStore.items[0]?.storeName || cartStore.items[0]?.storeInfo?.name || route.query.storeName || '알 수 없는 가게'
+        } else {
+          storeName.value = route.query.storeName || '알 수 없는 가게'
+        }
+        
         deliveryAddress.value = route.query.deliveryAddress || '주소 정보 없음'
         phoneNumber.value = route.query.phoneNumber || '연락처 정보 없음'
       } else {
