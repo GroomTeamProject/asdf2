@@ -20,18 +20,19 @@ import OrderComplete from '../pages/customer/OrderComplete.vue'
 
 // 라우트 경로 추가
 const routes = [
-  { path: '/', component: Home },
-  { path: '/signup', component: Signup },
-  { path: '/login', component: Login },
-  { path: '/customer-main', component: CustomerMain, meta: { role: 'CUSTOMER' } },
-  { path: '/owner-main', component: OwnerMain, meta: { role: 'OWNER' } },
-  { path: '/store-registration', component: StoreRegistration, meta: { role: 'OWNER' } },
-  { path: '/driver-main', component: DriverMain, meta: { role: 'RIDER' } },
-  //{ path: '/dashboard', component: Dashboard }, //로그인후 이동하는 임시 페이지
   {
     path: '/',
     component: DefaultLayout,
-    children: [{ path: '', component: Home }],
+    children: [
+      { path: '', component: Home },
+      { path: '/signup', component: Signup },
+      { path: '/login', component: Login },
+      { path: '/customer-main', component: CustomerMain, meta: { role: 'CUSTOMER' } },
+      { path: '/owner-main', component: OwnerMain, meta: { role: 'OWNER' } },
+      { path: '/store-registration', component: StoreRegistration, meta: { role: 'OWNER' } },
+      { path: '/driver-main', component: DriverMain, meta: { role: 'RIDER' } },
+      //{ path: '/dashboard', component: Dashboard }, //로그인후 이동하는 임시 페이지
+    ],
   },
   {
     path: '/customer',
@@ -77,4 +78,3 @@ router.beforeEach((to, from, next) => {
 })
 
 export default router
-
