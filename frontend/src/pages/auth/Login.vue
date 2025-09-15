@@ -52,8 +52,9 @@ export default {
         const response = await axios.post('http://localhost:8080/api/auth/login', this.form)
 
         // 2️⃣ JWT 토큰과 사용자 정보 저장 (로컬스토리지)
-        const { token, email, name, userType } = response.data
+        const { token, id, email, name, userType } = response.data
         localStorage.setItem('jwt', token)
+        localStorage.setItem('userId', id)
         localStorage.setItem('userEmail', email)
         localStorage.setItem('userName', name)
         localStorage.setItem('userType', userType)
