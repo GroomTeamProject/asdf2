@@ -3,27 +3,27 @@ server:
 spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: ${DB_URL_LOCAL:jdbc:mariadb://localhost:3306/asdf?characterEncoding=UTF-8&useUnicode=true}
-    username: ${DB_USERNAME_LOCAL:root}
-    password: ${DB_PASSWORD_LOCAL:}
-  flyway:
-    enabled: true
-    baseline-on-migrate: true
-    locations: classpath:db/migration
+    url: ${DB_URL_LOCAL}
+    username: ${DB_USERNAME_LOCAL}
+    password: ${DB_PASSWORD_LOCAL}
   jpa:
     hibernate:
       ddl-auto: none
       dialect: org.hibernate.dialect.MariaDBDialect
+  flyway:
+    enabled: false # 수동으로 Bean을 등록하기 위해 비활성화
 
 cors:
-  allowed-origins: ${ORIGIN_URL_LOCAL:http://localhost:3000}
+  allowed-origins: ${ORIGIN_URL_LOCAL}
 
 cloud:
   aws:
     credentials:
-      access-key: dummy
-      secret-key: dummy
-    region:
-      static: ap-northeast-2
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
     s3:
-      bucket: dummy
+      bucket: ${AWS_S3_BUCKET}
+    region:
+      static: ${AWS_REGION}
+    stack:
+      auto: false
