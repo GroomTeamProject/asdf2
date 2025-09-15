@@ -59,7 +59,7 @@
           </button>
 
           <button
-            @click="openAddressListModal"
+            @click="goToAddressManagement"
             class="w-full flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <div class="flex items-center gap-3">
@@ -129,83 +129,6 @@
     </div>
 
 
-    <!-- 배송지 목록 모달 -->
-    <div
-      v-if="showAddressListModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-    >
-      <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
-        <div class="p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">배송지 목록</h3>
-            <button
-              @click="closeAddressListModal"
-              class="text-gray-400 hover:text-gray-600"
-            >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-            </button>
-          </div>
-
-          <div v-if="loadingAddresses" class="flex justify-center items-center py-8">
-            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span class="ml-2 text-gray-600">배송지를 불러오는 중...</span>
-          </div>
-
-          <div v-else-if="userAddresses.length === 0" class="text-center py-8">
-            <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-            </svg>
-            <p class="text-gray-500">등록된 배송지가 없습니다.</p>
-          </div>
-
-          <div v-else class="space-y-3 max-h-96 overflow-y-auto">
-            <div
-              v-for="address in userAddresses"
-              :key="address.id"
-              class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-2">
-                    <h4 class="font-medium text-gray-900">{{ address.addressName }}</h4>
-                    <span
-                      v-if="address.isDefault"
-                      class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
-                    >
-                      기본
-                    </span>
-                  </div>
-                  <p class="text-sm text-gray-600 mb-1">{{ address.address }}</p>
-                  <p class="text-sm text-gray-600">{{ address.detailAddress }}</p>
-                  <p class="text-xs text-gray-500 mt-1">우편번호: {{ address.zipcode }}</p>
-                </div>
-                <div class="flex gap-2 ml-4">
-                  <button
-                    @click="setDefaultAddress(address.id)"
-                    :disabled="address.isDefault"
-                    class="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {{ address.isDefault ? '기본' : '기본 설정' }}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex justify-end pt-4 border-t border-gray-200 mt-4">
-            <button
-              @click="closeAddressListModal"
-              class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-            >
-              닫기
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -221,10 +144,6 @@ export default {
     const userProfile = ref(null)
     const loading = ref(true)
     
-    // 모달 상태
-    const showAddressListModal = ref(false)
-    const loadingAddresses = ref(false)
-    const userAddresses = ref([])
 
     const goToOrderHistory = () => {
       router.push('/customer/order-history')
@@ -240,6 +159,10 @@ export default {
 
     const goToEditProfile = () => {
       router.push('/customer/edit-profile')
+    }
+
+    const goToAddressManagement = () => {
+      router.push('/customer/address-management')
     }
 
     const handleLogout = async () => {
@@ -281,43 +204,6 @@ export default {
     }
 
 
-    // 배송지 목록 모달 관련 함수들
-    const openAddressListModal = async () => {
-      showAddressListModal.value = true
-      await fetchUserAddresses()
-    }
-
-    const closeAddressListModal = () => {
-      showAddressListModal.value = false
-      userAddresses.value = []
-    }
-
-    const fetchUserAddresses = async () => {
-      try {
-        loadingAddresses.value = true
-        const userId = localStorage.getItem('userId')
-        
-        if (userId) {
-          const addresses = await userApi.getUserAddresses(userId)
-          userAddresses.value = addresses || []
-        }
-      } catch (error) {
-        console.error('배송지 목록 조회 실패:', error)
-        userAddresses.value = []
-      } finally {
-        loadingAddresses.value = false
-      }
-    }
-
-    const setDefaultAddress = async (addressId) => {
-      try {
-        // TODO: 기본 배송지 설정 API 구현 후 연결
-        alert('기본 배송지 설정 기능은 추후 구현 예정입니다.')
-      } catch (error) {
-        console.error('기본 배송지 설정 실패:', error)
-        alert('기본 배송지 설정에 실패했습니다.')
-      }
-    }
 
     onMounted(() => {
       fetchUserData()
@@ -330,15 +216,8 @@ export default {
       goToCart,
       goToStores,
       goToEditProfile,
+      goToAddressManagement,
       handleLogout,
-      // 모달 관련
-      showAddressListModal,
-      loadingAddresses,
-      userAddresses,
-      // 모달 함수들
-      openAddressListModal,
-      closeAddressListModal,
-      setDefaultAddress,
     }
   },
 }
