@@ -40,6 +40,7 @@ const routes = [
     path: '/customer',
     component: CustomerLayout,
     children: [
+      { path: '', component: CustomerMain },
       { path: 'stores', component: StoreList },
       { path: 'stores/:id', component: StoreDetail },
       { path: 'stores/:id/menu/:menuId', component: MenuDetail },
