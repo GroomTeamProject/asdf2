@@ -103,7 +103,6 @@ export const userApi = {
     }),
 
   /**
-<<<<<<< HEAD
    * 비밀번호 변경
    */
   changePassword: (data) =>
@@ -116,8 +115,7 @@ export const userApi = {
     }),
 
   /**
-=======
->>>>>>> origin/develop
+
    * 로그아웃 API
    */
   logout: () =>
@@ -134,4 +132,13 @@ export const userApi = {
       localStorage.removeItem('userId')
       return { success: true, message: '로그아웃되었습니다.' }
     }),
+
+  deleteAccount: () =>
+    apiManager.queueRequest(async () => {
+      console.log('🗑️ 계정 탈퇴 중...')
+      const response = await api.delete('/users/me/deactivate')
+      return { success: true, message: '계정이 삭제되었습니다.' }
+    }),
+
+
 }

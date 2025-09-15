@@ -148,6 +148,27 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
             </svg>
           </button>
+
+          <button
+            @click="handleDeleteAccount"
+            class="w-full flex items-center justify-between p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-red-200 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </div>
+              <div class="text-left">
+                <div class="font-medium text-red-700">계정 탈퇴</div>
+                <div class="text-sm text-red-600">계정을 영구적으로 삭제합니다</div>
+              </div>
+            </div>
+            <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </button>
         </div>
       </div>
     </div>
@@ -211,6 +232,20 @@ export default {
       }
     }
 
+    const handleDeleteAccount = async () => {
+      if (confirm('정말로 계정을 탈퇴하시겠습니까? 삭제된 계정은 복구할 수 없습니다.')) {
+        try {
+          await userApi.deleteAccount()  // 서버 API 호출
+          alert('계정이 삭제되었습니다.')
+          localStorage.clear()
+          router.push('/')
+        } catch (error) {
+          console.error('계정 탈퇴 실패:', error)
+          alert('계정 탈퇴에 실패했습니다.')
+        }
+      }
+    }
+
     const fetchUserData = async () => {
       try {
         loading.value = true
@@ -249,6 +284,7 @@ export default {
       goToEditProfile,
       goToAddressManagement,
       handleLogout,
+      handleDeleteAccount
     }
   },
 }
