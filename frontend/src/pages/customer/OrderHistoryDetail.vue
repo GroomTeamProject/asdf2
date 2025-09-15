@@ -148,6 +148,17 @@
           <h3 class="text-lg font-semibold text-gray-900 mb-4">예상 조리 시간</h3>
           <p class="text-gray-700">{{ order.minCookingTime }}분 ~ {{ order.maxCookingTime }}분</p>
         </div>
+
+        <!-- 주문 취소 버튼 (맨 아래) -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div class="flex justify-center">
+            <OrderCancelButton 
+              :order-id="order.id" 
+              :order-status="order.status"
+              @order-cancelled="handleOrderCancelled"
+            />
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -158,11 +169,13 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { customerApi } from '@/api/customer/customerApi.js'
 import OrderStatusBadge from '@/components/customer/order/OrderStatusBadge.vue'
+import OrderCancelButton from '@/components/customer/order/OrderCancelButton.vue'
 
 export default {
   name: 'OrderHistoryDetail',
   components: {
-    OrderStatusBadge
+    OrderStatusBadge,
+    OrderCancelButton
   },
   setup() {
     const router = useRouter()
@@ -208,6 +221,12 @@ export default {
       return new Intl.NumberFormat('ko-KR').format(price)
     }
 
+    // 주문 취소 완료 처리
+    const handleOrderCancelled = () => {
+      // 주문 정보 다시 불러오기
+      fetchOrderDetail()
+    }
+
     onMounted(() => {
       fetchOrderDetail()
     })
@@ -217,7 +236,8 @@ export default {
       loading,
       goBack,
       formatDate,
-      formatPrice
+      formatPrice,
+      handleOrderCancelled
     }
   }
 }
