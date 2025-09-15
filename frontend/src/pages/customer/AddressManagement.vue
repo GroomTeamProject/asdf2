@@ -281,13 +281,23 @@ export default {
     const saveAddress = async () => {
       try {
         isSaving.value = true
-        // TODO: 실제 API 구현 후 연결
-        alert('배송지 저장 기능은 추후 구현 예정입니다.')
+        const userId = localStorage.getItem('userId')
+        
+        if (editingAddress.value) {
+          // 배송지 수정
+          await userApi.updateUserAddress(userId, editingAddress.value.id, addressForm.value)
+          alert('배송지가 성공적으로 수정되었습니다.')
+        } else {
+          // 배송지 추가
+          await userApi.createUserAddress(userId, addressForm.value)
+          alert('배송지가 성공적으로 추가되었습니다.')
+        }
+        
         closeAddressModal()
         await fetchUserAddresses()
       } catch (error) {
         console.error('배송지 저장 실패:', error)
-        alert('배송지 저장에 실패했습니다.')
+        alert(error.response?.data?.message || '배송지 저장에 실패했습니다.')
       } finally {
         isSaving.value = false
       }
@@ -295,24 +305,26 @@ export default {
 
     const setDefaultAddress = async (addressId) => {
       try {
-        // TODO: 실제 API 구현 후 연결
-        alert('기본 배송지 설정 기능은 추후 구현 예정입니다.')
+        const userId = localStorage.getItem('userId')
+        await userApi.setDefaultAddress(userId, addressId)
+        alert('기본 배송지가 설정되었습니다.')
         await fetchUserAddresses()
       } catch (error) {
         console.error('기본 배송지 설정 실패:', error)
-        alert('기본 배송지 설정에 실패했습니다.')
+        alert(error.response?.data?.message || '기본 배송지 설정에 실패했습니다.')
       }
     }
 
     const deleteAddress = async (addressId) => {
       if (confirm('정말로 이 배송지를 삭제하시겠습니까?')) {
         try {
-          // TODO: 실제 API 구현 후 연결
-          alert('배송지 삭제 기능은 추후 구현 예정입니다.')
+          const userId = localStorage.getItem('userId')
+          await userApi.deleteUserAddress(userId, addressId)
+          alert('배송지가 성공적으로 삭제되었습니다.')
           await fetchUserAddresses()
         } catch (error) {
           console.error('배송지 삭제 실패:', error)
-          alert('배송지 삭제에 실패했습니다.')
+          alert(error.response?.data?.message || '배송지 삭제에 실패했습니다.')
         }
       }
     }

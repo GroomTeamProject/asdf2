@@ -57,6 +57,41 @@ export const userApi = {
     }),
 
   /**
+   * 배송지 CRUD API
+   */
+  createUserAddress: (userId, addressData) =>
+    apiManager.queueRequest(async () => {
+      console.log('🔄 배송지 추가 중...')
+      const response = await api.post(`/users/${userId}/addresses`, addressData)
+      console.log('✅ 배송지 추가 성공')
+      return response.data
+    }),
+
+  updateUserAddress: (userId, addressId, addressData) =>
+    apiManager.queueRequest(async () => {
+      console.log('🔄 배송지 수정 중...')
+      const response = await api.put(`/users/${userId}/addresses/${addressId}`, addressData)
+      console.log('✅ 배송지 수정 성공')
+      return response.data
+    }),
+
+  deleteUserAddress: (userId, addressId) =>
+    apiManager.queueRequest(async () => {
+      console.log('🔄 배송지 삭제 중...')
+      const response = await api.delete(`/users/${userId}/addresses/${addressId}`)
+      console.log('✅ 배송지 삭제 성공')
+      return response.data
+    }),
+
+  setDefaultAddress: (userId, addressId) =>
+    apiManager.queueRequest(async () => {
+      console.log('🔄 기본 배송지 설정 중...')
+      const response = await api.put(`/users/${userId}/addresses/${addressId}/default`)
+      console.log('✅ 기본 배송지 설정 성공')
+      return response.data
+    }),
+
+  /**
    * 사용자 정보 수정 API
    */
   updateUserProfile: (userId, userData) =>
