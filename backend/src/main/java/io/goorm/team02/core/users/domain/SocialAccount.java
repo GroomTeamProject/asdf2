@@ -12,13 +12,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Entity
 @Table(name = "social_accounts")
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class SocialAccount extends io.goorm.team02.core.common.domain.BaseEntity {
+public class SocialAccount {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,6 +25,7 @@ public class SocialAccount extends io.goorm.team02.core.common.domain.BaseEntity
 
 	@ManyToOne
 	@JoinColumn(name = "user_id", nullable = false)
+	@ToString.Exclude
 	private User user;
 
 	@Enumerated(EnumType.STRING)
