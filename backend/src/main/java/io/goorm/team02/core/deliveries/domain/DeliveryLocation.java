@@ -15,18 +15,18 @@ import java.math.BigDecimal;
 @Table(name = "delivery_locations")
 public class DeliveryLocation extends BaseEntity {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@ManyToOne
-	@JoinColumn(name = "delivery_id", nullable = false)
-	private Delivery delivery;
+    @ManyToOne
+    @JoinColumn(name = "delivery_id", nullable = false)
+    private Delivery delivery;
 
-	@Column(nullable = false, precision = 10, scale = 8)
-	private BigDecimal latitude;
+    @Column(nullable = false, precision = 10, scale = 8)
+    private BigDecimal latitude;
 
-	@Column(nullable = false, precision = 11, scale = 8)
-	private BigDecimal longitude;
+    @Column(nullable = false, precision = 11, scale = 8)
+    private BigDecimal longitude;
 
 }

@@ -5,6 +5,7 @@ import io.goorm.team02.core.orders.controller.dto.OrderResponse;
 import io.goorm.team02.core.orders.controller.dto.OrderRejectRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderAcceptRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderCancelRequest;
+import io.goorm.team02.core.orders.controller.dto.OrderSearchRequest;
 import io.goorm.team02.core.orders.domain.Order;
 import io.goorm.team02.core.orders.service.OrderStatusService;
 import io.goorm.team02.core.orders.service.OrderService;
@@ -34,11 +35,11 @@ public class OrderController implements OrderControllerDocs {
     }
 
     @GetMapping
-    public List<OrderResponse> getAll(@RequestParam("storeId") Long storeId) {
-        List<Order> orders = orderService.getAll(storeId);
+    public List<OrderResponse> getAllByParams(OrderSearchRequest searchRequest) {
+        List<Order> orders = orderService.getAllByParams(searchRequest);
         return orders.stream()
-                .map(OrderResponse::from)
-                .toList();
+                     .map(OrderResponse::from)
+                     .toList();
     }
 
     @GetMapping("/{orderId}")
@@ -111,4 +112,5 @@ public class OrderController implements OrderControllerDocs {
             @RequestParam(value = "storeId", required = false) Long storeId) {
         return orderService.getAvailableOrders(storeId);
     }
+
 }

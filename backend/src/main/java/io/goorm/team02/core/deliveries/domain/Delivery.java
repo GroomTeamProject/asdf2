@@ -23,40 +23,42 @@ import java.util.List;
 
 @Entity
 @Table(name = "deliveries")
+@lombok.Getter
+@lombok.NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 public class Delivery extends BaseEntity {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@OneToOne
-	@JoinColumn(name = "order_id", nullable = false)
-	private Order order;
+    @OneToOne @JoinColumn(name = "order_id", nullable = false)
+    private Order order;
 
-	@ManyToOne
-	@JoinColumn(name = "rider_id")
-	private User rider;
+    @ManyToOne @JoinColumn(name = "rider_id")
+    private User rider;
 
-	@Column(nullable = false, columnDefinition = "TEXT")
-	private String pickupAddress;
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String pickupAddress;
 
-	@Column(nullable = false, columnDefinition = "TEXT")
-	private String deliveryAddress;
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String deliveryAddress;
 
-	@Column(precision = 5, scale = 2)
-	private BigDecimal distanceKm;
+    @Column(precision = 5, scale = 2)
+    private BigDecimal distanceKm;
 
-	private Integer estimatedTime; // 분 단위
+    private Integer estimatedTime;
 
-	@Enumerated(EnumType.STRING)
-	private DeliveryStatus status = DeliveryStatus.REQUESTED;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @lombok.Setter
+    private DeliveryStatus status = DeliveryStatus.REQUESTED;
 
-	private LocalDateTime requestedAt = LocalDateTime.now();
-	private LocalDateTime acceptedAt;
-	private LocalDateTime pickedUpAt;
-	private LocalDateTime deliveredAt;
+    @lombok.Setter private LocalDateTime acceptedAt;
+    @lombok.Setter private LocalDateTime pickedUpAt;
+    @lombok.Setter private LocalDateTime deliveredAt;
 
-	@OneToMany(mappedBy = "delivery", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<DeliveryLocation> locations;
+    @OneToMany(mappedBy = "delivery", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DeliveryLocation> locations;
 
+    // 필요하면 requestedAt도 게터만 유지
+    private LocalDateTime requestedAt = LocalDateTime.now();
 }

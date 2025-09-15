@@ -17,6 +17,12 @@ import MenuDetail from '../pages/customer/MenuDetail.vue'
 import Cart from '../pages/customer/Cart.vue'
 import Order from '../pages/customer/Order.vue'
 import OrderComplete from '../pages/customer/OrderComplete.vue'
+import OrderHistory from '../pages/customer/OrderHistory.vue'
+import OrderHistoryDetail from '../pages/customer/OrderHistoryDetail.vue'
+import MyPage from '../pages/customer/MyPage.vue'
+import EditProfile from '../pages/customer/EditProfile.vue'
+import AddressManagement from '../pages/customer/AddressManagement.vue'
+import ChangePassword from '../pages/customer/ChangePassword.vue'
 
 // 라우트 경로 추가
 const routes = [
@@ -38,12 +44,19 @@ const routes = [
     path: '/customer',
     component: CustomerLayout,
     children: [
+      { path: '', component: CustomerMain },
       { path: 'stores', component: StoreList },
       { path: 'stores/:id', component: StoreDetail },
       { path: 'stores/:id/menu/:menuId', component: MenuDetail },
       { path: 'cart', component: Cart },
       { path: 'order', component: Order },
       { path: 'order-complete', component: OrderComplete },
+      { path: 'order-history', component: OrderHistory },
+      { path: 'order-history/:id', component: OrderHistoryDetail },
+             { path: 'mypage', component: MyPage },
+             { path: 'edit-profile', component: EditProfile },
+             { path: 'address-management', component: AddressManagement },
+             { path: 'change-password', name: 'ChangePassword', component: ChangePassword },
     ],
   },
 ]

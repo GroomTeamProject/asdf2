@@ -52,8 +52,9 @@ export default {
         const response = await axios.post('http://localhost:8080/api/auth/login', this.form)
 
         // 2️⃣ JWT 토큰과 사용자 정보 저장 (로컬스토리지)
-        const { token, email, name, userType } = response.data
+        const { token, id, email, name, userType } = response.data
         localStorage.setItem('jwt', token)
+        localStorage.setItem('userId', id)
         localStorage.setItem('userEmail', email)
         localStorage.setItem('userName', name)
         localStorage.setItem('userType', userType)
@@ -63,7 +64,7 @@ export default {
         // 3️⃣ 로그인 후 권한에 맞는 페이지로 이동 (예: 대시보드)
         //this.$router.push('/dashboard') // /dashboard 라우트는 나중에 만들어 주세요
         if (userType === 'CUSTOMER') {
-          this.$router.push('/customer/stores')
+          this.$router.push('/customer')
         } else if (userType === 'OWNER') {
           this.$router.push('/owner-main')
         } else if (userType === 'RIDER') {

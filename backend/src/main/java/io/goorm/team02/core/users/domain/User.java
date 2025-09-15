@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Entity
 @Table(name = "users")
@@ -55,9 +56,11 @@ public class User extends BaseEntity {
 	private Boolean phoneVerified = false;
 
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	@ToString.Exclude
 	private List<SocialAccount> socialAccounts;
 
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	@ToString.Exclude
 	private List<UserAddress> addresses;
 
 }

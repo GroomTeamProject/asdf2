@@ -1,4 +1,4 @@
-package io.goorm.team02.core.users.service;
+/*package io.goorm.team02.core.users.service;
 
 import io.goorm.team02.core.auth.security.SecurityUtils;
 import io.goorm.team02.core.users.controller.dto.UserAddressRequest;
@@ -48,4 +48,4 @@ public class UserAddressService {
                 saved.getIsDefault()
             );
        }
-    }
+    }*/

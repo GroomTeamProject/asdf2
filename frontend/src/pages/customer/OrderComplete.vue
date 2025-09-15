@@ -77,11 +77,11 @@
         <div class="space-y-3">
           <div class="flex items-center gap-2">
             <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
-            <span class="text-sm text-blue-700">주문 접수 완료</span>
+            <span class="text-sm text-blue-700">주문 접수 대기</span>
           </div>
           <div class="flex items-center gap-2">
             <div class="w-3 h-3 bg-gray-300 rounded-full"></div>
-            <span class="text-sm text-gray-500">가게에서 주문 확인 중</span>
+            <span class="text-sm text-gray-500">주문 접수됨</span>
           </div>
           <div class="flex items-center gap-2">
             <div class="w-3 h-3 bg-gray-300 rounded-full"></div>
@@ -131,12 +131,14 @@
 <script>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useCartStore } from '@/stores/customer/cart'
 
 export default {
   name: 'OrderComplete',
   setup() {
     const route = useRoute()
     const router = useRouter()
+    const cartStore = useCartStore()
 
     // 주문 정보 (실제로는 API에서 받아와야 함)
     const orderNumber = ref('')
@@ -153,7 +155,7 @@ export default {
     }
 
     const goToHome = () => {
-      router.push('/')
+      router.push('/customer')
     }
 
     // 페이지 로드 시 주문 정보 설정
@@ -162,7 +164,14 @@ export default {
       if (route.query.orderNumber) {
         orderNumber.value = route.query.orderNumber
         totalAmount.value = parseInt(route.query.totalAmount) || 0
-        storeName.value = route.query.storeName || '알 수 없는 가게'
+        
+        // 가게명 우선순위: 장바구니 > query > fallback
+        if (cartStore.items.length > 0) {
+          storeName.value = cartStore.items[0]?.storeName || cartStore.items[0]?.storeInfo?.name || route.query.storeName || '알 수 없는 가게'
+        } else {
+          storeName.value = route.query.storeName || '알 수 없는 가게'
+        }
+        
         deliveryAddress.value = route.query.deliveryAddress || '주소 정보 없음'
         phoneNumber.value = route.query.phoneNumber || '연락처 정보 없음'
       } else {

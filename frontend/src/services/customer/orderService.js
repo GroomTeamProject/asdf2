@@ -122,7 +122,7 @@ export class OrderService {
     
     // 백엔드 OrderRequest 구조에 맞춤
     return {
-      userId: 1, // TODO: 실제 사용자 ID로 교체
+      userId: localStorage.getItem('userId'),
       storeId: orderItems[0]?.storeId || 1, // TODO: 실제 가게 ID로 교체
       deliveryAddress: deliveryAddress,
       deliveryDetailAddress: deliveryDetailAddress || '',
@@ -138,15 +138,23 @@ export class OrderService {
       console.log('주문 데이터:', orderData)
       
       const result = await customerApi.createOrder(orderData)
+      console.log('주문 제출 결과:', result)
       
       return {
         success: true,
-        orderNumber: result.orderNumber || result.order_number,
+        orderNumber: result.orderNumber || result.order_number || `ORD-${Date.now()}`,
         message: result.message || '주문이 성공적으로 접수되었습니다!'
       }
     } catch (error) {
       console.error('주문 제출 실패:', error)
-      throw error
+      
+      // 에러 상세 정보 로깅
+      if (error.response) {
+        console.error('응답 데이터:', error.response.data)
+        console.error('응답 상태:', error.response.status)
+      }
+      
+      throw new Error(error.response?.data?.message || error.message || '주문 처리 중 오류가 발생했습니다.')
     }
   }
 

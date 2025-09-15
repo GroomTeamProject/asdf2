@@ -1,4 +1,4 @@
-// 새로운 주소 등록
+/*/ 새로운 주소 등록
 package io.goorm.team02.core.users.controller;
 
 import io.goorm.team02.core.users.controller.dto.UserAddressRequest;
@@ -26,5 +26,5 @@ public class UserAddressController {
         UserAddressResponse response = userAddressService.addAddress(userId, request);
         return ResponseEntity.ok(response);
     }
-}
+}*/
 

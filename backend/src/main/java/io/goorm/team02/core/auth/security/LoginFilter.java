@@ -73,8 +73,8 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         // 인증 성공 시 JWT 발급 (email + userId 포함)
         String token = jwtTokenProvider.generateToken(authentication, user.getId());
 
-        // 응답: JSON으로 email, name, token
-        LoginResponse loginResponse = new LoginResponse(user.getEmail(), user.getName(),user.getUserType(),token);
+        // 응답: JSON으로 id, email, name, userType, token
+        LoginResponse loginResponse = new LoginResponse(user.getId(), user.getEmail(), user.getName(), user.getUserType(), token);
 
         // 응답 헤더에 JWT 추가
         response.setHeader("Authorization", "Bearer " + token);
