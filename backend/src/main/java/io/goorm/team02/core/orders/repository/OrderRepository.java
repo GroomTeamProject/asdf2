@@ -19,6 +19,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findAllByStoreId(Long storeId);
 
+    List<Order> findAllByUserId(Long userId);
+
     /**
      * 특정 상태의 주문들 조회 (배달 가능한 주문들)
      */
