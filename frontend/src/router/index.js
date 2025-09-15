@@ -20,6 +20,7 @@ import OrderComplete from '../pages/customer/OrderComplete.vue'
 import OrderHistory from '../pages/customer/OrderHistory.vue'
 import OrderHistoryDetail from '../pages/customer/OrderHistoryDetail.vue'
 import MyPage from '../pages/customer/MyPage.vue'
+import EditProfile from '../pages/customer/EditProfile.vue'
 
 // 라우트 경로 추가
 const routes = [
@@ -51,6 +52,7 @@ const routes = [
       { path: 'order-history', component: OrderHistory },
       { path: 'order-history/:id', component: OrderHistoryDetail },
       { path: 'mypage', component: MyPage },
+      { path: 'edit-profile', component: EditProfile },
     ],
   },
 ]

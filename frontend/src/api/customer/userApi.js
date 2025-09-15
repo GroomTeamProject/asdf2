@@ -57,17 +57,14 @@ export const userApi = {
     }),
 
   /**
-   * 사용자 정보 수정 API (추후 구현 예정)
+   * 사용자 정보 수정 API
    */
   updateUserProfile: (userId, userData) =>
     apiManager.queueRequest(async () => {
       console.log('🔄 사용자 정보 수정 중...')
-      // TODO: 실제 API 엔드포인트 구현 후 연결
-      // const response = await api.put(`/users/${userId}`, userData)
-      // console.log('✅ 사용자 정보 수정 성공')
-      // return response.data
-      
-      throw new Error('사용자 정보 수정 API는 아직 구현되지 않았습니다.')
+      const response = await api.put(`/users/${userId}`, userData)
+      console.log('✅ 사용자 정보 수정 성공')
+      return response.data
     }),
 
   /**
