@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../pages/Home.vue'
 import Signup from '../pages/auth/Signup.vue'
 import Login from '../pages/auth/Login.vue'
-import Dashboard from '../pages/auth/Dashboard.vue'
 import StoreRegistration from '../pages/owner/StoreRegistration.vue'
 
 // 권한별 메인 페이지
@@ -10,17 +9,43 @@ import CustomerMain from '../pages/customer/CustomerMain.vue'
 import OwnerMain from '../pages/owner/OwnerMain.vue'
 import DriverMain from '../pages/driver/DriverMain.vue'
 
+import DefaultLayout from '../layouts/DefaultLayout.vue'
+import CustomerLayout from '../layouts/customer/CustomerLayout.vue'
+import StoreList from '../pages/customer/StoreList.vue'
+import StoreDetail from '../pages/customer/StoreDetail.vue'
+import MenuDetail from '../pages/customer/MenuDetail.vue'
+import Cart from '../pages/customer/Cart.vue'
+import Order from '../pages/customer/Order.vue'
+import OrderComplete from '../pages/customer/OrderComplete.vue'
 
 // 라우트 경로 추가
 const routes = [
-  { path: '/', component: Home },
-  { path: '/signup', component: Signup },
-  { path: '/login', component: Login },
-  { path: '/customer-main', component: CustomerMain, meta: { role: 'CUSTOMER' } },
-  { path: '/owner-main', component: OwnerMain, meta: { role: 'OWNER' } },
-  { path: '/store-registration', component: StoreRegistration, meta: { role: 'OWNER' } },
-  { path: '/driver-main', component: DriverMain, meta: { role: 'RIDER' } }
-  //{ path: '/dashboard', component: Dashboard }, //로그인후 이동하는 임시 페이지
+  {
+    path: '/',
+    component: DefaultLayout,
+    children: [
+      { path: '', component: Home },
+      { path: '/signup', component: Signup },
+      { path: '/login', component: Login },
+      { path: '/customer-main', component: CustomerMain, meta: { role: 'CUSTOMER' } },
+      { path: '/owner-main', component: OwnerMain, meta: { role: 'OWNER' } },
+      { path: '/store-registration', component: StoreRegistration, meta: { role: 'OWNER' } },
+      { path: '/driver-main', component: DriverMain, meta: { role: 'RIDER' } },
+      //{ path: '/dashboard', component: Dashboard }, //로그인후 이동하는 임시 페이지
+    ],
+  },
+  {
+    path: '/customer',
+    component: CustomerLayout,
+    children: [
+      { path: 'stores', component: StoreList },
+      { path: 'stores/:id', component: StoreDetail },
+      { path: 'stores/:id/menu/:menuId', component: MenuDetail },
+      { path: 'cart', component: Cart },
+      { path: 'order', component: Order },
+      { path: 'order-complete', component: OrderComplete },
+    ],
+  },
 ]
 
 const router = createRouter({
@@ -53,4 +78,3 @@ router.beforeEach((to, from, next) => {
 })
 
 export default router
-
