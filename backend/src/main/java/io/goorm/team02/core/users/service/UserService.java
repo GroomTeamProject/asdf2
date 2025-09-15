@@ -213,6 +213,7 @@ public class UserService {
         }
     }
 
+
     // 비밀번호 변경
     @Transactional
     public void changePassword(String email, String currentPassword, String newPassword) {
@@ -229,6 +230,7 @@ public class UserService {
         userRepository.save(user);
     }
     
+
 
     public SignupResponse registerUser(SignupRequest request) {
         // 이메일 중복 체크

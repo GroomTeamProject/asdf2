@@ -19,4 +19,8 @@ public class UserAddressRequest {
     private BigDecimal latitude;  // 위도
     private BigDecimal longitude; // 경도
     private Boolean isDefault;    // 기본 배송지 여부
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/develop

@@ -103,6 +103,7 @@ export const userApi = {
     }),
 
   /**
+<<<<<<< HEAD
    * 비밀번호 변경
    */
   changePassword: (data) =>
@@ -115,6 +116,8 @@ export const userApi = {
     }),
 
   /**
+=======
+>>>>>>> origin/develop
    * 로그아웃 API
    */
   logout: () =>

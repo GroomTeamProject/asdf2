@@ -81,6 +81,8 @@
 
 
           <button
+
+
             @click="goToAddressManagement"
             class="w-full flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
           >
@@ -187,9 +189,11 @@ export default {
       router.push('/customer/address-management')
     }
 
+
     const goToChangePassword = () => {
       router.push('/customer/change-password')
     }
+
 
     const handleLogout = async () => {
       if (confirm('정말로 로그아웃하시겠습니까?')) {
