@@ -1,0 +1,85 @@
+package io.goorm.team02.core.users.controller;
+
+import io.goorm.team02.core.users.controller.dto.UserResponse;
+import io.goorm.team02.core.users.controller.dto.UserAddressResponse;
+import io.goorm.team02.core.users.controller.dto.UserUpdateRequest;
+import io.goorm.team02.core.users.controller.dto.UserAddressRequest;
+import io.goorm.team02.core.users.domain.User;
+import io.goorm.team02.core.users.domain.UserAddress;
+import io.goorm.team02.core.users.service.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+public class UserController implements UserControllerDocs {
+
+    private final UserService userService;
+
+    /**
+     * 사용자 정보 조회
+     */
+    // TODO: filter 이용해서 현재 사용자 정보 조회하도록 수정
+    @GetMapping("/{userId}")
+    public UserResponse getUser(@PathVariable Long userId) {
+        User user = userService.getUserById(userId);
+        System.out.println("user: " + user);
+        return UserResponse.from(user);
+    }
+
+    /**
+     * 사용자 주소 목록 조회
+     */
+    @GetMapping("/{userId}/addresses")
+    public List<UserAddressResponse> getUserAddresses(@PathVariable Long userId) {
+        List<UserAddress> addresses = userService.getUserAddresses(userId);
+        return addresses.stream()
+                .map(UserAddressResponse::from)
+                .toList();
+    }
+
+    /**
+     * 사용자 정보 업데이트
+     */
+    @PutMapping("/{userId}")
+    public UserResponse updateUser(@PathVariable Long userId, @RequestBody UserUpdateRequest request) {
+        User updatedUser = userService.updateUser(userId, request);
+        return UserResponse.from(updatedUser);
+    }
+
+    /**
+     * 사용자 주소 생성
+     */
+    @PostMapping("/{userId}/addresses")
+    public UserAddressResponse createUserAddress(@PathVariable Long userId, @RequestBody UserAddressRequest request) {
+        UserAddress address = userService.createUserAddress(userId, request);
+        return UserAddressResponse.from(address);
+    }
+
+    /**
+     * 사용자 주소 수정
+     */
+    @PutMapping("/{userId}/addresses/{addressId}")
+    public UserAddressResponse updateUserAddress(@PathVariable Long userId, @PathVariable Long addressId, @RequestBody UserAddressRequest request) {
+        UserAddress address = userService.updateUserAddress(userId, addressId, request);
+        return UserAddressResponse.from(address);
+    }
+
+    /**
+     * 사용자 주소 삭제
+     */
+    @DeleteMapping("/{userId}/addresses/{addressId}")
+    public void deleteUserAddress(@PathVariable Long userId, @PathVariable Long addressId) {
+        userService.deleteUserAddress(userId, addressId);
+    }
+}
