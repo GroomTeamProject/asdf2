@@ -30,6 +30,9 @@ export default {
     const orderStore = useOrderStore()
     const cartStore = useCartStore()
     
+    // 컴포넌트 마운트 시 주문 제출 상태 초기화
+    orderStore.setSubmitting(false)
+    
     // store에서 필요한 상태들만 추출
     const {
       deliveryAddress,

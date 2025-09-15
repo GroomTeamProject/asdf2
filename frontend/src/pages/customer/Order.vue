@@ -55,6 +55,9 @@ export default {
         return
       }
 
+      // 주문 제출 상태 초기화 (이전에 실패한 주문이 있을 수 있음)
+      orderStore.setSubmitting(false)
+
       // 임시 배달 정보 설정
       // TODO: 실제로는 사용자 정보에서 가져와야 함
       orderStore.initializeDeliveryInfo(
