@@ -9,6 +9,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 
@@ -23,6 +24,7 @@ public class UserAddress {
 
 	@ManyToOne
 	@JoinColumn(name = "user_id", nullable = false)
+	@ToString.Exclude
 	private User user;
 
 	@Column(name = "address_name", length = 50)
