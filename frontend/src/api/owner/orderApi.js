@@ -1,5 +1,4 @@
 import api from '../index.js'
-import { storeApi } from './storeApi.js'
 
 class OrderApiManager {
   constructor() {
@@ -42,6 +41,7 @@ export const orderApi = {
   getStoreInfo: () => orderApiManager.queueRequest(async () => {
     console.log('🔄 가게 정보 조회 중...');
     // storeApi에서 이미 구현된 getMyStore 사용
+    const { storeApi } = await import('./storeApi.js');
     const storeData = await storeApi.getMyStore();
     console.log('✅ 가게 정보 조회 성공');
     return storeData;
