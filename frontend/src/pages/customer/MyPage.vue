@@ -59,6 +59,30 @@
           </button>
 
           <button
+            @click="goToChangePassword"
+            class="w-full flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M12 11c0-1.105-.895-2-2-2s-2 .895-2 2 .895 2 2 2 2-.895 2-2zm0 0v1m6-5v4a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h8l4 4z" />
+                </svg>
+              </div>
+              <div class="text-left">
+                <div class="font-medium text-gray-900">비밀번호 변경</div>
+                <div class="text-sm text-gray-600">현재 비밀번호를 확인 후 변경</div>
+              </div>
+            </div>
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </button>
+
+
+          <button
+
+
             @click="goToAddressManagement"
             class="w-full flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
           >
@@ -165,6 +189,12 @@ export default {
       router.push('/customer/address-management')
     }
 
+
+    const goToChangePassword = () => {
+      router.push('/customer/change-password')
+    }
+
+
     const handleLogout = async () => {
       if (confirm('정말로 로그아웃하시겠습니까?')) {
         try {
@@ -215,6 +245,7 @@ export default {
       goToOrderHistory,
       goToCart,
       goToStores,
+      goToChangePassword,
       goToEditProfile,
       goToAddressManagement,
       handleLogout,

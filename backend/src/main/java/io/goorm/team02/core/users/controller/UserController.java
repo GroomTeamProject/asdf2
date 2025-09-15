@@ -3,13 +3,20 @@ package io.goorm.team02.core.users.controller;
 import io.goorm.team02.core.users.controller.dto.UserResponse;
 import io.goorm.team02.core.users.controller.dto.UserAddressResponse;
 import io.goorm.team02.core.users.controller.dto.UserUpdateRequest;
+import io.goorm.team02.core.auth.security.SecurityUtils;
+import io.goorm.team02.core.users.controller.dto.ProfilePasswordEdit;
 import io.goorm.team02.core.users.controller.dto.UserAddressRequest;
 import io.goorm.team02.core.users.domain.User;
 import io.goorm.team02.core.users.domain.UserAddress;
 import io.goorm.team02.core.users.service.UserService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -91,4 +98,22 @@ public class UserController implements UserControllerDocs {
         UserAddress address = userService.setDefaultAddress(userId, addressId);
         return UserAddressResponse.from(address);
     }
+
+    // 비밀번호 변경
+    @PatchMapping("/me/password") // put이 아니라, patch??
+    public ResponseEntity<?> changePassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody ProfilePasswordEdit request
+    ) {
+        userService.changePassword(userDetails.getUsername(), request.getCurrentPassword(), request.getNewPassword());
+        return ResponseEntity.ok("Password changed successfully");
+    }
+
+    /*/ 계정 삭제
+    @DeleteMapping("/me/deactivate")
+    public ResponseEntity<Void> deactivateUser() {
+        Long userId = SecurityUtils.getCurrentUserId(); // 로그인한 사용자 ID 가져오기
+        userService.deactivateUser(userId);
+        return ResponseEntity.noContent().build();
+    }*/
 }

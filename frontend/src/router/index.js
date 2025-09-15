@@ -22,6 +22,8 @@ import OrderHistoryDetail from '../pages/customer/OrderHistoryDetail.vue'
 import MyPage from '../pages/customer/MyPage.vue'
 import EditProfile from '../pages/customer/EditProfile.vue'
 import AddressManagement from '../pages/customer/AddressManagement.vue'
+import ChangePassword from '../pages/customer/ChangePassword.vue'
+
 
 // 라우트 경로 추가
 const routes = [
@@ -55,6 +57,8 @@ const routes = [
              { path: 'mypage', component: MyPage },
              { path: 'edit-profile', component: EditProfile },
              { path: 'address-management', component: AddressManagement },
+             { path: 'change-password', name: 'ChangePassword', component: ChangePassword },
+
     ],
   },
 ]

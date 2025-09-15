@@ -213,6 +213,25 @@ public class UserService {
         }
     }
 
+
+    // 비밀번호 변경
+    @Transactional
+    public void changePassword(String email, String currentPassword, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 현재 비밀번호 확인
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+
+        // 새 비밀번호 인코딩 후 저장
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+    
+
+
     public SignupResponse registerUser(SignupRequest request) {
         // 이메일 중복 체크
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {

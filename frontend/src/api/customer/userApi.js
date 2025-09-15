@@ -103,6 +103,21 @@ export const userApi = {
     }),
 
   /**
+<<<<<<< HEAD
+   * 비밀번호 변경
+   */
+  changePassword: (data) =>
+    apiManager.queueRequest(async () => {
+      console.log('🔄 비밀번호 변경 요청 중...')
+      // data: { email, currentPassword, newPassword }
+      const response = await api.patch(`/users/me/password`, data)
+      console.log('✅ 비밀번호 변경 성공')
+      return response.data
+    }),
+
+  /**
+=======
+>>>>>>> origin/develop
    * 로그아웃 API
    */
   logout: () =>
