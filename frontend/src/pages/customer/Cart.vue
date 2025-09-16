@@ -1,20 +1,32 @@
 <template>
-  <div class="max-w-6xl mx-auto p-4 space-y-6">
-    <!-- 장바구니 아이템 목록 -->
-    <CartItems
-      v-if="cart.length > 0"
-      :cartItems="cart"
-      @update-quantity="updateQuantity"
-    />
-    <CartEmpty v-if="cart.length === 0" />
-
-    <!-- 주문 요약 및 결제 -->
-    <CartSummary
-      v-if="cart.length > 0"
-      :totalPrice="totalPrice"
-      @place-order="placeOrder"
-    />
+  <!-- 헤더 배너 -->
+  <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+    <div class="max-w-6xl mx-auto">
+      <h1 class="text-2xl font-bold mb-2">장바구니</h1>
+      <p class="text-blue-100">주문할 메뉴를 확인해보세요</p>
+    </div>
   </div>
+
+  <!-- 페이지 컨테이너 -->
+  <CustomerContainer max-width="6xl" padding="4" custom-class="space-y-6">
+    <!-- 장바구니 아이템 목록 섹션 -->
+    <section>
+      <CartItems
+        v-if="cart.length > 0"
+        :cartItems="cart"
+        @update-quantity="updateQuantity"
+      />
+      <CartEmpty v-if="cart.length === 0" />
+    </section>
+
+    <!-- 주문 요약 및 결제 섹션 -->
+    <section v-if="cart.length > 0">
+      <CartSummary
+        :totalPrice="totalPrice"
+        @place-order="placeOrder"
+      />
+    </section>
+  </CustomerContainer>
 </template>
 
 <script>
@@ -23,6 +35,7 @@ import { useRouter } from 'vue-router'
 import CartEmpty from '@/components/customer/cart/CartEmpty.vue'
 import CartItems from '@/components/customer/cart/CartItems.vue'
 import CartSummary from '@/components/customer/cart/CartSummary.vue'
+import CustomerContainer from '@/components/customer/CustomerContainer.vue'
 import { cartService } from '@/services/customer/cartService'
 
 export default {
@@ -31,6 +44,7 @@ export default {
     CartEmpty,
     CartItems,
     CartSummary,
+    CustomerContainer,
   },
   setup() {
     const router = useRouter()

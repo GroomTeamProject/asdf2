@@ -1,14 +1,14 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- 메인 배너 -->
-    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
-      <div class="max-w-2xl mx-auto">
-        <h1 class="text-2xl font-bold mb-2">맛있는 배달 주문</h1>
-        <p class="text-blue-100">원하는 음식을 빠르고 안전하게 배달받으세요</p>
-      </div>
+  <!-- 메인 배너 -->
+  <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+    <div class="max-w-2xl mx-auto">
+      <h1 class="text-2xl font-bold mb-2">맛있는 배달 주문</h1>
+      <p class="text-blue-100">원하는 음식을 빠르고 안전하게 배달받으세요</p>
     </div>
+  </div>
 
-    <div class="max-w-2xl mx-auto p-4 space-y-6">
+  <!-- 페이지 컨테이너 -->
+  <CustomerContainer max-width="2xl" padding="4" custom-class="space-y-6">
       <!-- 크루셀 -->
       <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div class="relative">
@@ -155,16 +155,19 @@
           </button>
         </div>
       </div>
-    </div>
-  </div>
+  </CustomerContainer>
 </template>
 
 <script>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import CustomerContainer from '@/components/customer/CustomerContainer.vue'
 
 export default {
   name: 'CustomerMain',
+  components: {
+    CustomerContainer,
+  },
   setup() {
     const router = useRouter()
     const currentSlide = ref(0)
