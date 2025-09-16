@@ -7,8 +7,7 @@ import io.goorm.team02.core.orders.controller.dto.OrderCancelRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderRejectRequest;
 import io.goorm.team02.core.orders.controller.dto.OrderResponse;
 import io.goorm.team02.core.orders.domain.Order;
-import io.goorm.team02.core.orders.domain.enums.OrderStatus;
-import io.goorm.team02.core.orders.event.OrderAcceptedEvent;
+import io.goorm.team02.core.orders.event.*;
 import io.goorm.team02.core.orders.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -50,7 +49,8 @@ public class OrderStatusService {
         order.startCooking();
         Order dbOrder = orderRepository.save(order);
         
-        // TODO: 주문 상태 변경 이벤트 발행
+        // 주문 조리 시작 이벤트 발행
+        eventPublisher.publishEvent(new OrderCookingEvent(this, dbOrder));
         
         return OrderResponse.from(dbOrder);
     }
@@ -65,7 +65,8 @@ public class OrderStatusService {
         order.completeCooking();
         Order dbOrder = orderRepository.save(order);
         
-        // TODO: 주문 상태 변경 이벤트 발행
+        // 주문 준비 완료 이벤트 발행
+        eventPublisher.publishEvent(new OrderReadyEvent(this, dbOrder));
         
         return OrderResponse.from(dbOrder);
     }
@@ -80,7 +81,8 @@ public class OrderStatusService {
         order.startDelivery();
         Order dbOrder = orderRepository.save(order);
         
-        // TODO: 주문 상태 변경 이벤트 발행
+        // 주문 배달 시작 이벤트 발행
+        eventPublisher.publishEvent(new OrderDeliveringEvent(this, dbOrder));
         
         return OrderResponse.from(dbOrder);
     }
@@ -95,7 +97,8 @@ public class OrderStatusService {
         order.deliver();
         Order dbOrder = orderRepository.save(order);
         
-        // TODO: 주문 상태 변경 이벤트 발행
+        // 주문 배달 완료 이벤트 발행
+        eventPublisher.publishEvent(new OrderDeliveredEvent(this, dbOrder));
         
         return OrderResponse.from(dbOrder);
     }
@@ -110,7 +113,8 @@ public class OrderStatusService {
         order.cancel(request.cancelReason());
         Order dbOrder = orderRepository.save(order);
         
-        // TODO: 주문 상태 변경 이벤트 발행
+        // 주문 취소 이벤트 발행
+        eventPublisher.publishEvent(new OrderCancelledEvent(this, dbOrder, request.cancelReason()));
         
         return OrderResponse.from(dbOrder);
     }
@@ -125,7 +129,8 @@ public class OrderStatusService {
         order.reject(request.rejectReason());
         Order dbOrder = orderRepository.save(order);
         
-        // TODO: 주문 상태 변경 이벤트 발행
+        // 주문 거절 이벤트 발행
+        eventPublisher.publishEvent(new OrderRejectedEvent(this, dbOrder, request.rejectReason()));
         
         return OrderResponse.from(dbOrder);
     }
