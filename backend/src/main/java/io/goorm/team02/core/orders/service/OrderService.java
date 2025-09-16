@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +36,7 @@ public class OrderService {
     // ================================
     public Order getOrderById(Long orderId) {
         return orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
+                              .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
     }
 
     public List<Order> getAllOrdersByStoreId(Long storeId) {
@@ -50,6 +53,7 @@ public class OrderService {
     @Transactional
     public Order create(OrderRequest orderRequest) {
         // 1. 엔티티 참조 조회 & 검증
+        // TODO: MSA 전환 시 의존성 제거 필요
         User user = getUserById(orderRequest.userId());
         Store store = getStoreById(orderRequest.storeId());
 
@@ -60,7 +64,11 @@ public class OrderService {
         Order order = Order.create(user, store, orderRequest, menuMap);
 
         // 4. 저장
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+
+        // TODO: 5. 주문 생성 이벤트 발행 - OrderCreatedEvent
+
+        return savedOrder;
     }
 
     /**
@@ -68,34 +76,33 @@ public class OrderService {
      */
     private Map<Long, Menu> getMenuMap(List<OrderRequest.OrderItemRequest> itemRequests) {
         List<Long> menuIds = itemRequests.stream()
-                .map(OrderRequest.OrderItemRequest::menuId)
-                .toList();
+                                         .map(OrderRequest.OrderItemRequest::menuId)
+                                         .toList();
 
         List<Menu> menus = menuRepository.findAllById(menuIds);
         return menus.stream()
-                .collect(Collectors.toMap(Menu::getId, menu -> menu));
+                    .collect(Collectors.toMap(Menu::getId, menu -> menu));
     }
 
     /**
-     * 주문 목록 조회
+     * 주문 목록 조회 (페이지네이션 지원)
      */
-    public List<Order> getAllByParams(OrderSearchRequest searchRequest) {
-        List<Order> orders;
-        
+    public Page<Order> getAllByParams(OrderSearchRequest searchRequest) {
+        Page<Order> orders;
+        Pageable pageable = PageRequest.of(searchRequest.getPageOrDefault(), searchRequest.getSizeOrDefault());
+
         // 검색 조건에 따라 다른 메서드 호출
         if (searchRequest.hasStoreId()) {
-            orders = orderRepository.findAllByStoreId(searchRequest.getStoreId());
+            orders = orderRepository.findAllByStoreIdWithPagination(searchRequest.getStoreId(), pageable);
         } else if (searchRequest.hasUserId()) {
-            orders = orderRepository.findAllByUserId(searchRequest.getUserId());
+            orders = orderRepository.findAllByUserIdWithPagination(searchRequest.getUserId(), pageable);
         } else {
             // 모든 주문 조회
-            // TODO: 추후 필터링 로직 추가
-            orders = orderRepository.findAll();
+            orders = orderRepository.findAllWithPagination(pageable);
         }
-        
+
         // JPA 지연 로딩으로 orderItems와 options를 가져옴
-        // TODO: 모든 주문 조회에서는 상세 정보를 제공할 필요 없음
-        orders.forEach(order -> {
+        orders.getContent().forEach(order -> {
             order.getOrderItems().forEach(orderItem -> {
                 orderItem.getOptions().size(); // 지연 로딩 트리거
             });
@@ -116,6 +123,7 @@ public class OrderService {
 
         return order;
     }
+
     /**
      * 픽업 가능한 주문 목록 조회 (READY 상태)
      */
@@ -135,8 +143,8 @@ public class OrderService {
         orders.forEach(this::loadOrderDetails);
 
         return orders.stream()
-                .map(OrderResponse::from)
-                .toList();
+                     .map(OrderResponse::from)
+                     .toList();
     }
 
     /**
@@ -153,12 +161,12 @@ public class OrderService {
     // ================================
     private User getUserById(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+                             .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
     }
 
     private Store getStoreById(Long storeId) {
         return storeRepository.findById(storeId)
-                .orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다: " + storeId));
+                              .orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다: " + storeId));
     }
 
 }
