@@ -85,12 +85,12 @@ export default {
       if (!id) throw new Error('currentOrder.id 없음');
 
       const token = localStorage.getItem('jwt');
-      const riderId = this.riderId || JSON.parse(localStorage.getItem('rider') || '{}').riderId;
+      const riderId = localStorage.getItem('userId'); // DB users.id 값
 
       const resp = await fetch(`${API_BASE}/rider/deliveries/${id}/pickup`, {
         method: 'PUT',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ riderId }),
+        headers: { Authorization: `Bearer ${token}` },
+
       });
       if (!resp.ok) throw new Error(`픽업 실패 ${resp.status}`);
     },
@@ -130,7 +130,7 @@ export default {
       this.isAccepting = true;
       try {
         const token = localStorage.getItem('jwt');
-        const riderId = this.riderId || JSON.parse(localStorage.getItem('rider') || '{}').riderId;
+        const riderId = localStorage.getItem('userId'); // DB users.id 값
 
         const resp = await fetch(`${API_BASE}/rider/deliveries/${deliveryId}/accept`, {
           method: 'POST',
@@ -178,36 +178,32 @@ export default {
     async fetchDeliveries() {
       try {
         const token = localStorage.getItem('jwt');
-        const res = await fetch(`${API_BASE}/rider/deliveries`, {
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+ 
+        const res = await fetch(`${API_BASE}/api/orders/delivery/available`, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` },
+ 
         });
         const json = await res.json();
+        // 1) json이 배열이면 그대로 사용
+        const items = Array.isArray(json) ? json : (json?.data ?? []);
+        // 2) OrderResponse 스키마에 맞게 매핑
+        const mapped = items.map((o, idx) => ({
+          _key: `ord:${o.id}|${o.orderNumber}|${idx}`,
+          id: o.id,
+          status: o.status,
+          restaurantName: o.storeName,
+          customerAddress: [o.deliveryAddress, o.deliveryDetailAddress].filter(Boolean).join(' '),
+          orderTime: o.orderedAt ?? o.cookingCompletedAt ?? '-',
+          deliveryFee: o.deliveryFee ?? 0,
+          items: (o.orderItems ?? []).map(i => ({
+            name: i.menuName, quantity: i.quantity, price: i.totalPrice,
+          })),
+          total: o.totalAmount ?? 0,
+        }));
+        console.log('mapped len', mapped.length, mapped[0]);
 
-        // 여기부터 ↓↓↓
-        const items = json?.data?.items ?? json?.data ?? [];
-
-        const mapped = items.map((d, idx) => {
-          const id = d.deliveryId ?? d.id ?? `temp-${idx}`;
-          const key = `ord:${id}|${d.requestedAt ?? idx}|${d.pickupAddress ?? ''}|${d.deliveryAddress ?? ''}`;
-          return {
-            _key: key,                // 렌더용 고유키
-            id,                       // 로직용 ID
-            status: d.status,         // REQUESTED 여부 확인
-            riderId: d.riderId,
-            restaurantName: d.restaurantName || '가게',
-            restaurantAddress: d.pickupAddress,
-            customerAddress: d.deliveryAddress,
-            orderTime: d.requestedAt ? new Date(d.requestedAt).toLocaleString() : '-',
-            estimatedDeliveryTime: d.estimatedTime ? `${d.estimatedTime}분` : '미정',
-            distance: d.distanceKm ? `${d.distanceKm}km` : '-',
-            deliveryFee: d.fee ?? 0,
-            items: d.items ?? [],
-            total: d.totalPrice ?? 0,
-          };
-        });
-
-        // REQUESTED 상태만 노출
-        this.availableOrders = mapped.filter(o => o.status === 'REQUESTED');
+        this.availableOrders = mapped; // 필터·재할당 없음
 
         // 디버그 로그
         console.log('[final ids]', this.availableOrders.map(o => o.id), 'len=', this.availableOrders.length);
