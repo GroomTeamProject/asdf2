@@ -14,10 +14,6 @@ spring:
   flyway:
     enabled: false
 
-cors:
-  allowed-origins: http://localhost:5173
----
-
 cloud:
   aws:
     credentials:

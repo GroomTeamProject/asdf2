@@ -9,17 +9,13 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig {
 
-	@Value("${cors.allowed-origins}")
-	private String allowedOrigins;
-
 	@Bean
 	public WebMvcConfigurer corsConfigurer() {
 		return new WebMvcConfigurer() {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
 				registry.addMapping("/**")
-						//.allowedOrigins(allowedOrigins)
-						.allowedOrigins("http://localhost:5173") // Vue dev 서버 주소
+						.allowedOrigins("http://localhost:5173", "d1bhs0w09pq7lg.cloudfront.net")
 						.allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
 						.allowedHeaders("*")
 						.allowCredentials(true);
