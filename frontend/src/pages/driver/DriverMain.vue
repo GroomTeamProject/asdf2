@@ -20,6 +20,8 @@ export default {
       todayEarnings: 0,
       todayCount: 0,
       isAccepting: false,
+      isPickedUp: false,
+      isBusy: false, // 클릭 중 중복 방지
     }
   },
 
@@ -57,6 +59,41 @@ export default {
   },
 
   methods: {
+    async toggleOrderStatus() {
+      if (!this.currentOrder || this.isBusy) return;
+      this.isBusy = true;
+
+      try {
+        if (!this.isPickedUp) {
+          // 픽업
+          await this.pickupCurrentOrder();
+          this.isPickedUp = true; // 서버 성공 후 전환
+        } else {
+          // 배달 완료
+          await this.completeCurrentOrder(); // 성공 시 currentOrder null 처리
+          this.isPickedUp = false;
+        }
+      } catch (e) {
+        console.error(e);
+        alert('처리 실패');
+      } finally {
+        this.isBusy = false;
+      }
+    },
+    async pickupCurrentOrder() {
+      const id = this.currentOrder?.id;
+      if (!id) throw new Error('currentOrder.id 없음');
+
+      const token = localStorage.getItem('jwt');
+      const riderId = this.riderId || JSON.parse(localStorage.getItem('rider') || '{}').riderId;
+
+      const resp = await fetch(`${API_BASE}/api/rider/deliveries/${id}/pickup`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ riderId }),
+      });
+      if (!resp.ok) throw new Error(`픽업 실패 ${resp.status}`);
+    },
     async refreshLocation() {
       if (!navigator.geolocation) { this.riderAddress = '위치 지원 안됨'; return; }
       navigator.geolocation.getCurrentPosition(
@@ -89,8 +126,7 @@ export default {
     },
 
     async acceptOrder(deliveryId) {
-      if (this.currentOrder) { alert('이미 진행 중인 배달이 있습니다.'); return; }
-      if (this.isAccepting) return;
+      if (this.currentOrder || this.isAccepting) return;
       this.isAccepting = true;
       try {
         const token = localStorage.getItem('jwt');
@@ -102,13 +138,15 @@ export default {
           body: JSON.stringify({ riderId }),
         });
         if (!resp.ok) {
-          if (resp.status === 409) alert('동시에 여러 건 수락이 불가합니다.');
-          else alert(`수락 실패: ${resp.status}`);
+          alert(resp.status === 409 ? '동시에 여러 건 수락 불가' : `수락 실패: ${resp.status}`);
           return;
         }
 
-        const picked = this.availableOrders.find(o => String(o.id) === String(deliveryId)) || null;
+        const picked =
+            this.availableOrders.find(o => String(o.id) === String(deliveryId)) || null;
+
         this.currentOrder = picked;
+        this.isPickedUp = false; // 새 주문 수락 시 초기화
         this.availableOrders = this.availableOrders.filter(o => String(o.id) !== String(deliveryId));
         if (picked) localStorage.setItem('currentOrder', JSON.stringify(picked));
       } catch (e) {
@@ -180,15 +218,38 @@ export default {
       }
     },
 
-    completeCurrentOrder() {
-      if (!this.currentOrder) return;
+    async completeCurrentOrder() {
+      const co = this.currentOrder;
+      if (!co?.id) throw new Error('currentOrder.id 없음');
+
+      // 낙관적 반영 준비
       const now = new Date();
-      this.completedDeliveries.unshift({
-        ...this.currentOrder,
+      const optimistic = {
+        ...co,
         completedTime: now.toISOString(),
         completedTimeText: now.toLocaleString(),
-        earnings: this.currentOrder.deliveryFee,
+        earnings: co.deliveryFee ?? 0,
+      };
+
+      // 낙관적 반영
+      this.completedDeliveries.unshift(optimistic);
+
+      const token = localStorage.getItem('jwt');
+      const riderId = this.riderId || JSON.parse(localStorage.getItem('rider') || '{}').riderId;
+
+      const resp = await fetch(`${API_BASE}/api/rider/deliveries/${co.id}/complete`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ riderId }),
       });
+
+      if (!resp.ok) {
+        // 롤백
+        this.completedDeliveries.shift();
+        throw new Error(`완료 실패 ${resp.status}`);
+      }
+
+      // 성공 처리
       this.currentOrder = null;
       localStorage.removeItem('currentOrder');
       this.updateStats();
@@ -397,9 +458,9 @@ export default {
 
         <button
           v-if="currentOrder"
-          @click="completeCurrentOrder"
+          @click="toggleOrderStatus()"
           class="mt-4 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
-          배달 완료
+          {{ isPickedUp ? '배달 완료' : '픽업 완료' }}
         </button>
       </div>
     </div>
