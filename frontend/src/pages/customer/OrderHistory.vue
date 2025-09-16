@@ -80,6 +80,16 @@
                 </svg>
               </div>
             </div>
+            
+            <!-- 리뷰 작성 버튼 (배달완료된 주문만) -->
+            <div v-if="order.status === 'DELIVERED'" class="mt-4 pt-4 border-t border-gray-100">
+              <button
+                @click.stop="goToWriteReview(order.id)"
+                class="w-full py-2 px-4 bg-yellow-500 text-white text-sm font-medium rounded-lg hover:bg-yellow-600 transition-colors"
+              >
+                리뷰 작성하기
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -134,6 +144,11 @@ export default {
       router.push(`/customer/order-history/${orderId}`)
     }
 
+    // 리뷰 작성 페이지로 이동
+    const goToWriteReview = (orderId) => {
+      router.push(`/customer/write-review/${orderId}`)
+    }
+
     // 날짜 포맷팅
     const formatDate = (dateString) => {
       if (!dateString) return ''
@@ -167,6 +182,7 @@ export default {
       loading,
       hasMore,
       goToOrderDetail,
+      goToWriteReview,
       formatDate,
       formatPrice,
       loadMore

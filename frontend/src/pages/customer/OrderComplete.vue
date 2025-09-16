@@ -113,9 +113,16 @@
       <div class="space-y-3">
         <button
           @click="goToStores"
-          class="w-full h-12 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+          class="w-full h-12 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors mb-3"
         >
           다른 가게 둘러보기
+        </button>
+        
+        <button
+          @click="goToWriteReview"
+          class="w-full h-12 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-600 transition-colors mb-3"
+        >
+          리뷰 작성하기
         </button>
         
         <button
@@ -158,6 +165,12 @@ export default {
       router.push('/customer')
     }
 
+    const goToWriteReview = () => {
+      // 주문 ID를 가져와서 리뷰 작성 페이지로 이동
+      const orderId = route.query.orderId || '1' // 임시로 1 사용
+      router.push(`/customer/write-review/${orderId}`)
+    }
+
     // 페이지 로드 시 주문 정보 설정
     onMounted(() => {
       // route query에서 주문 정보 가져오기
@@ -197,6 +210,7 @@ export default {
       estimatedDeliveryTime,
       goToStores,
       goToHome,
+      goToWriteReview,
     }
   },
 }
