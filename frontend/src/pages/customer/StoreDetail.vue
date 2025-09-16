@@ -1,14 +1,22 @@
 <template>
-  <div class="min-h-screen bg-gray-100">
+  <div class="min-h-screen bg-gray-50">
+    <!-- 헤더 배너 -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+      <div class="max-w-6xl mx-auto">
+        <h1 class="text-2xl font-bold mb-2">{{ selectedStore?.name || '가게 정보' }}</h1>
+        <p class="text-blue-100">맛있는 메뉴를 확인하고 주문해보세요</p>
+      </div>
+    </div>
+
     <main class="max-w-6xl mx-auto p-4 pb-20">
-      <!-- 음식점 정보   -->
+      <!-- 음식점 정보 -->
       <StoreInfo :store="selectedStore" />
 
       <!-- 메뉴 -->
       <StoreMenu :menuItems="menuItems" :storeId="storeId" />
     </main>
 
-    <!-- 장바구니/주문  버튼 -->
+    <!-- 장바구니/주문 버튼 -->
     <StoreCartButton />
   </div>
 </template>
