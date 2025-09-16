@@ -24,24 +24,33 @@ public class PaymentController {
 
     @PostMapping("/callback")
     @Transactional
-    public ResponseEntity<String> completePayment(@RequestBody PaymentRequest request) {
-        // 주문 조회
+    public ResponseEntity<Payment> completePayment(@RequestBody PaymentRequest request) {
+        // 1주문 조회
         Order order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + request.getOrderId()));
 
-        System.out.println("paymentKey: " + request.getPaymentKey());
+        // 금액 검증
+        if (request.getAmount().compareTo(order.getTotalAmount()) != 0) {
+            throw new IllegalArgumentException("결제 금액 불일치");
+        }
 
-        // 결제 저장
-        Payment payment = new Payment();
-        payment.setPaymentKey(request.getPaymentKey()); 
+        // Payment 조회 또는 새로 생성
+        Payment payment = paymentRepository.findByPaymentKey(request.getPaymentKey())
+                .orElseGet(() -> {
+                    Payment p = new Payment();
+                    p.setPaymentKey(request.getPaymentKey());
+                    p.setOrder(order);
+                    return p;
+                });
+
+        // 결제 정보 업데이트
+        payment.setAmount(request.getAmount());
+        payment.setStatus(PaymentStatus.COMPLETED);
         payment.setPgProvider(request.getPgProvider());
         payment.setPgTid(request.getPgTid());
-        payment.setAmount(request.getAmount());
-        payment.setOrder(order);
-        payment.setStatus(PaymentStatus.COMPLETED); 
 
         paymentRepository.save(payment);
 
-        return ResponseEntity.ok("Payment completed and order saved!");
+        return ResponseEntity.ok(payment);
     }
 }

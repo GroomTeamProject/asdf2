@@ -22,10 +22,10 @@ public class OrderController {
 
     @PostMapping("/create")
     public ResponseEntity<Map<String, Object>> createOrder(@RequestBody OrderRequest orderRequest) {
-        Order savedOrder = orderService.createOrder(orderRequest);
+        Order order = orderService.createOrder(orderRequest);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("orderId", savedOrder.getId());
+        response.put("orderId", order.getId());
 
         return ResponseEntity.ok(response);
     }

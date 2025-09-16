@@ -21,23 +21,30 @@ public class PaymentService {
     }
 
     @Transactional
-    
-    public Payment completePayment(String paymentKey, String pgProvider, String pgTid, BigDecimal amount) {
-        // paymentKey로 결제 조회
+    public Payment completePayment(Long orderId, String paymentKey, String pgProvider, String pgTid,
+            BigDecimal amount) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
+
         Payment payment = paymentRepository.findByPaymentKey(paymentKey)
-                .orElseThrow(() -> new IllegalArgumentException("Payment not found: " + paymentKey));
+                .orElseGet(() -> {
+                    Payment newPayment = new Payment();
+                    newPayment.setPaymentKey(paymentKey);
+                    newPayment.setOrder(order);
+                    return newPayment;
+                });
 
-        // 결제 금액 설정 (Order에서 가져오기)
-        Order order = payment.getOrder();
-        BigDecimal totalAmount = order.getTotalAmount();
-        payment.setAmount(totalAmount);
+        // 금액 검증
+        if (amount.compareTo(order.getTotalAmount()) != 0) {
+            throw new IllegalArgumentException("결제 금액 불일치");
+        }
 
-        // 결제 승인 처리
+        payment.setAmount(amount);
         payment.setStatus(PaymentStatus.COMPLETED);
         payment.setPgProvider(pgProvider);
         payment.setPgTid(pgTid);
-        payment.setAmount(amount);
 
         return paymentRepository.save(payment);
     }
+
 }

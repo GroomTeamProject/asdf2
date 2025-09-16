@@ -1,5 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import axios from "axios";
+
+const router = useRouter();
 
 const items = ref([]);
 const customerName = ref("");
@@ -17,34 +21,51 @@ const totalAmount = computed(() =>
     items.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
 );
 
-const goToPayment = () => {
+const goToPayment = async () => {
     const fullAddress = `${deliveryAddress.value} ${detailAddress.value}`.trim();
 
-    // 주문 정보 localStorage에 저장
-    localStorage.setItem(
-        "orderInfo",
-        JSON.stringify({
-            customerName: customerName.value,
-            phoneNumber: phone.value,
-            address: fullAddress,
-            requestMessage: orderMemo.value,
-            totalAmount: totalAmount.value,
-            items: items.value.map(item => ({
-                menuId: item.id, //
-                name: item.name,
-                productId: item.id,
-                productName: item.name,
-                price: item.price,
-                quantity: item.quantity
-            }))
-        })
-    );
+    const orderData = {
+        customerName: customerName.value,
+        phoneNumber: phone.value,
+        address: fullAddress,
+        requestMessage: orderMemo.value,
+        totalAmount: totalAmount.value,
+        items: items.value.map(item => ({
+            menuId: item.id,
+            name: item.name,
+            productId: item.id,
+            productName: item.name,
+            price: item.price,
+            quantity: item.quantity
+        }))
+    };
 
-    // Toss 결제 페이지로 이동
-    window.location.href = "/payment"; // PaymentPage.vue에서 처리
+    try {
+        // 주문 생성
+        const response = await axios.post("http://localhost:8080/api/orders/create", orderData);
+        const savedOrder = response.data;
+        console.log("주문 생성 응답:", savedOrder);
+
+        // localStorage에 저장 (orderId 포함)
+        localStorage.setItem(
+            "orderInfo",
+            JSON.stringify({
+                ...orderData,
+                orderId: `order-${savedOrder.id}` // Toss 규칙에 맞게 가공
+            })
+        );
+
+        // 장바구니 초기화
+        localStorage.removeItem("cartForCheckout");
+
+        // Payment 페이지 이동
+        router.push("/payment");
+    } catch (err) {
+        console.error("주문 생성 실패:", err);
+        alert("주문 생성 중 오류가 발생했습니다.");
+    }
 };
 </script>
-
 
 <template>
     <div class="max-w-md mx-auto p-4">
