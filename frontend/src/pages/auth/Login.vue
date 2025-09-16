@@ -49,7 +49,7 @@ export default {
       this.loading = true
       try {
         // 1️⃣ 로그인 API 호출
-        const response = await axios.post('http://localhost:8080/api/auth/login', this.form)
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, this.form)
 
         // 2️⃣ JWT 토큰과 사용자 정보 저장 (로컬스토리지)
         const { token, id, email, name, userType } = response.data
