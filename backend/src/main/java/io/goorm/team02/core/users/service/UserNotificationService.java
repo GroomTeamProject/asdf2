@@ -28,20 +28,10 @@ public class UserNotificationService {
     @EventListener
     @Async("eventTaskExecutor")
     public void handleOrderAccepted(OrderAcceptedEvent event) {
-        log.info("사용자 주문 수락 알림 처리 시작: 주문번호={}, 사용자ID={}", event.getOrder().getId(), event.getCustomerId());
+        String message = event.getCustomerMessage();
 
-        try {
-            String message = event.getCustomerMessage();
-
-            // 1. 실시간 알림 전송
-            sendRealTimeNotification(event.getCustomerId(), message);
-
-            log.info("사용자 주문 수락 알림 전송 완료: 주문번호={}, 사용자ID={}", event.getOrder().getId(), event.getCustomerId());
-
-        } catch (Exception e) {
-            log.error("사용자 주문 수락 알림 전송 실패: 주문번호={}, 사용자ID={}, 오류={}", event.getOrder().getId(), event.getCustomerId(), e
-                                                                                                                        .getMessage(), e);
-        }
+        // 1. 실시간 알림 전송
+        sendRealTimeNotification(event.getCustomerId(), message);
     }
 
     /**

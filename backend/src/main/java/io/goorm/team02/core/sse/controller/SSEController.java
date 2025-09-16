@@ -28,7 +28,6 @@ public class SSEController {
      */
     @GetMapping(value = "/connect/{userId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter connect(@PathVariable Long userId) {
-        log.info("사용자 {} SSE 연결 요청", userId);
         return sseService.createConnection(userId);
     }
 
