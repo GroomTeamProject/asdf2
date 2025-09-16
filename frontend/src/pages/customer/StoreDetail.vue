@@ -1,16 +1,27 @@
 <template>
-  <div class="min-h-screen bg-gray-100">
-    <main class="max-w-6xl mx-auto p-4 pb-20">
-      <!-- 음식점 정보   -->
-      <StoreInfo :store="selectedStore" />
-
-      <!-- 메뉴 -->
-      <StoreMenu :menuItems="menuItems" :storeId="storeId" />
-    </main>
-
-    <!-- 장바구니/주문  버튼 -->
-    <StoreCartButton />
+  <!-- 헤더 배너 -->
+  <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+    <div class="max-w-6xl mx-auto">
+      <h1 class="text-2xl font-bold mb-2">{{ selectedStore?.name || '가게 정보' }}</h1>
+      <p class="text-blue-100">맛있는 메뉴를 확인하고 주문해보세요</p>
+    </div>
   </div>
+
+  <!-- 페이지 컨테이너 -->
+  <CustomerContainer max-width="6xl" padding="4" custom-class="pb-20">
+    <!-- 음식점 정보 섹션 -->
+    <section class="mb-6">
+      <StoreInfo :store="selectedStore" />
+    </section>
+
+    <!-- 메뉴 섹션 -->
+    <section>
+      <StoreMenu :menuItems="menuItems" :storeId="storeId" />
+    </section>
+  </CustomerContainer>
+
+  <!-- 장바구니/주문 버튼 -->
+  <StoreCartButton />
 </template>
 
 <script>
@@ -19,6 +30,7 @@ import { useRouter, useRoute } from 'vue-router'
 import StoreInfo from '@/components/customer/storeDetail/StoreInfo.vue'
 import StoreMenuCard from '@/components/customer/storeDetail/StoreMenuCard.vue'
 import StoreCartButton from '@/components/customer/storeDetail/StoreCartButton.vue'
+import CustomerContainer from '@/components/customer/CustomerContainer.vue'
 import { customerApi } from '@/api/customer/customerApi'
 
 export default {
@@ -27,6 +39,7 @@ export default {
     StoreInfo,
     StoreMenu: StoreMenuCard,
     StoreCartButton,
+    CustomerContainer,
   },
   setup() {
     const router = useRouter()
@@ -34,7 +47,7 @@ export default {
     
     const selectedStore = ref(null)
     const menuItems = ref([])
-    const storeId = ref(route.params.id)
+    const storeId = ref(route.params.storeId)
 
     onMounted(async () => {
       try {
@@ -69,7 +82,7 @@ export default {
     return {
       selectedStore,
       menuItems,
-      storeId: route.params.id,
+      storeId: route.params.storeId,
     }
   },
 }

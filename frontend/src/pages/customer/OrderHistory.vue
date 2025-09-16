@@ -80,6 +80,16 @@
                 </svg>
               </div>
             </div>
+            
+            <!-- 리뷰 작성 버튼 (배달완료된 주문만) -->
+            <div v-if="order.status === 'DELIVERED'" class="mt-4 pt-4 border-t border-gray-100">
+              <button
+                @click.stop="goToWriteReview(order.id)"
+                class="w-full py-2 px-4 bg-yellow-500 text-white text-sm font-medium rounded-lg hover:bg-yellow-600 transition-colors"
+              >
+                리뷰 작성하기
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -88,9 +98,11 @@
       <div v-if="hasMore" class="text-center mt-8">
         <button 
           @click="loadMore"
-          class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+          :disabled="loadingMore"
+          class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
         >
-          더보기
+          <div v-if="loadingMore" class="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+          {{ loadingMore ? '로딩 중...' : '더보기' }}
         </button>
       </div>
     </div>
@@ -113,25 +125,60 @@ export default {
     const orders = ref([])
     const loading = ref(true)
     const hasMore = ref(false)
+    const currentPage = ref(0)
+    const loadingMore = ref(false)
 
     // 주문 내역 조회
-    const fetchOrders = async () => {
+    const fetchOrders = async (page = 0, append = false) => {
       try {
-        loading.value = true
+        if (append) {
+          loadingMore.value = true
+        } else {
+          loading.value = true
+        }
+        
         // 사용자의 주문 내역 조회
-        const response = await customerApi.getMyOrders()
-        orders.value = response || []
+        console.log(`📄 페이지 ${page} 요청 중...`)
+        const response = await customerApi.getMyOrders(page, 20)
+        console.log('📄 응답 데이터:', response)
+        
+        // 페이지네이션 응답 구조에 맞게 수정
+        if (response && response.content) {
+          if (append) {
+            // 더보기: 기존 데이터에 추가
+            orders.value = [...orders.value, ...response.content]
+          } else {
+            // 초기 로드: 새로 설정
+            orders.value = response.content || []
+          }
+          hasMore.value = !response.last // 마지막 페이지가 아니면 더보기 버튼 표시
+          currentPage.value = response.pageable?.pageNumber || 0
+        } else {
+          if (!append) {
+            orders.value = []
+          }
+          hasMore.value = false
+        }
       } catch (error) {
         console.error('주문 내역 조회 실패:', error)
-        orders.value = []
+        if (!append) {
+          orders.value = []
+        }
+        hasMore.value = false
       } finally {
         loading.value = false
+        loadingMore.value = false
       }
     }
 
     // 주문 상세 페이지로 이동
     const goToOrderDetail = (orderId) => {
       router.push(`/customer/order-history/${orderId}`)
+    }
+
+    // 리뷰 작성 페이지로 이동
+    const goToWriteReview = (orderId) => {
+      router.push(`/customer/write-review/${orderId}`)
     }
 
     // 날짜 포맷팅
@@ -154,8 +201,9 @@ export default {
 
     // 더보기 로드
     const loadMore = () => {
-      // 페이지네이션 구현 (필요시)
-      console.log('더보기 로드')
+      if (hasMore.value && !loadingMore.value) {
+        fetchOrders(currentPage.value + 1, true)
+      }
     }
 
     onMounted(() => {
@@ -166,7 +214,9 @@ export default {
       orders,
       loading,
       hasMore,
+      loadingMore,
       goToOrderDetail,
+      goToWriteReview,
       formatDate,
       formatPrice,
       loadMore

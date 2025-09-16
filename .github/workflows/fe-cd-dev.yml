@@ -31,6 +31,8 @@ jobs:
 
       - name: Build application
         working-directory: ./frontend
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL_DEV }}
         run: npm run build
         
       - name: Configure AWS credentials
@@ -54,3 +56,8 @@ jobs:
             --index-document index.html \
             --error-document index.html
 
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID_DEV_DEPLOY }} \
+            --paths "/*"

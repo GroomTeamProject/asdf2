@@ -1,6 +1,6 @@
 <!-- src/pages/driver/DriverMain.vue -->
 <script>
-const API_BASE = 'http://localhost:8080';
+const API_BASE = import.meta.env.VITE_API_URL;
 const REJECT_KEY_PREFIX = 'rejectedOrders';
 
 export default {
@@ -87,7 +87,7 @@ export default {
       const token = localStorage.getItem('jwt');
       const riderId = localStorage.getItem('userId'); // DB users.id 값
 
-      const resp = await fetch(`${API_BASE}/api/rider/deliveries/${id}/pickup`, {
+      const resp = await fetch(`${API_BASE}/rider/deliveries/${id}/pickup`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` },
 
@@ -132,7 +132,7 @@ export default {
         const token = localStorage.getItem('jwt');
         const riderId = localStorage.getItem('userId'); // DB users.id 값
 
-        const resp = await fetch(`${API_BASE}/api/rider/deliveries/${deliveryId}/accept`, {
+        const resp = await fetch(`${API_BASE}/rider/deliveries/${deliveryId}/accept`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ riderId }),
@@ -178,9 +178,11 @@ export default {
     async fetchDeliveries() {
       try {
         const token = localStorage.getItem('jwt');
+ 
         const res = await fetch(`${API_BASE}/api/orders/delivery/available`, {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
+ 
         });
         const json = await res.json();
         // 1) json이 배열이면 그대로 사용
@@ -231,7 +233,7 @@ export default {
       const token = localStorage.getItem('jwt');
       const riderId = this.riderId || JSON.parse(localStorage.getItem('rider') || '{}').riderId;
 
-      const resp = await fetch(`${API_BASE}/api/rider/deliveries/${co.id}/complete`, {
+      const resp = await fetch(`${API_BASE}/rider/deliveries/${co.id}/complete`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ riderId }),

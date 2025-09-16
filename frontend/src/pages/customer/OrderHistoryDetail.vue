@@ -149,14 +149,30 @@
           <p class="text-gray-700">{{ order.minCookingTime }}분 ~ {{ order.maxCookingTime }}분</p>
         </div>
 
-        <!-- 주문 취소 버튼 (맨 아래) -->
+        <!-- 액션 버튼들 (맨 아래) -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div class="flex justify-center">
-            <OrderCancelButton 
-              :order-id="order.id" 
-              :order-status="order.status"
-              @order-cancelled="handleOrderCancelled"
-            />
+          <div class="space-y-3">
+            <!-- 리뷰 작성 버튼 (배달완료된 주문만) -->
+            <div v-if="order.status === 'DELIVERED'">
+              <button
+                @click="goToWriteReview"
+                class="w-full h-14 text-lg font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-yellow-100 text-yellow-700 hover:bg-yellow-200 focus:ring-yellow-500 border border-yellow-300 flex items-center justify-center gap-2"
+              >
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                리뷰 작성하기
+              </button>
+            </div>
+            
+            <!-- 주문 취소 버튼 -->
+            <div class="flex justify-center">
+              <OrderCancelButton 
+                :order-id="order.id" 
+                :order-status="order.status"
+                @order-cancelled="handleOrderCancelled"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -187,7 +203,7 @@ export default {
     const fetchOrderDetail = async () => {
       try {
         loading.value = true
-        const orderId = route.params.id
+        const orderId = route.params.orderId
         const response = await customerApi.getOrderDetail(orderId)
         order.value = response
       } catch (error) {
@@ -201,6 +217,11 @@ export default {
     // 뒤로가기
     const goBack = () => {
       router.push('/customer/order-history')
+    }
+
+    // 리뷰 작성 페이지로 이동
+    const goToWriteReview = () => {
+      router.push(`/customer/write-review/${order.value.id}`)
     }
 
     // 날짜 포맷팅
@@ -235,6 +256,7 @@ export default {
       order,
       loading,
       goBack,
+      goToWriteReview,
       formatDate,
       formatPrice,
       handleOrderCancelled

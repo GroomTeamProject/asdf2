@@ -113,7 +113,7 @@ export default {
     async onSubmit() {
       try {
         //API 요청
-        const response = await axios.post('http://localhost:8080/api/auth/signup', this.form)
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/signup`, this.form)
         console.log('회원가입 성공:', response.data)
         alert('회원가입 성공!')
         this.$router.push('/login')

@@ -2,6 +2,8 @@ package io.goorm.team02.core.orders.repository;
 
 import io.goorm.team02.core.orders.domain.Order;
 import io.goorm.team02.core.orders.domain.enums.OrderStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,9 +19,36 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
            "ORDER BY o.orderedAt DESC")
     List<Order> findAllByStoreIdWithDetails(@Param("storeId") Long storeId);
 
-    List<Order> findAllByStoreId(Long storeId);
+    @Query("SELECT o FROM Order o " +
+           "WHERE o.store.id = :storeId " +
+           "ORDER BY o.orderedAt DESC")
+    List<Order> findAllByStoreId(@Param("storeId") Long storeId);
 
-    List<Order> findAllByUserId(Long userId);
+    @Query("SELECT o FROM Order o " +
+           "WHERE o.user.id = :userId " +
+           "ORDER BY o.orderedAt DESC")
+    List<Order> findAllByUserId(@Param("userId") Long userId);
+
+    // 페이지네이션을 지원하는 메서드들 (내림차순 정렬)
+    @Query("SELECT o FROM Order o " +
+           "LEFT JOIN FETCH o.user u " +
+           "LEFT JOIN FETCH o.store s " +
+           "WHERE o.store.id = :storeId " +
+           "ORDER BY o.orderedAt DESC")
+    Page<Order> findAllByStoreIdWithPagination(@Param("storeId") Long storeId, Pageable pageable);
+
+    @Query("SELECT o FROM Order o " +
+           "LEFT JOIN FETCH o.user u " +
+           "LEFT JOIN FETCH o.store s " +
+           "WHERE o.user.id = :userId " +
+           "ORDER BY o.orderedAt DESC")
+    Page<Order> findAllByUserIdWithPagination(@Param("userId") Long userId, Pageable pageable);
+
+    @Query("SELECT o FROM Order o " +
+           "LEFT JOIN FETCH o.user u " +
+           "LEFT JOIN FETCH o.store s " +
+           "ORDER BY o.orderedAt DESC")
+    Page<Order> findAllWithPagination(Pageable pageable);
 
     /**
      * 특정 상태의 주문들 조회 (배달 가능한 주문들)
