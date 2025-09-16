@@ -12,7 +12,10 @@
     <FloatingCartButton />
     
     <!-- 알림 토스트 -->
-    <NotificationToast />
+    <NotificationToast 
+      :notifications="notifications" 
+      :remove-notification="removeNotification" 
+    />
   </div>
 </template>
 
@@ -24,5 +27,5 @@ import NotificationToast from '@/components/customer/NotificationToast.vue'
 import { useCustomerSSE } from '@/composables/useCustomerSSE.js'
 
 // SSE 훅 초기화 (Customer 페이지에서만 작동)
-useCustomerSSE()
+const { notifications, removeNotification } = useCustomerSSE()
 </script>

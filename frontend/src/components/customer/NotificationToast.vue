@@ -3,7 +3,7 @@
   <div class="fixed top-4 right-4 z-50 space-y-2">
     <TransitionGroup name="notification" tag="div">
       <div
-        v-for="notification in notifications"
+        v-for="notification in props.notifications"
         :key="notification.id"
         :class="getNotificationClass(notification.type)"
         class="max-w-sm p-4 rounded-lg shadow-lg border-l-4 flex items-start gap-3"
@@ -26,13 +26,14 @@
 
         <!-- 메시지 -->
         <div class="flex-1">
-          <p class="text-sm font-medium text-gray-900">{{ notification.message }}</p>
+          <p class="text-sm font-medium text-gray-900">{{ notification.title || notification.message }}</p>
+          <p v-if="notification.title" class="text-sm text-gray-700 mt-1">{{ notification.message }}</p>
           <p class="text-xs text-gray-500 mt-1">{{ formatTime(notification.timestamp) }}</p>
         </div>
 
         <!-- 닫기 버튼 -->
         <button
-          @click="removeNotification(notification.id)"
+          @click="props.removeNotification(notification.id)"
           class="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
         >
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -45,11 +46,17 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useCustomerSSE } from '@/composables/useCustomerSSE.js'
-
-// SSE 훅 사용
-const { notifications, removeNotification } = useCustomerSSE()
+// props로 notifications와 removeNotification을 받기
+const props = defineProps({
+  notifications: {
+    type: Array,
+    default: () => []
+  },
+  removeNotification: {
+    type: Function,
+    default: () => {}
+  }
+})
 
 // 알림 타입별 스타일 클래스
 const getNotificationClass = (type) => {

@@ -1,39 +1,41 @@
 /**
- * 전역 SSE 관리자
- * 앱 전체에서 실시간 알림을 관리하는 싱글톤 클래스
+ * SSE(Server-Sent Events) 연결을 관리하는 싱글톤 클래스
+ * 연결 관리만 담당하며, 이벤트 처리(이벤트 리스너)는 각 서비스에서 담당합니다.
  */
 class SSEManager {
   constructor() {
     this.eventSource = null
-    this.userId = null
     this.isConnected = false
     this.reconnectAttempts = 0
     this.maxReconnectAttempts = 5
     this.reconnectInterval = 3000
-    this.notificationCallbacks = []
+    this.userId = null
+    this.userType = null
+    this.listeners = new Map()
   }
 
   /**
    * SSE 연결 시작
    * @param {string} userId - 사용자 ID
+   * @param {string} userType - 사용자 타입 (CUSTOMER, OWNER, RIDER)
    */
-  connect(userId) {
+  connect(userId, userType = 'CUSTOMER') {
     if (this.isConnected && this.userId === userId) {
-      console.log('SSE already connected for user:', userId)
+      console.log('SSE가 이미 연결되어 있습니다.', userId)
       return
     }
 
     this.userId = userId
+    this.userType = userType
     this.disconnect() // 기존 연결이 있다면 끊기
 
     try {
       const baseURL = import.meta.env.VITE_API_URL
       const url = `${baseURL}/sse/connect/${userId}`
       console.log('🔄 SSE 연결 시도:', url)
-      
+
       this.eventSource = new EventSource(url)
-      this.setupEventListeners()
-      
+      this.setupBasicEventListeners()
     } catch (error) {
       console.error('SSE 연결 실패:', error)
       this.handleConnectionError()
@@ -41,16 +43,14 @@ class SSEManager {
   }
 
   /**
-   * 이벤트 리스너 설정
+   * 기본 이벤트 리스너 설정 (연결 관리만)
    */
-  setupEventListeners() {
+  setupBasicEventListeners() {
     if (!this.eventSource) return
 
     // 연결 성공
     this.eventSource.onopen = () => {
       console.log('✅ SSE 연결 성공!')
-      console.log('📡 연결된 사용자 ID:', this.userId)
-      console.log('🌐 연결 URL:', this.eventSource.url)
       this.isConnected = true
       this.reconnectAttempts = 0
     }
@@ -59,143 +59,56 @@ class SSEManager {
     this.eventSource.onerror = (error) => {
       console.error('❌ SSE 연결 오류 발생!')
       console.error('🔍 오류 상세:', error)
-      console.error('📡 연결 시도한 URL:', this.eventSource?.url)
-      console.error('👤 사용자 ID:', this.userId)
       console.error('🔄 재연결 시도 횟수:', this.reconnectAttempts)
       this.isConnected = false
       this.handleConnectionError()
     }
-
-    // 서버에서 오는 이벤트들 처리
-    this.eventSource.addEventListener('notification', (event) => {
-      console.log('📢 알림 수신:', event.data)
-      this.handleNotification(event.data)
-    })
-
-    this.eventSource.addEventListener('order-status-update', (event) => {
-      console.log('📦 주문 상태 업데이트:', event.data)
-      this.handleOrderStatusUpdate(event.data)
-    })
-
-    this.eventSource.addEventListener('delivery-update', (event) => {
-      console.log('🚚 배달 업데이트:', event.data)
-      this.handleDeliveryUpdate(event.data)
-    })
-
-    this.eventSource.addEventListener('store-notification', (event) => {
-      console.log('🏪 가게 알림:', event.data)
-      this.handleStoreNotification(event.data)
-    })
   }
 
   /**
-   * 일반 알림 처리
-   * @param {string} message - 알림 메시지
-   */
-  handleNotification(message) {
-    try {
-      const data = JSON.parse(message)
-      this.showNotification(data.message || data.content || message)
-    } catch (error) {
-      this.showNotification(message)
-    }
-  }
-
-  /**
-   * 주문 상태 업데이트 처리
-   * @param {string} message - 주문 상태 메시지
-   */
-  handleOrderStatusUpdate(message) {
-    try {
-      const data = JSON.parse(message)
-      const notificationMessage = `주문 상태가 "${data.status}"로 변경되었습니다.`
-      this.showNotification(notificationMessage)
-      
-      // 주문 상태 업데이트 이벤트 발생
-      this.notifyCallbacks('orderStatusUpdate', data)
-    } catch (error) {
-      this.showNotification(message)
-    }
-  }
-
-  /**
-   * 배달 업데이트 처리
-   * @param {string} message - 배달 상태 메시지
-   */
-  handleDeliveryUpdate(message) {
-    try {
-      const data = JSON.parse(message)
-      const notificationMessage = `배달 상태: ${data.status}`
-      this.showNotification(notificationMessage)
-      
-      // 배달 업데이트 이벤트 발생
-      this.notifyCallbacks('deliveryUpdate', data)
-    } catch (error) {
-      this.showNotification(message)
-    }
-  }
-
-  /**
-   * 가게 알림 처리
-   * @param {string} message - 가게 알림 메시지
-   */
-  handleStoreNotification(message) {
-    try {
-      const data = JSON.parse(message)
-      const notificationMessage = `${data.storeName || '가게'}에서 알림: ${data.message}`
-      this.showNotification(notificationMessage)
-      
-      // 가게 알림 이벤트 발생
-      this.notifyCallbacks('storeNotification', data)
-    } catch (error) {
-      this.showNotification(message)
-    }
-  }
-
-  /**
-   * 알림을 화면에 표시
-   * @param {string} message - 표시할 메시지
-   */
-  showNotification(message) {
-    // 브라우저 알림 API 사용
-    if (Notification.permission === 'granted') {
-      new Notification('알림', {
-        body: message,
-        icon: '/favicon.ico'
-      })
-    }
-    
-    // 커스텀 알림 컴포넌트에 알림 전달
-    this.notifyCallbacks('notification', { message })
-    
-    // 임시로 alert 사용 (개발 중)
-    console.log('🔔 알림:', message)
-  }
-
-  /**
-   * 알림 콜백 등록
-   * @param {string} eventType - 이벤트 타입
+   * 이벤트 리스너 등록
+   * @param {string} eventName - 이벤트 이름
    * @param {Function} callback - 콜백 함수
    */
-  onNotification(eventType, callback) {
-    this.notificationCallbacks.push({ eventType, callback })
+  addEventListener(eventName, callback) {
+    if (!this.eventSource) {
+      console.warn('SSE가 연결되지 않았습니다.')
+      return
+    }
+
+    const listener = (event) => {
+      try {
+        callback(event)
+      } catch (error) {
+        console.error(`SSE 이벤트 처리 오류 (${eventName}):`, error)
+      }
+    }
+
+    this.eventSource.addEventListener(eventName, listener)
+
+    // 리스너 관리
+    if (!this.listeners.has(eventName)) {
+      this.listeners.set(eventName, [])
+    }
+    this.listeners.get(eventName).push({ callback, listener })
+
+    console.log(`📡 SSE 이벤트 리스너 등록: ${eventName}`)
   }
 
   /**
-   * 등록된 콜백들에게 이벤트 알림
-   * @param {string} eventType - 이벤트 타입
-   * @param {any} data - 이벤트 데이터
+   * 모든 이벤트 리스너 제거
    */
-  notifyCallbacks(eventType, data) {
-    this.notificationCallbacks.forEach(({ eventType: type, callback }) => {
-      if (type === eventType) {
-        try {
-          callback(data)
-        } catch (error) {
-          console.error('SSE 콜백 오류:', error)
-        }
-      }
+  removeAllEventListeners() {
+    if (!this.eventSource) return
+
+    this.listeners.forEach((eventListeners, eventName) => {
+      eventListeners.forEach(({ listener }) => {
+        this.eventSource.removeEventListener(eventName, listener)
+      })
     })
+
+    this.listeners.clear()
+    console.log('📡 모든 SSE 이벤트 리스너 제거 완료')
   }
 
   /**
@@ -212,12 +125,12 @@ class SSEManager {
 
     this.reconnectAttempts++
     console.log(`🔄 SSE 재연결 시도 ${this.reconnectAttempts}/${this.maxReconnectAttempts}`)
-    console.log(`⏰ ${this.reconnectInterval/1000}초 후 재연결 시도...`)
-    
+    console.log(`⏰ ${this.reconnectInterval / 1000}초 후 재연결 시도...`)
+
     setTimeout(() => {
       if (this.userId) {
         console.log(`🔄 재연결 시작 (시도 ${this.reconnectAttempts}/${this.maxReconnectAttempts})`)
-        this.connect(this.userId)
+        this.connect(this.userId, this.userType)
       } else {
         console.warn('⚠️ 사용자 ID가 없어 재연결을 시도하지 않습니다.')
       }
@@ -232,8 +145,11 @@ class SSEManager {
       console.log('🔌 SSE 연결 해제 중...')
       console.log('📡 해제할 URL:', this.eventSource.url)
       console.log('👤 사용자 ID:', this.userId)
+
+      this.removeAllEventListeners()
       this.eventSource.close()
       this.eventSource = null
+
       console.log('✅ SSE 연결 해제 완료')
     } else {
       console.log('ℹ️ SSE 연결이 이미 해제되어 있습니다.')
@@ -247,14 +163,6 @@ class SSEManager {
    */
   getConnectionStatus() {
     return this.isConnected
-  }
-
-  /**
-   * 현재 사용자 ID 반환
-   * @returns {string|null} 사용자 ID
-   */
-  getCurrentUserId() {
-    return this.userId
   }
 }
 
