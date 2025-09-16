@@ -61,4 +61,8 @@ public class Delivery extends BaseEntity {
 
     // 필요하면 requestedAt도 게터만 유지
     private LocalDateTime requestedAt = LocalDateTime.now();
+
+    public void assignRider(User rider) {
+        this.rider = rider;
+    }
 }

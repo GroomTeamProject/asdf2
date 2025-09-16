@@ -85,12 +85,11 @@ export default {
       if (!id) throw new Error('currentOrder.id 없음');
 
       const token = localStorage.getItem('jwt');
-      const riderId = this.riderId || JSON.parse(localStorage.getItem('rider') || '{}').riderId;
+      const riderId = localStorage.getItem('userId'); // DB users.id 값
 
       const resp = await fetch(`${API_BASE}/api/rider/deliveries/${id}/pickup`, {
         method: 'PUT',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ riderId }),
+        headers: { Authorization: `Bearer ${token}`},
       });
       if (!resp.ok) throw new Error(`픽업 실패 ${resp.status}`);
     },
@@ -130,7 +129,7 @@ export default {
       this.isAccepting = true;
       try {
         const token = localStorage.getItem('jwt');
-        const riderId = this.riderId || JSON.parse(localStorage.getItem('rider') || '{}').riderId;
+        const riderId = localStorage.getItem('userId'); // DB users.id 값
 
         const resp = await fetch(`${API_BASE}/api/rider/deliveries/${deliveryId}/accept`, {
           method: 'POST',
