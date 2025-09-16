@@ -5,9 +5,6 @@ import { useRouter } from "vue-router";
 const router = useRouter();
 const orders = ref([]);
 
-// 가상 주문 상태 예시
-const STATUS_LIST = ["조리중", "배달중", "배달 완료"];
-
 // 페이지 로드 시 로컬 스토리지에서 주문 정보 가져오기
 onMounted(() => {
     const savedOrders = JSON.parse(localStorage.getItem("cartForPayment") || "[]");
