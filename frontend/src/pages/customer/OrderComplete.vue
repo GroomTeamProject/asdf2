@@ -1,5 +1,14 @@
 <template>
-  <div class="max-w-2xl mx-auto p-4 space-y-6">
+  <!-- 헤더 배너 -->
+  <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+    <div class="max-w-2xl mx-auto">
+      <h1 class="text-2xl font-bold mb-2">주문 완료</h1>
+      <p class="text-blue-100">주문이 성공적으로 접수되었습니다</p>
+    </div>
+  </div>
+
+  <!-- 페이지 컨테이너 -->
+  <CustomerContainer max-width="2xl" padding="4" custom-class="space-y-6">
       <!-- 주문 완료 메시지 -->
       <div class="text-center py-8">
         <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -113,28 +122,32 @@
       <div class="space-y-3">
         <button
           @click="goToStores"
-          class="w-full h-12 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+          class="w-full h-12 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors mb-3"
         >
           다른 가게 둘러보기
         </button>
         
         <button
-          @click="goToHome"
+          @click="goToOrderHistory"
           class="w-full h-12 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors"
         >
-          홈으로 돌아가기
+          주문 내역 확인
         </button>
       </div>
-    </div>
+  </CustomerContainer>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/customer/cart'
+import CustomerContainer from '@/components/customer/CustomerContainer.vue'
 
 export default {
   name: 'OrderComplete',
+  components: {
+    CustomerContainer,
+  },
   setup() {
     const route = useRoute()
     const router = useRouter()
@@ -154,8 +167,8 @@ export default {
       router.push('/customer/stores')
     }
 
-    const goToHome = () => {
-      router.push('/customer')
+    const goToOrderHistory = () => {
+      router.push('/customer/order-history')
     }
 
     // 페이지 로드 시 주문 정보 설정
@@ -196,7 +209,7 @@ export default {
       phoneNumber,
       estimatedDeliveryTime,
       goToStores,
-      goToHome,
+      goToOrderHistory,
     }
   },
 }

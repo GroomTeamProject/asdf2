@@ -1,40 +1,5 @@
 import api from '../index.js'
-
-class CustomerApiManager {
-  constructor() {
-    this.requestQueue = []
-    this.isProcessing = false
-  }
-
-  async processQueue() {
-    if (this.isProcessing) return
-
-    this.isProcessing = true
-
-    while (this.requestQueue.length > 0) {
-      const { apiFunction, resolve, reject } = this.requestQueue.shift()
-
-      try {
-        const result = await apiFunction()
-        resolve(result)
-        await new Promise((resolve) => setTimeout(resolve, 100))
-      } catch (error) {
-        reject(error)
-      }
-    }
-
-    this.isProcessing = false
-  }
-
-  async queueRequest(apiFunction) {
-    return new Promise((resolve, reject) => {
-      this.requestQueue.push({ apiFunction, resolve, reject })
-      this.processQueue()
-    })
-  }
-}
-
-const apiManager = new CustomerApiManager()
+import apiManager from './apiManager.js'
 
 export const customerApi = {
   /**
@@ -94,11 +59,11 @@ export const customerApi = {
     }),
 
   // 사용자 주문 내역 조회 (storeId 없이)
-  getMyOrders: () =>
+  getMyOrders: (page = 0, size = 20) =>
     apiManager.queueRequest(async () => {
       console.log('🔄 내 주문 내역 조회 중...')
       const userId = localStorage.getItem('userId')
-      const response = await api.get(`/orders?userId=${userId}`)
+      const response = await api.get(`/orders?userId=${userId}&page=${page}&size=${size}`)
       console.log('✅ 내 주문 내역 조회 성공')
       return response.data
     }),

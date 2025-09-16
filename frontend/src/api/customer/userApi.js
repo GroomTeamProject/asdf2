@@ -1,40 +1,5 @@
 import api from '../index.js'
-
-class UserApiManager {
-  constructor() {
-    this.requestQueue = []
-    this.isProcessing = false
-  }
-
-  async processQueue() {
-    if (this.isProcessing) return
-
-    this.isProcessing = true
-
-    while (this.requestQueue.length > 0) {
-      const { apiFunction, resolve, reject } = this.requestQueue.shift()
-
-      try {
-        const result = await apiFunction()
-        resolve(result)
-        await new Promise((resolve) => setTimeout(resolve, 100))
-      } catch (error) {
-        reject(error)
-      }
-    }
-
-    this.isProcessing = false
-  }
-
-  async queueRequest(apiFunction) {
-    return new Promise((resolve, reject) => {
-      this.requestQueue.push({ apiFunction, resolve, reject })
-      this.processQueue()
-    })
-  }
-}
-
-const apiManager = new UserApiManager()
+import apiManager from './apiManager.js'
 
 export const userApi = {
   /**
