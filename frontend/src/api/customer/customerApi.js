@@ -59,11 +59,11 @@ export const customerApi = {
     }),
 
   // 사용자 주문 내역 조회 (storeId 없이)
-  getMyOrders: () =>
+  getMyOrders: (page = 0, size = 20) =>
     apiManager.queueRequest(async () => {
       console.log('🔄 내 주문 내역 조회 중...')
       const userId = localStorage.getItem('userId')
-      const response = await api.get(`/orders?userId=${userId}`)
+      const response = await api.get(`/orders?userId=${userId}&page=${page}&size=${size}`)
       console.log('✅ 내 주문 내역 조회 성공')
       return response.data
     }),
