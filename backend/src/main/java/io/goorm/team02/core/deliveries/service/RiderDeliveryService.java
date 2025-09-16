@@ -4,8 +4,9 @@ package io.goorm.team02.core.deliveries.service;
 import io.goorm.team02.core.deliveries.domain.Delivery;
 import io.goorm.team02.core.deliveries.domain.enums.DeliveryStatus;
 import io.goorm.team02.core.deliveries.repository.DeliveryRepository;
+import io.goorm.team02.core.orders.domain.Order;
+import io.goorm.team02.core.orders.domain.enums.OrderStatus;
 import io.goorm.team02.core.users.domain.User;
-import io.goorm.team02.core.users.repository.UserAddressRepository;
 import io.goorm.team02.core.users.repository.UserinfoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,6 @@ import java.util.Optional;
 public class RiderDeliveryService {
     private final DeliveryRepository repo;
     private final UserinfoRepository userInfoRepository;
-
     private Delivery get(Long id){ return repo.findById(id).orElseThrow(); }
 
     @Transactional
@@ -37,9 +37,12 @@ public class RiderDeliveryService {
         User rider = userInfoRepository.findById(riderId)
                 .orElseThrow(() -> new IllegalArgumentException("rider not found: " + riderId));
 
+        d.getOrder().setStatus(OrderStatus.ACCEPTED);
         d.assignRider(rider);                 // 또는 d.setRider(rider)
         d.setStatus(DeliveryStatus.ACCEPTED);
         d.setAcceptedAt(LocalDateTime.now());
+
+
         return d;                             // 영속 상태면 save 불필요
     }
 
@@ -48,6 +51,7 @@ public class RiderDeliveryService {
         var d = get(id);
         if (d.getStatus()!=DeliveryStatus.REQUESTED) throw new IllegalStateException("not REQUESTED");
         d.setStatus(DeliveryStatus.CANCELLED);
+        d.getOrder().setStatus(OrderStatus.CANCELLED);
         return d;
     }
 
@@ -55,6 +59,7 @@ public class RiderDeliveryService {
         var d = get(id);
         if (d.getStatus()!=DeliveryStatus.ACCEPTED) throw new IllegalStateException("not ACCEPTED");
         d.setStatus(DeliveryStatus.PICKED_UP);
+        d.getOrder().setStatus(OrderStatus.PICKED_UP);
         d.setPickedUpAt(LocalDateTime.now());
         return d;
     }
@@ -64,6 +69,7 @@ public class RiderDeliveryService {
         if (d.getStatus()!=DeliveryStatus.PICKED_UP) throw new IllegalStateException("not PICKED_UP");
         d.setStatus(DeliveryStatus.DELIVERED);
         d.setDeliveredAt(LocalDateTime.now());
+        d.getOrder().setStatus(OrderStatus.DELIVERED);
         return d;
     }
 }
