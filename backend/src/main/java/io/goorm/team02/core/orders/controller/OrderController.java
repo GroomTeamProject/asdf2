@@ -11,6 +11,7 @@ import io.goorm.team02.core.orders.service.OrderStatusService;
 import io.goorm.team02.core.orders.service.OrderService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,11 +36,9 @@ public class OrderController implements OrderControllerDocs {
     }
 
     @GetMapping
-    public List<OrderResponse> getAllByParams(OrderSearchRequest searchRequest) {
-        List<Order> orders = orderService.getAllByParams(searchRequest);
-        return orders.stream()
-                     .map(OrderResponse::from)
-                     .toList();
+    public Page<OrderResponse> getAllByParams(OrderSearchRequest searchRequest) {
+        Page<Order> orders = orderService.getAllByParams(searchRequest);
+        return orders.map(OrderResponse::from);
     }
 
     @GetMapping("/{orderId}")

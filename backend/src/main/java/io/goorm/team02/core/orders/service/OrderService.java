@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,25 +80,24 @@ public class OrderService {
     }
 
     /**
-     * 주문 목록 조회
+     * 주문 목록 조회 (페이지네이션 지원)
      */
-    public List<Order> getAllByParams(OrderSearchRequest searchRequest) {
-        List<Order> orders;
+    public Page<Order> getAllByParams(OrderSearchRequest searchRequest) {
+        Page<Order> orders;
+        Pageable pageable = PageRequest.of(searchRequest.getPageOrDefault(), searchRequest.getSizeOrDefault());
         
         // 검색 조건에 따라 다른 메서드 호출
         if (searchRequest.hasStoreId()) {
-            orders = orderRepository.findAllByStoreId(searchRequest.getStoreId());
+            orders = orderRepository.findAllByStoreIdWithPagination(searchRequest.getStoreId(), pageable);
         } else if (searchRequest.hasUserId()) {
-            orders = orderRepository.findAllByUserId(searchRequest.getUserId());
+            orders = orderRepository.findAllByUserIdWithPagination(searchRequest.getUserId(), pageable);
         } else {
             // 모든 주문 조회
-            // TODO: 추후 필터링 로직 추가
-            orders = orderRepository.findAll();
+            orders = orderRepository.findAllWithPagination(pageable);
         }
         
         // JPA 지연 로딩으로 orderItems와 options를 가져옴
-        // TODO: 모든 주문 조회에서는 상세 정보를 제공할 필요 없음
-        orders.forEach(order -> {
+        orders.getContent().forEach(order -> {
             order.getOrderItems().forEach(orderItem -> {
                 orderItem.getOptions().size(); // 지연 로딩 트리거
             });

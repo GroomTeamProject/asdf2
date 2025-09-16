@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,12 +28,12 @@ public interface OrderControllerDocs {
     })
     public OrderResponse create(@RequestBody OrderRequest order);
 
-    @Operation(summary = "주문 목록 조회", description = "다양한 조건으로 주문 목록을 조회합니다")
+    @Operation(summary = "주문 목록 조회", description = "다양한 조건으로 주문 목록을 조회합니다 (페이지네이션 지원)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "주문 목록 조회 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 파라미터")
     })
-    public List<OrderResponse> getAllByParams(OrderSearchRequest searchRequest);
+    public Page<OrderResponse> getAllByParams(OrderSearchRequest searchRequest);
 
     @Operation(summary = "주문 상세 조회", description = "특정 주문의 상세 정보를 조회합니다")
     @ApiResponses({
