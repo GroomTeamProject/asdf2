@@ -15,9 +15,6 @@ spring:
       ddl-auto: none
       dialect: org.hibernate.dialect.MariaDBDialect
 
-cors:
-  allowed-origins: ${ORIGIN_URL_PROD}
-
 cloud:
   aws:
     credentials:
