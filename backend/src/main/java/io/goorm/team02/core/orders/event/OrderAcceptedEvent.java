@@ -13,6 +13,7 @@ public class OrderAcceptedEvent extends ApplicationEvent {
     
     private final Order order;
     private final Long customerId;
+    private final Long storeId;
     private final Integer minCookingTime;
     private final Integer maxCookingTime;
     
@@ -20,6 +21,7 @@ public class OrderAcceptedEvent extends ApplicationEvent {
         super(source);
         this.order = order;
         this.customerId = order.getUser().getId();
+        this.storeId = order.getStore().getId();
         this.minCookingTime = order.getMinCookingTime();
         this.maxCookingTime = order.getMaxCookingTime();
     }

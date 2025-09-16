@@ -28,10 +28,11 @@ public class UserNotificationService {
     @EventListener
     @Async("eventTaskExecutor")
     public void handleOrderAccepted(OrderAcceptedEvent event) {
+        long userId = event.getCustomerId();
         String message = event.getCustomerMessage();
 
         // 1. 실시간 알림 전송
-        sendRealTimeNotification(event.getCustomerId(), message);
+        sendRealTimeNotification(userId, message);
     }
 
     /**
