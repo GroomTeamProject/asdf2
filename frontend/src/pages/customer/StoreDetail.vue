@@ -34,7 +34,7 @@ export default {
     
     const selectedStore = ref(null)
     const menuItems = ref([])
-    const storeId = ref(route.params.id)
+    const storeId = ref(route.params.storeId)
 
     onMounted(async () => {
       try {
@@ -69,7 +69,7 @@ export default {
     return {
       selectedStore,
       menuItems,
-      storeId: route.params.id,
+      storeId: route.params.storeId,
     }
   },
 }

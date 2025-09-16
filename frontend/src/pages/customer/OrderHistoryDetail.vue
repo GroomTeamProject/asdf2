@@ -187,7 +187,7 @@ export default {
     const fetchOrderDetail = async () => {
       try {
         loading.value = true
-        const orderId = route.params.id
+        const orderId = route.params.orderId
         const response = await customerApi.getOrderDetail(orderId)
         order.value = response
       } catch (error) {

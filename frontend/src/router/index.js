@@ -10,20 +10,8 @@ import OwnerMain from '../pages/owner/OwnerMain.vue'
 import DriverMain from '../pages/driver/DriverMain.vue'
 
 import DefaultLayout from '../layouts/DefaultLayout.vue'
-import CustomerLayout from '../layouts/customer/CustomerLayout.vue'
-import StoreList from '../pages/customer/StoreList.vue'
-import StoreDetail from '../pages/customer/StoreDetail.vue'
-import MenuDetail from '../pages/customer/MenuDetail.vue'
-import Cart from '../pages/customer/Cart.vue'
-import Order from '../pages/customer/Order.vue'
-import OrderComplete from '../pages/customer/OrderComplete.vue'
-import OrderHistory from '../pages/customer/OrderHistory.vue'
-import OrderHistoryDetail from '../pages/customer/OrderHistoryDetail.vue'
-import MyPage from '../pages/customer/MyPage.vue'
-import EditProfile from '../pages/customer/EditProfile.vue'
-import AddressManagement from '../pages/customer/AddressManagement.vue'
-import ChangePassword from '../pages/customer/ChangePassword.vue'
 
+import { customerRoutes } from './customerRoutes.js'
 
 // 라우트 경로 추가
 const routes = [
@@ -41,26 +29,7 @@ const routes = [
       //{ path: '/dashboard', component: Dashboard }, //로그인후 이동하는 임시 페이지
     ],
   },
-  {
-    path: '/customer',
-    component: CustomerLayout,
-    children: [
-      { path: '', component: CustomerMain },
-      { path: 'stores', component: StoreList },
-      { path: 'stores/:id', component: StoreDetail },
-      { path: 'stores/:id/menu/:menuId', component: MenuDetail },
-      { path: 'cart', component: Cart },
-      { path: 'order', component: Order },
-      { path: 'order-complete', component: OrderComplete },
-      { path: 'order-history', component: OrderHistory },
-      { path: 'order-history/:id', component: OrderHistoryDetail },
-             { path: 'mypage', component: MyPage },
-             { path: 'edit-profile', component: EditProfile },
-             { path: 'address-management', component: AddressManagement },
-             { path: 'change-password', name: 'ChangePassword', component: ChangePassword },
-
-    ],
-  },
+  ...customerRoutes,
 ]
 
 const router = createRouter({

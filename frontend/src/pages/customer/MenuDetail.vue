@@ -103,7 +103,7 @@ export default {
     }
 
     onMounted(async () => {
-      await loadMenuData(route.params.id, route.params.menuId)
+      await loadMenuData(route.params.storeId, route.params.menuId)
       
       // 백엔드에서 메뉴 조회 시 옵션과 하위 항목을 함께 반환하므로
       // menuItem.value.options에서 직접 사용
