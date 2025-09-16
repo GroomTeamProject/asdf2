@@ -12,7 +12,7 @@ class SSEManager {
     this.userId = null
     this.userType = null
     this.listeners = new Map()
-  }
+  } 
 
   /**
    * SSE 연결 시작
@@ -31,10 +31,15 @@ class SSEManager {
 
     try {
       const baseURL = import.meta.env.VITE_API_URL
+      const token = localStorage.getItem('jwt')
       const url = `${baseURL}/sse/connect/${userId}`
       console.log('🔄 SSE 연결 시도:', url)
 
-      this.eventSource = new EventSource(url)
+      this.eventSource = new EventSource(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       this.setupBasicEventListeners()
     } catch (error) {
       console.error('SSE 연결 실패:', error)
@@ -51,6 +56,8 @@ class SSEManager {
     // 연결 성공
     this.eventSource.onopen = () => {
       console.log('✅ SSE 연결 성공!')
+      console.log('👤 사용자 ID:', this.userId)
+      console.log('🔗 연결 URL:', this.eventSource.url)
       this.isConnected = true
       this.reconnectAttempts = 0
     }
