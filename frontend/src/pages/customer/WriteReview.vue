@@ -170,7 +170,7 @@ const loadOrderInfo = async () => {
       return
     }
 
-    const order = await customerApi.getOrderById(orderId)
+    const order = await customerApi.getOrderDetail(orderId)
     orderInfo.value = order
   } catch (error) {
     console.error('주문 정보 불러오기 실패:', error)
