@@ -57,7 +57,8 @@ jobs:
       - name: Build and test
         run: |
           cd backend
-          ./gradlew build -DJWT_SECRET_DEV=${{ secrets.JWT_SECRET_DEV }}
+          export JWT_SECRET_DEV="${{ secrets.JWT_SECRET_DEV }}"
+          ./gradlew build
 
       - name: Upload test report
         uses: actions/upload-artifact@v4
