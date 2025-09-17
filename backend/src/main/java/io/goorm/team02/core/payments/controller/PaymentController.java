@@ -6,50 +6,43 @@ import io.goorm.team02.core.payments.domain.Payment;
 import io.goorm.team02.core.payments.domain.enums.PaymentStatus;
 import io.goorm.team02.core.payments.dto.PaymentRequest;
 import io.goorm.team02.core.payments.repository.PaymentRepository;
+import io.goorm.team02.core.payments.service.PaymentService;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/payments")
 public class PaymentController {
 
-    private final PaymentRepository paymentRepository;
+    private final PaymentService paymentService;
     private final OrderRepository orderRepository;
 
-    public PaymentController(PaymentRepository paymentRepository, OrderRepository orderRepository) {
-        this.paymentRepository = paymentRepository;
+    public PaymentController(PaymentService paymentService, OrderRepository orderRepository) {
+        this.paymentService = paymentService;
         this.orderRepository = orderRepository;
     }
 
     @PostMapping("/callback")
     @Transactional
-    public ResponseEntity<Payment> completePayment(@RequestBody PaymentRequest request) {
-        // 1주문 조회
-        Order order = orderRepository.findById(request.getOrderId())
-                .orElseThrow(() -> new IllegalArgumentException("Order not found: " + request.getOrderId()));
+    public ResponseEntity<?> completePayment(@RequestBody PaymentRequest request) {
 
-        // 금액 검증
-        if (request.getAmount().compareTo(order.getTotalAmount()) != 0) {
-            throw new IllegalArgumentException("결제 금액 불일치");
-        }
+        // orders 테이블에서 최근 주문 조회
+        Order order = orderRepository.findTopByOrderByIdDesc()
+                .orElseThrow(() -> new IllegalArgumentException("최근 주문을 찾을 수 없습니다."));
 
-        // Payment 조회 또는 새로 생성
-        Payment payment = paymentRepository.findByPaymentKey(request.getPaymentKey())
-                .orElseGet(() -> {
-                    Payment p = new Payment();
-                    p.setPaymentKey(request.getPaymentKey());
-                    p.setOrder(order);
-                    return p;
-                });
-
-        // 결제 정보 업데이트
-        payment.setAmount(request.getAmount());
-        payment.setStatus(PaymentStatus.COMPLETED);
-        payment.setPgProvider(request.getPgProvider());
-        payment.setPgTid(request.getPgTid());
-
-        paymentRepository.save(payment);
+        // Service 호출
+        Payment payment = paymentService.completePayment(
+                order, // order 객체 그대로 전달
+                request.getPaymentKey(),
+                request.getPgProvider(),
+                request.getPgTid(),
+                request.getAmount());
 
         return ResponseEntity.ok(payment);
     }

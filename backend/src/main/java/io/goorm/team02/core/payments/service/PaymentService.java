@@ -20,11 +20,9 @@ public class PaymentService {
         this.orderRepository = orderRepository;
     }
 
+    // PaymentService
     @Transactional
-    public Payment completePayment(Long orderId, String paymentKey, String pgProvider, String pgTid,
-            BigDecimal amount) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
+    public Payment completePayment(Order order, String paymentKey, String pgProvider, String pgTid, BigDecimal amount) {
 
         Payment payment = paymentRepository.findByPaymentKey(paymentKey)
                 .orElseGet(() -> {

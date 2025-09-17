@@ -51,7 +51,8 @@ const goToPayment = async () => {
             "orderInfo",
             JSON.stringify({
                 ...orderData,
-                orderId: `order-${savedOrder.id}` // Toss 규칙에 맞게 가공
+                orderId: savedOrder.id,
+                orderIdString: `order-${savedOrder.id}` // Toss 규칙에 맞게 가공
             })
         );
 

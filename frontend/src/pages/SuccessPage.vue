@@ -4,35 +4,49 @@ import { useRouter } from "vue-router";
 import axios from "axios";
 
 const router = useRouter();
-const orderId = ref(null);
 const amount = ref(0);
 const message = ref("결제를 확인 중입니다...");
-const orderItems = ref([]); // ✅ 주문 상품 배열 추가
+const orderItems = ref([]);
+const orderId = ref(null); // 주문 번호 추가
 
 onMounted(async () => {
+    // localStorage에서 주문 정보 가져오기
     const orderInfo = JSON.parse(localStorage.getItem("orderInfo") || "{}");
-
     amount.value = orderInfo.totalAmount || 0;
+    orderItems.value = orderInfo.items || [];
+
+    const paymentKey = localStorage.getItem("paymentKey");
+    const pgTid = localStorage.getItem("pgTid") || "";
+    const pgProvider = "tosspay";
 
     try {
-        // 주문 생성 API 호출
-        const orderResponse = await axios.post("http://localhost:8080/api/orders/create", orderInfo);
-        orderId.value = orderResponse.data.id;
+        const paymentResponse = await axios.post(
+            "http://localhost:8080/api/payments/callback",
+            {
+                paymentKey: paymentKey,
+                amount: amount.value,
+                pgProvider: pgProvider,
+                pgTid: pgTid
+            }
+        );
 
-        // ✅ 주문 상품 배열 가져오기
-        orderItems.value = orderInfo.items || [];
+        console.log("✅ 결제 처리 성공:", paymentResponse.data);
 
-        console.log("주문번호: ", orderId.value);
-        console.log("주문 상품:", orderItems.value);
+        // 주문 번호 백엔드에서 가져오기
+        orderId.value = paymentResponse.data.orderId;
 
+        // 결제 완료 후 localStorage 초기화
         localStorage.removeItem("cart");
         localStorage.removeItem("orderInfo");
+        localStorage.removeItem("paymentKey");
+        localStorage.removeItem("pgTid");
 
-        message.value = "주문이 완료되었습니다! 5초 후 고객 페이지로 이동합니다.";
+        message.value = "주문과 결제가 완료되었습니다! 5초 후 고객 페이지로 이동합니다.";
         setTimeout(() => router.push("/customer"), 5000);
+
     } catch (err) {
-        console.error("❌ 주문 저장 중 오류 발생:", err);
-        message.value = `주문 저장 중 오류가 발생했습니다: ${err.message}`;
+        console.error("❌ 주문/결제 처리 중 오류 발생:", err);
+        message.value = `주문/결제 처리 중 오류가 발생했습니다: ${err.response?.data || err.message}`;
     }
 });
 </script>
@@ -40,7 +54,8 @@ onMounted(async () => {
 <template>
     <div class="payment-success p-6 text-center">
         <h2 class="text-2xl font-bold mb-4">결제 성공</h2>
-        <p class="mb-2">주문번호: {{ orderId }}</p>
+
+        <p v-if="orderId !== null" class="mb-2">주문 번호: {{ orderId }}</p>
         <p class="mb-2">결제금액: {{ amount.toLocaleString() }}원</p>
 
         <!-- 주문 상품 목록 -->

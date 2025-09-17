@@ -2,6 +2,8 @@
 import { ref, onMounted } from "vue";
 
 const orderInfo = JSON.parse(localStorage.getItem("orderInfo") || "{}");
+const orderId = orderInfo.orderId;             // 숫자 ID, 백엔드 조회용
+const orderIdString = orderInfo.orderIdString; // PG용 문자열
 const amount = ref(orderInfo.totalAmount || 0);
 const widgetsReady = ref(false);
 let widgets = null;
@@ -26,13 +28,13 @@ onMounted(async () => {
 const requestPayment = async () => {
     if (!widgets) return;
 
-    if (!orderInfo.orderId) {
+    if (!orderInfo.orderIdString) {
         alert("주문 정보가 없습니다!");
         return;
     }
 
     await widgets.requestPayment({
-        orderId: orderInfo.orderId,
+        orderId: orderInfo.orderIdString,
         orderName: "장바구니 주문",
         successUrl: window.location.origin + "/success",
         failUrl: window.location.origin + "/fail",
