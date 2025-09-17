@@ -48,7 +48,7 @@ public class PaymentRequest {
         return orderId;
     }
 
-    public void setOrderId(Long orderId) {
+    public void setOrderIdString(Long orderId) {
         this.orderId = orderId;
     }
 

@@ -1,4 +1,4 @@
-package io.goorm.team02.core.orders.entity;
+package io.goorm.team02.core.orders.domain;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;

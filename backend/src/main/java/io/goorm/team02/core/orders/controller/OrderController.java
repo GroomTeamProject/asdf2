@@ -26,6 +26,7 @@ public class OrderController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("orderId", order.getId());
+        response.put("orderIdString", "order-" + order.getId()); // PG용 문자열 ID
 
         return ResponseEntity.ok(response);
     }
