@@ -6,6 +6,7 @@ import io.goorm.team02.core.auth.repository.RefreshTokenRepository;
 import io.goorm.team02.core.users.repository.UserinfoRepository;
 import io.goorm.team02.core.auth.security.JwtTokenProvider;
 import org.springframework.stereotype.Service;
+import java.util.Optional;
 
 import java.time.LocalDateTime;
 
@@ -31,5 +32,9 @@ public class RefreshTokenService {
         refreshToken.setToken(token);
         refreshToken.setExpiryDate(LocalDateTime.now().plusDays(7)); // 7일 만료
         return refreshTokenRepository.save(refreshToken);
+    }
+
+    public Optional<RefreshToken> findByToken(String token) {
+        return refreshTokenRepository.findByToken(token);
     }
 }

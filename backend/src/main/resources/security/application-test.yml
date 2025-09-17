@@ -25,3 +25,5 @@ cloud:
       static: ${AWS_REGION:us-east-1}
     stack:
       auto: false
+jwt:
+  secret: ${JWT_SECRET_DEV}
