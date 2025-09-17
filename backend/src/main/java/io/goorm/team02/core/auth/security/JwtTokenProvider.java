@@ -13,8 +13,9 @@ public class JwtTokenProvider {
 
     private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS512); // 안전한 512비트 키
     private final long EXPIRATION = 1000L * 60 * 60; // 1시간
+    private final long REFRESH_EXPIRATION = 1000L * 60 * 60 * 24 * 7; // 7일
 
-    // 이메일+ userId(PK) 포함
+    // access 토큰 : 이메일+ userId(PK) 포함
     public String generateToken(Authentication authentication, Long userId) {
         String username = authentication.getName();
         Date now = new Date();
@@ -26,6 +27,20 @@ public class JwtTokenProvider {
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(key) // HS512 안전한 키 사용
+                .compact();
+    }
+
+    // refresh 토큰
+    public String generateRefreshToken(String email, Long userId) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + REFRESH_EXPIRATION);
+
+        return Jwts.builder()
+                .setSubject(email)
+                .claim("userId", userId)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(key)
                 .compact();
     }
 
