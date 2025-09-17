@@ -3,6 +3,7 @@
  * 연결 관리만 담당하며, 이벤트 처리(이벤트 리스너)는 각 서비스에서 담당합니다.
  */
 import { EventSourcePolyfill } from 'event-source-polyfill'
+//import EventSourcePolyfill from 'event-source-polyfill'
 
 class SSEManager {
   constructor() {
