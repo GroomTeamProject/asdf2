@@ -179,12 +179,13 @@ export default {
       try {
         const token = localStorage.getItem('jwt');
  
-        const res = await fetch(`${API_BASE}/api/orders/delivery/available`, {
+        const res = await fetch(`${API_BASE}/orders/delivery/available`, {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
  
         });
         const json = await res.json();
+        console.log(JSON.stringify(json, null, 2)); // 예쁘게 들여쓰기해서 출력
         // 1) json이 배열이면 그대로 사용
         const items = Array.isArray(json) ? json : (json?.data ?? []);
         // 2) OrderResponse 스키마에 맞게 매핑
@@ -199,7 +200,10 @@ export default {
           items: (o.orderItems ?? []).map(i => ({
             name: i.menuName, quantity: i.quantity, price: i.totalPrice,
           })),
+          restaurantAddress: o.storeAddress,
+          restaurantDetailAddress: o.storeDetailAddress,
           total: o.totalAmount ?? 0,
+
         }));
         console.log('mapped len', mapped.length, mapped[0]);
 
@@ -388,7 +392,7 @@ export default {
               <i data-lucide="map-pin" class="w-4 h-4 text-gray-600"></i>
               <span class="text-sm text-gray-700">픽업 주소</span>
             </div>
-            <p class="text-sm pl-6 text-gray-600">{{ order.restaurantAddress }}</p>
+            <p class="text-sm pl-6 text-gray-600">{{ order.restaurantAddress + "\t" + order.restaurantDetailAddress }}</p>
           </div>
           <div>
             <div class="flex items-center gap-2 mb-2">
@@ -448,7 +452,7 @@ export default {
 
       <div v-else class="border-2 border-gray-400 bg-white rounded-lg p-6">
         <h3 class="text-lg text-gray-800 mb-2">현재 배달</h3>
-        <p class="text-sm text-gray-600">가게: {{ currentOrder.restaurantName }}</p>
+        <p class="text-sm text-gray-600">가게: {{ currentOrder.restaurantName + " (" + currentOrder.restaurantAddress + "\t" + currentOrder.restaurantDetailAddress}}</p>
         <p class="text-sm text-gray-600">배달 주소: {{ currentOrder.customerAddress }}</p>
         <p class="text-sm text-gray-600">예상 배달 시간: {{ currentOrder.estimatedDeliveryTime }}</p>
 
