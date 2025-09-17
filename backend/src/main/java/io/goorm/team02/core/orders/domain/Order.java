@@ -56,6 +56,12 @@ public class Order extends BaseEntity {
 	@Column(name = "delivery_detail_address", length = 100)
 	private String deliveryDetailAddress;
 
+	@Column(nullable = false, columnDefinition = "TEXT")
+	private String storeAddress;
+
+	@Column(name = "store_detail_address", length = 100)
+	private String storeDetailAddress;
+
 	@Column(nullable = false, length = 20)
 	private String phone;
 
@@ -303,6 +309,8 @@ public class Order extends BaseEntity {
 		order.setStore(store);
 		order.setDeliveryAddress(orderRequest.deliveryAddress());
 		order.setDeliveryDetailAddress(orderRequest.deliveryDetailAddress());
+        order.setStoreAddress(store.getAddress());
+        order.setStoreDetailAddress(store.getDetailAddress());
 		order.setPhone(orderRequest.phone());
 		order.setOrderMemo(orderRequest.orderMemo());
 		order.setDeliveryFee(store.getDeliveryFee());
