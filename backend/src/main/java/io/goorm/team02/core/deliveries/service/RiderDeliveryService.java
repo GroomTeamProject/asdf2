@@ -51,7 +51,7 @@ public class RiderDeliveryService {
         var d = get(id);
         if (d.getStatus()!=DeliveryStatus.REQUESTED) throw new IllegalStateException("not REQUESTED");
         d.setStatus(DeliveryStatus.CANCELLED);
-        d.getOrder().setStatus(OrderStatus.CANCELLED);
+        //d.getOrder().setStatus(OrderStatus.CANCELLED);
         return d;
     }
 
