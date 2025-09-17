@@ -9,6 +9,6 @@ ALTER TABLE orders ADD COLUMN store_detail_address VARCHAR(100);
 UPDATE orders SET store_address = '' WHERE store_address IS NULL;
 UPDATE orders SET store_detail_address = '' WHERE store_detail_address IS NULL;
 
--- 3. NOT NULL 제약조건 추가
-ALTER TABLE orders ALTER COLUMN store_address SET NOT NULL;
-ALTER TABLE orders ALTER COLUMN store_detail_address SET NOT NULL;
+-- 3. NOT NULL 제약조건 추가 (MariaDB 문법)
+ALTER TABLE orders MODIFY COLUMN store_address VARCHAR(200) NOT NULL;
+ALTER TABLE orders MODIFY COLUMN store_detail_address VARCHAR(100) NOT NULL;
