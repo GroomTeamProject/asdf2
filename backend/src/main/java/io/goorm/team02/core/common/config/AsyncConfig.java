@@ -1,4 +1,4 @@
-package io.goorm.team02.core.orders.config;
+package io.goorm.team02.core.common.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
