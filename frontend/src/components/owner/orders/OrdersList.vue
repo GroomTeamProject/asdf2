@@ -104,7 +104,6 @@ const loadStoreInfo = async () => {
   }
 }
 
-// 주문 목록 로드
 const loadOrders = async () => {
   if (!props.storeId) {
     console.warn('⚠️ storeId가 설정되지 않았습니다. 가게 정보를 먼저 불러와주세요.')
@@ -121,15 +120,52 @@ const loadOrders = async () => {
     // 가게 정보와 주문 목록을 병렬로 로드
     const [ordersData] = await Promise.all([
       orderApi.getOrders(props.storeId),
-      storeInfo.value ? Promise.resolve() : loadStoreInfo() // 가게 정보가 없으면 로드
+      storeInfo.value ? Promise.resolve() : loadStoreInfo()
     ])
     
-    orders.value = ordersData
-    console.log('✅ 주문 목록 로드 완료:', orders.value.length, '개')
+    console.log('🔍 Raw ordersData:', ordersData)
+    
+    // 페이지네이션된 응답 처리
+    let ordersList = []
+    
+    if (ordersData && ordersData.content && Array.isArray(ordersData.content)) {
+      // Spring Boot 페이지네이션 응답 구조
+      ordersList = ordersData.content
+      console.log('✅ 페이지네이션 응답에서 content 추출:', ordersList.length, '개')
+      
+      // 페이지네이션 정보 로깅
+      console.log('📄 페이지 정보:', {
+        totalElements: ordersData.totalElements,
+        totalPages: ordersData.totalPages,
+        currentPage: ordersData.number,
+        size: ordersData.size,
+        isLast: ordersData.last
+      })
+    } else if (Array.isArray(ordersData)) {
+      // 일반 배열 응답
+      ordersList = ordersData
+      console.log('✅ 배열 응답 처리:', ordersList.length, '개')
+    } else {
+      console.error('❌ 예상하지 못한 응답 구조:', ordersData)
+      ordersList = []
+    }
+    
+    // 유효한 주문 객체만 필터링
+    const validOrders = ordersList.filter((order, index) => {
+      const isValid = order && typeof order === 'object' && (order.id || order.orderId)
+      if (!isValid) {
+        console.warn(`⚠️ 잘못된 주문 데이터 [${index}]:`, order)
+      }
+      return isValid
+    })
+    
+    orders.value = validOrders
+    console.log('✅ 주문 목록 로드 완료:', validOrders.length, '개')
     
   } catch (err) {
     console.error('❌ 주문 목록 로드 실패:', err)
     error.value = err.response?.data?.message || err.message || '주문 목록을 불러오는데 실패했습니다.'
+    orders.value = []
   } finally {
     loading.value = false
   }
