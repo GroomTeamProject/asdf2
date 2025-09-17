@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.goorm.team02.core.auth.controller.dto.LoginRequest;
 import io.goorm.team02.core.auth.controller.dto.LoginResponse;
+import io.goorm.team02.core.auth.domain.RefreshToken;
+import io.goorm.team02.core.auth.service.RefreshTokenService;
 import io.goorm.team02.core.users.repository.UserinfoRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -30,6 +32,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserinfoRepository userRepository; // DB 조회용
+    private final RefreshTokenService refreshTokenService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
@@ -73,8 +76,11 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         // 인증 성공 시 JWT 발급 (email + userId 포함)
         String token = jwtTokenProvider.generateToken(authentication, user.getId());
 
+        // Refresh Token 발급 및 DB 저장
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+        
         // 응답: JSON으로 id, email, name, userType, token
-        LoginResponse loginResponse = new LoginResponse(user.getId(), user.getEmail(), user.getName(), user.getUserType(), token);
+        LoginResponse loginResponse = new LoginResponse(user.getId(), user.getEmail(), user.getName(), user.getUserType(), token, refreshToken.getToken());
 
         // 응답 헤더에 JWT 추가
         response.setHeader("Authorization", "Bearer " + token);

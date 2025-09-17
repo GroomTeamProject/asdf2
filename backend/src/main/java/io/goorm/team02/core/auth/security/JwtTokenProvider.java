@@ -2,8 +2,12 @@ package io.goorm.team02.core.auth.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+import io.goorm.team02.core.users.domain.User;
 
 import java.security.Key;
 import java.util.Date;
@@ -11,10 +15,20 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS512); // 안전한 512비트 키
-    private final long EXPIRATION = 1000L * 60 * 60; // 1시간
+    //private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS512); // 안전한 512비트 키
+    @Value("${jwt.secret}")
+    private String secret;
+    private Key key;
 
-    // 이메일+ userId(PK) 포함
+    @PostConstruct
+    public void init() {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+    }
+
+    private final long EXPIRATION = 1000L * 60 * 60; // 1시간  1000L * 60 * 60;
+    private final long REFRESH_EXPIRATION = 1000L * 60 * 60 * 24 * 7; // 7일
+
+    // access 토큰 : 이메일+ userId(PK) 포함
     public String generateToken(Authentication authentication, Long userId) {
         String username = authentication.getName();
         Date now = new Date();
@@ -28,6 +42,34 @@ public class JwtTokenProvider {
                 .signWith(key) // HS512 안전한 키 사용
                 .compact();
     }
+
+    // refresh 토큰
+    public String generateRefreshToken(String email, Long userId) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + REFRESH_EXPIRATION);
+
+        return Jwts.builder()
+                .setSubject(email)
+                .claim("userId", userId)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(key)
+                .compact();
+    }
+
+    // access 토큰 재발급. ??  
+    public String generateTokenFromUser(User user) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + EXPIRATION);
+
+        return Jwts.builder()
+                .setSubject(user.getEmail())
+                .claim("userId", user.getId())
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(key)
+                .compact();
+        }
 
     public String getEmailFromToken(String token) {
         return Jwts.parserBuilder()

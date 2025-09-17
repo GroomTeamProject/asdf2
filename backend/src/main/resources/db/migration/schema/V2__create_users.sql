@@ -37,6 +37,16 @@ CREATE TABLE `user_addresses`
   `updated_at`     TIMESTAMP DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP
 );
 
+CREATE TABLE refresh_token (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    token VARCHAR(512) NOT NULL,
+    expiry_date TIMESTAMP NOT NULL,
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+
+
 -- indexes
 CREATE INDEX `users_index_0` ON `users` (`email`);
 CREATE INDEX `users_index_1` ON `users` (`phone`);

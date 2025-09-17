@@ -57,6 +57,7 @@ jobs:
       - name: Build and test
         run: |
           cd backend
+          export JWT_SECRET_DEV="${{ secrets.JWT_SECRET_DEV }}"
           ./gradlew build
 
       - name: Upload test report
