@@ -21,6 +21,7 @@ function isTokenExpired(token) {
 // ---> Refresh Token 요청
 async function refreshToken() {
   const refreshToken = localStorage.getItem('refreshToken')
+  // refresh 토큰 없으면 에러 던짐
   if (!refreshToken) throw new Error('Refresh Token 없음')
 
   const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/refresh`, {
@@ -79,6 +80,7 @@ api.interceptors.response.use(
     
     if (error.response?.status === 401) {
       localStorage.removeItem('jwt')
+      localStorage.removeItem('refreshToken') 
       localStorage.removeItem('userEmail')
       localStorage.removeItem('userName')
       localStorage.removeItem('userType')
