@@ -5,8 +5,11 @@ import io.goorm.team02.core.auth.service.RefreshTokenService;
 import io.goorm.team02.core.auth.security.JwtTokenProvider;
 import io.goorm.team02.core.auth.controller.dto.RefreshRequest;
 import io.goorm.team02.core.auth.controller.dto.RefreshResponse;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -27,11 +30,11 @@ public class RefreshTokenController {
 
         // DB에서 토큰 조회
         RefreshToken refreshToken = refreshTokenService.findByToken(requestToken)
-                .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid refresh token"));
 
-        // 만료 체크
+        // 만료 체크 : RuntimeException는 500 에러
         if (refreshToken.getExpiryDate().isBefore(java.time.LocalDateTime.now())) {
-            throw new RuntimeException("Refresh token expired. Please login again.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Refresh token expired. Please login again.");
         }
 
         // Access Token 재발급
