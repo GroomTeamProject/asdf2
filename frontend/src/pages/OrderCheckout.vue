@@ -24,6 +24,12 @@ const totalAmount = computed(() =>
 const goToPayment = async () => {
     const fullAddress = `${deliveryAddress.value} ${detailAddress.value}`.trim();
 
+    // 필수값 체크
+    if (!customerName.value || !phone.value || !fullAddress || items.value.length === 0) {
+        alert("필수 입력값을 모두 입력해주세요.");
+        return;
+    }
+
     const orderData = {
         customerName: customerName.value,
         phoneNumber: phone.value,
@@ -32,40 +38,55 @@ const goToPayment = async () => {
         totalAmount: totalAmount.value,
         items: items.value.map(item => ({
             menuId: item.id,
-            name: item.name,
-            productId: item.id,
             productName: item.name,
-            price: item.price,
-            quantity: item.quantity
+            quantity: item.quantity,
+            price: item.price
         }))
     };
 
     try {
-        // 주문 생성
+        // 1️⃣ 주문 생성
         const response = await axios.post("http://localhost:8080/api/orders/create", orderData);
-        const savedOrder = response.data;
+        const savedOrder = response.data; // 서버에서 { orderId, orderIdString } 반환 가정
         console.log("주문 생성 응답:", savedOrder);
 
-        // localStorage에 저장 (orderId 포함)
+        // 2️⃣ 로컬스토리지에 주문 정보 저장
         localStorage.setItem(
             "orderInfo",
             JSON.stringify({
                 ...orderData,
-                orderId: savedOrder.id,
-                orderIdString: `order-${savedOrder.id}` // Toss 규칙에 맞게 가공
+                orderId: savedOrder.orderId,
+                orderIdString: savedOrder.orderIdString
             })
         );
 
-        // 장바구니 초기화
+        // 3️⃣ 장바구니 초기화
         localStorage.removeItem("cartForCheckout");
 
-        // Payment 페이지 이동
+        // 4️⃣ Toss 결제 호출 준비
+        // 예시: Toss 결제 파라미터 구성
+        const tossPaymentParams = {
+            amount: totalAmount.value,
+            orderId: savedOrder.orderIdString,
+            orderName: `주문 #${savedOrder.orderId}`,
+            customerName: customerName.value,
+            successUrl: `${window.location.origin}/payment/success`,
+            failUrl: `${window.location.origin}/payment/fail`,
+        };
+
+        // 실제 Toss 위젯 호출
+        // tossPayments.requestPayment(tossPaymentParams); 
+        // 위 코드는 Toss SDK를 프론트에 import 하고 사용해야 함
+
+        // 5️⃣ 결제 페이지로 이동 (위젯 미사용시)
         router.push("/payment");
+
     } catch (err) {
         console.error("주문 생성 실패:", err);
         alert("주문 생성 중 오류가 발생했습니다.");
     }
 };
+
 </script>
 
 <template>

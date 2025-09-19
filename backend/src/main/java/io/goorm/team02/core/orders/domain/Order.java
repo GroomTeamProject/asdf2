@@ -10,6 +10,7 @@ import io.goorm.team02.core.reviews.domain.Review;
 import io.goorm.team02.core.stores.domain.Store;
 import io.goorm.team02.core.users.domain.User;
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -377,18 +378,7 @@ public class Order extends BaseEntity {
         return items;
     }
 
-    public void setItems(List<OrderItem> items) {
-        this.items = items;
-    }
-
-    // 연관관계 편의 메서드
-    public void addItem(OrderItem item) {
-        items.add(item);
-        item.setOrder(this);
-    }
-
-    public void removeItem(OrderItem item) {
-        items.remove(item);
-        item.setOrder(null);
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

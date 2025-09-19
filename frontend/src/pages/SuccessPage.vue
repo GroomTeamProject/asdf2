@@ -1,23 +1,28 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 
 const router = useRouter();
+const route = useRoute();
+
 const amount = ref(0);
 const message = ref("결제를 확인 중입니다...");
 const orderItems = ref([]);
-const orderId = ref(null); // 주문 번호 추가
+const orderId = ref(null);
 
 onMounted(async () => {
-    // localStorage에서 주문 정보 가져오기
     const orderInfo = JSON.parse(localStorage.getItem("orderInfo") || "{}");
-    amount.value = orderInfo.totalAmount || 0;
     orderItems.value = orderInfo.items || [];
 
-    const paymentKey = localStorage.getItem("paymentKey");
-    const pgTid = localStorage.getItem("pgTid") || "";
-    const pgProvider = "tosspay";
+    const paymentKey = route.query.paymentKey;
+    const orderIdParam = route.query.orderId;
+    amount.value = Number(route.query.amount || 0);
+
+    if (!paymentKey) {
+        message.value = "결제 키가 존재하지 않습니다. 다시 시도해주세요.";
+        return;
+    }
 
     try {
         const paymentResponse = await axios.post(
@@ -25,28 +30,23 @@ onMounted(async () => {
             {
                 paymentKey: paymentKey,
                 amount: amount.value,
-                pgProvider: pgProvider,
-                pgTid: pgTid
+                pgProvider: "tosspay",
+                pgTid: null
             }
         );
 
         console.log("✅ 결제 처리 성공:", paymentResponse.data);
+        orderId.value = paymentResponse.data?.order?.id || null;
 
-        // 주문 번호 백엔드에서 가져오기
-        orderId.value = paymentResponse.data.orderId;
+        ["cart", "orderInfo"].forEach(key => localStorage.removeItem(key));
 
-        // 결제 완료 후 localStorage 초기화
-        localStorage.removeItem("cart");
-        localStorage.removeItem("orderInfo");
-        localStorage.removeItem("paymentKey");
-        localStorage.removeItem("pgTid");
-
-        message.value = "주문과 결제가 완료되었습니다! 5초 후 고객 페이지로 이동합니다.";
+        message.value =
+            "주문과 결제가 완료되었습니다! 5초 후 고객 페이지로 이동합니다.";
         setTimeout(() => router.push("/customer"), 5000);
-
     } catch (err) {
         console.error("❌ 주문/결제 처리 중 오류 발생:", err);
-        message.value = `주문/결제 처리 중 오류가 발생했습니다: ${err.response?.data || err.message}`;
+        message.value = `주문/결제 처리 중 오류가 발생했습니다: ${err.response?.data?.message || err.message
+            }`;
     }
 });
 </script>
