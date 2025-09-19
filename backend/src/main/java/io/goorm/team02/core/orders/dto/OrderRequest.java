@@ -9,6 +9,7 @@ public class OrderRequest {
     private String phoneNumber;
     private String address;
     private String requestMessage;
+    private String orderMemo;
     private BigDecimal totalAmount;
     private List<OrderItemRequest> items;
 
@@ -48,6 +49,14 @@ public class OrderRequest {
         this.requestMessage = requestMessage;
     }
 
+    public String getOrderMemo() {
+        return orderMemo;
+    }
+
+    public void setOrderMemo(String orderMemo) {
+        this.orderMemo = orderMemo;
+    }
+
     public BigDecimal getTotalAmount() {
         return totalAmount;
     }
@@ -63,4 +72,5 @@ public class OrderRequest {
     public void setItems(List<OrderItemRequest> items) {
         this.items = items;
     }
+    
 }

@@ -3,18 +3,12 @@ package io.goorm.team02.core.payments.controller;
 import io.goorm.team02.core.orders.domain.Order;
 import io.goorm.team02.core.orders.repository.OrderRepository;
 import io.goorm.team02.core.payments.domain.Payment;
-import io.goorm.team02.core.payments.domain.enums.PaymentStatus;
 import io.goorm.team02.core.payments.dto.PaymentRequest;
-import io.goorm.team02.core.payments.repository.PaymentRepository;
 import io.goorm.team02.core.payments.service.PaymentService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -32,13 +26,22 @@ public class PaymentController {
     @Transactional
     public ResponseEntity<?> completePayment(@RequestBody PaymentRequest request) {
 
-        // orders 테이블에서 최근 주문 조회
-        Order order = orderRepository.findTopByOrderByIdDesc()
-                .orElseThrow(() -> new IllegalArgumentException("최근 주문을 찾을 수 없습니다."));
+        // Request 검증
+        if (request == null || request.getPaymentKey() == null || request.getAmount() == null) {
+            return ResponseEntity.badRequest().body("결제 키 또는 금액이 없습니다.");
+        }
 
-        // Service 호출
+        // 2최근 주문 조회
+        Order order = orderRepository.findTopByOrderByIdDesc()
+                .orElse(null);
+
+        if (order == null) {
+            return ResponseEntity.badRequest().body("최근 주문이 없습니다.");
+        }
+
+        //결제 처리
         Payment payment = paymentService.completePayment(
-                order, // order 객체 그대로 전달
+                order,
                 request.getPaymentKey(),
                 request.getPgProvider(),
                 request.getPgTid(),
@@ -46,4 +49,5 @@ public class PaymentController {
 
         return ResponseEntity.ok(payment);
     }
+
 }
