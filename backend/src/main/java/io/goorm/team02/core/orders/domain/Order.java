@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import jakarta.persistence.*;
+import jakarta.persistence.Id;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -41,10 +42,10 @@ public class Order {
     private Payment payment;
 
     @Builder.Default
-    private String status = "CREATED"; // 기본 생성 상태
+    private String status = "CREATED";
 
     public boolean canCancel() {
-        return "CREATED".equals(this.status); // 이미 완료되거나 취소된 주문은 취소 불가
+        return "CREATED".equals(this.status);
     }
 
     public void setStatus(String status) {

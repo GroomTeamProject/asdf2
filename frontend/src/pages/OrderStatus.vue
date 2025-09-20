@@ -1,99 +1,69 @@
 <script setup>
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
 
-const router = useRouter();
+import { ref, onMounted } from "vue";
+import axios from "axios";
+
 const orders = ref([]);
 
-// 페이지 로드 시 로컬 스토리지에서 주문 정보 가져오기
-onMounted(() => {
-    const savedOrders = JSON.parse(localStorage.getItem("cartForPayment") || "[]");
+const fetchOrders = async () => {
+    try {
+        const response = await axios.get("http://localhost:8080/api/orders/all");
 
-    // 각 주문에 상태 추가 (초기 상태: 조리중)
-    orders.value = savedOrders.map(item => ({
-        ...item,
-        status: STATUS_LIST[0],
-        canceled: false, // 취소 여부
-    }));
+        orders.value = response.data.filter(order => order.status !== "CANCELED");
 
-    // 상태 자동 업데이트
-    orders.value.forEach((order, index) => {
-        let step = 0;
-        const interval = setInterval(() => {
-            if (order.canceled) {
-                clearInterval(interval); // 취소된 주문은 업데이트 중지
-                return;
-            }
-
-            step++;
-            if (step < STATUS_LIST.length) {
-                order.status = STATUS_LIST[step];
-            } else {
-                clearInterval(interval);
-            }
-        }, 3000 + index * 1000);
-    });
-});
-
-// 주문 취소
-const cancelOrder = (order) => {
-    const confirmed = confirm(`${order.name} 주문을 취소하시겠습니까?`);
-    if (!confirmed) return;
-
-    order.canceled = true;
-    orders.value = orders.value.filter(o => o !== order);
-    localStorage.setItem("cartForPayment", JSON.stringify(orders.value));
+        console.log("주문 내역:", orders.value);
+    } catch (err) {
+        console.error("주문 내역 불러오기 실패:", err);
+    }
 };
 
-// 뒤로가기
-const goBack = () => router.push("/customer");
+// 주문 취소
+const cancelOrder = async (orderId) => {
+    if (!confirm("정말로 주문을 취소하시겠습니까?")) return;
+
+    try {
+        await axios.delete(`http://localhost:8080/api/orders/${orderId}`);
+        alert("주문이 취소되고 결제가 환불되었습니다.");
+        fetchOrders();
+    } catch (err) {
+        alert("주문 취소 실패: " + (err.response?.data || err.message));
+    }
+};
+
+onMounted(() => {
+    fetchOrders();
+});
 </script>
 
+
 <template>
-    <div class="max-w-md mx-auto p-4">
-        <h1 class="text-2xl font-bold mb-4">주문 상태 확인</h1>
+    <div class="orders p-4 max-w-md mx-auto">
+        <h1 class="text-2xl font-bold mb-4">내 주문 내역</h1>
 
-        <div v-if="orders.length === 0" class="text-center py-12 text-gray-600">
-            주문 내역이 없습니다.
-        </div>
+        <div v-if="orders.length === 0">주문 내역이 없습니다.</div>
 
-        <div v-else class="space-y-4">
-            <div v-for="item in orders" :key="item.id"
-                class="border p-4 rounded bg-white flex justify-between items-center">
-                <div>
-                    <h2 class="font-semibold">{{ item.name }}</h2>
-                    <p>수량: {{ item.quantity }}</p>
-                    <p>가격: {{ (item.price * item.quantity).toLocaleString() }}원</p>
-                </div>
-                <div class="text-right">
-                    <p>상태:
-                        <span :class="{
-                            'text-yellow-500': item.status === '조리중',
-                            'text-blue-500': item.status === '배달중',
-                            'text-green-500': item.status === '배달 완료'
-                        }">
-                            {{ item.status }}
-                        </span>
-                    </p>
-                    <p>총: {{ (item.price * item.quantity).toLocaleString() }}원</p>
-                    <button @click="cancelOrder(item)"
-                        class="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">
-                        주문 취소
-                    </button>
-                </div>
-            </div>
+        <ul v-else>
+            <li v-for="order in orders" :key="order.id" class="border p-2 mb-2 rounded">
+                <p>주문 번호: {{ order.id }}</p>
+                <p>총 금액: {{ order.totalAmount?.toLocaleString() || 0 }}원</p>
+                <p>
+                    상태:
+                    <span v-if="order.status === 'CANCELED'" class="text-red-600 font-bold">주문 취소됨</span>
+                    <span v-else class="text-green-600 font-bold">{{ order.status }}</span>
+                </p>
 
-            <p class="text-right font-bold mt-2">
-                총 금액: {{orders.reduce((sum, item) => sum + item.price * item.quantity, 0).toLocaleString()}}원
-            </p>
-        </div>
+                <ul class="ml-4">
+                    <li v-for="item in order.items" :key="item.id">
+                        {{ item.productName }} x {{ item.quantity }} ({{ (item.price * item.quantity).toLocaleString()
+                            || 0 }}원)
+                    </li>
+                </ul>
 
-        <button @click="goBack" class="mt-6 w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
-            뒤로가기
-        </button>
+                <button v-if="order.status !== 'CANCELED'" @click="cancelOrder(order.id, order.status)"
+                    class="mt-2 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                    주문 취소
+                </button>
+            </li>
+        </ul>
     </div>
 </template>
-
-<style scoped>
-/* 필요하면 스타일 조정 가능 */
-</style>
