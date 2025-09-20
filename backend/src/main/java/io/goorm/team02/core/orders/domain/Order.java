@@ -10,6 +10,7 @@ import io.goorm.team02.core.reviews.domain.Review;
 import io.goorm.team02.core.stores.domain.Store;
 import io.goorm.team02.core.users.domain.User;
 import jakarta.persistence.*;
+import jakarta.persistence.Id;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
