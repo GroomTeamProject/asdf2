@@ -25,7 +25,7 @@ public class OrderItemOption{
 	private Long id;
 
 	@ManyToOne
-	@JoinColumn(name = "order_item_id")
+	@JoinColumn(name = "order_item_id", nullable = false)
 	private OrderItem orderItem;
 
 	@Column(nullable = false, length = 50)

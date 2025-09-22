@@ -9,8 +9,19 @@ import io.goorm.team02.core.payments.domain.Payment;
 import io.goorm.team02.core.reviews.domain.Review;
 import io.goorm.team02.core.stores.domain.Store;
 import io.goorm.team02.core.users.domain.User;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -24,9 +35,10 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Order extends BaseEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
 	@Column(name = "order_number", nullable = false, unique = true, length = 50)
 	private String orderNumber;
@@ -182,17 +194,16 @@ public class Order extends BaseEntity {
 		changeStatus(OrderStatus.READY);
 	}
 
+	/**
+	 * 배달 시작
+	 */
+	public void startDelivery() {
+		if (this.status != OrderStatus.READY) {
+			throw new IllegalStateException("배달을 시작할 수 없는 주문 상태입니다. 현재 상태: " + this.status);
+		}
 
-    /**
-     * 배달 시작
-     */
-    public void startDelivery() {
-        if (this.status != OrderStatus.READY) {
-            throw new IllegalStateException("배달을 시작할 수 없는 주문 상태입니다. 현재 상태: " + this.status);
-        }
-
-        changeStatus(OrderStatus.PICKED_UP);
-    }
+		changeStatus(OrderStatus.PICKED_UP);
+	}
 
 	/**
 	 * 배달 완료
@@ -298,8 +309,8 @@ public class Order extends BaseEntity {
 		order.setStore(store);
 		order.setDeliveryAddress(orderRequest.deliveryAddress());
 		order.setDeliveryDetailAddress(orderRequest.deliveryDetailAddress());
-        order.setStoreAddress(store.getAddress());
-        order.setStoreDetailAddress(store.getDetailAddress());
+		order.setStoreAddress(store.getAddress());
+		order.setStoreDetailAddress(store.getDetailAddress());
 		order.setPhone(orderRequest.phone());
 		order.setOrderMemo(orderRequest.orderMemo());
 		order.setDeliveryFee(store.getDeliveryFee());
@@ -317,5 +328,5 @@ public class Order extends BaseEntity {
 
 		return order;
 	}
-	
+
 }
