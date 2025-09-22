@@ -24,9 +24,6 @@ public class OrderItemOption{
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	private String name;
-	private int price;
-
 	@ManyToOne
 	@JoinColumn(name = "order_item_id")
 	private OrderItem orderItem;
