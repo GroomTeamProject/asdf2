@@ -1,3 +1,4 @@
+// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../pages/Home.vue'
 import Signup from '../pages/auth/Signup.vue'
@@ -12,8 +13,13 @@ import DriverMain from '../pages/driver/DriverMain.vue'
 import DefaultLayout from '../layouts/DefaultLayout.vue'
 
 import { customerRoutes } from './customerRoutes.js'
+import CartPage from '../pages/cartPage.vue'
+import OrderCheck from '../pages/OrderCheckout.vue'
+import PaymentWidget from '../pages/PaymentWidget.vue'
+import SuccessPage from '../pages/SuccessPage.vue'
+import FailPage from '../pages/FailPage.vue'
+import OrderStatus from '../pages/OrderStatus.vue'
 
-// 라우트 경로 추가
 const routes = [
   {
     path: '/',
@@ -27,6 +33,14 @@ const routes = [
       { path: '/store-registration', component: StoreRegistration, meta: { role: 'OWNER' } },
       { path: '/driver-main', component: DriverMain, meta: { role: 'RIDER' } },
       //{ path: '/dashboard', component: Dashboard }, //로그인후 이동하는 임시 페이지
+
+      // TODO: 레이아웃에 맞춰서 수정해주세요
+      { path: '/cart', component: CartPage },
+      { path: '/ordercheck', component: OrderCheck },
+      { path: '/payment', component: PaymentWidget },
+      { path: '/success', component: SuccessPage },
+      { path: '/fail', component: FailPage },
+      { path: '/orderstatus', component: OrderStatus },
     ],
   },
   ...customerRoutes,
