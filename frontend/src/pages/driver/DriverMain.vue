@@ -1,5 +1,6 @@
 <!-- src/pages/driver/DriverMain.vue -->
 <script>
+import { apiFetch } from '@/libs/apiFetch';
 const API_BASE = import.meta.env.VITE_API_URL;
 const REJECT_KEY_PREFIX = 'rejectedOrders';
 
@@ -87,7 +88,7 @@ export default {
       const token = localStorage.getItem('jwt');
       const riderId = localStorage.getItem('userId'); // DB users.id 값
 
-      const resp = await fetch(`${API_BASE}/rider/deliveries/${id}/pickup`, {
+      const resp = await apiFetch(`${API_BASE}/rider/deliveries/${id}/pickup`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` },
 
@@ -132,7 +133,7 @@ export default {
         const token = localStorage.getItem('jwt');
         const riderId = localStorage.getItem('userId'); // DB users.id 값
 
-        const resp = await fetch(`${API_BASE}/rider/deliveries/${deliveryId}/accept`, {
+        const resp = await apiFetch(`${API_BASE}/rider/deliveries/${deliveryId}/accept`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ riderId }),
@@ -179,7 +180,7 @@ export default {
       try {
         const token = localStorage.getItem('jwt');
  
-        const res = await fetch(`${API_BASE}/orders/delivery/available`, {
+        const res = await apiFetch(`${API_BASE}/orders/delivery/available`, {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
  
@@ -237,7 +238,7 @@ export default {
       const token = localStorage.getItem('jwt');
       const riderId = this.riderId || JSON.parse(localStorage.getItem('rider') || '{}').riderId;
 
-      const resp = await fetch(`${API_BASE}/rider/deliveries/${co.id}/complete`, {
+      const resp = await apiFetch(`${API_BASE}/rider/deliveries/${co.id}/complete`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ riderId }),
@@ -278,7 +279,6 @@ export default {
 
 
 <template>
-  <div><!-- ✅ 하나의 루트로 감싸기 -->
   <header class="bg-white border-b-2 border-gray-400 p-4">
     <div class="max-w-6xl mx-auto flex items-center justify-between">
       <!-- 왼쪽: 제목 + 주소 -->
@@ -318,150 +318,156 @@ export default {
       </div>
     </div>
   </header>
-    <!-- Stats -->
-    <div class="max-w-6xl mx-auto p-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div class="border-2 border-gray-400 bg-white rounded-lg p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600">오늘 수익</p>
-              <p id="today-earnings" class="text-2xl text-gray-800">0원</p>
+
+  <div>  <!-- history tab-->
+
+  </div>
+
+  <div><!-- delivery tab -->
+    <div><!-- Stats -->
+      <div class="max-w-6xl mx-auto p-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="border-2 border-gray-400 bg-white rounded-lg p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-gray-600">오늘 수익</p>
+                <p id="today-earnings" class="text-2xl text-gray-800">0원</p>
+              </div>
+              <i data-lucide="dollar-sign" class="w-8 h-8 text-gray-600"></i>
             </div>
-            <i data-lucide="dollar-sign" class="w-8 h-8 text-gray-600"></i>
           </div>
-        </div>
-        <div class="border-2 border-gray-400 bg-white rounded-lg p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600">오늘 배달</p>
-              <p id="today-deliveries" class="text-2xl text-gray-800">0건</p>
+          <div class="border-2 border-gray-400 bg-white rounded-lg p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-gray-600">오늘 배달</p>
+                <p id="today-deliveries" class="text-2xl text-gray-800">0건</p>
+              </div>
+              <i data-lucide="package" class="w-8 h-8 text-gray-600"></i>
             </div>
-            <i data-lucide="package" class="w-8 h-8 text-gray-600"></i>
           </div>
-        </div>
-        <div class="border-2 border-gray-400 bg-white rounded-lg p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600">평균 배달 시간</p>
-              <p class="text-2xl text-gray-800">28분</p>
+          <div class="border-2 border-gray-400 bg-white rounded-lg p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-gray-600">평균 배달 시간</p>
+                <p class="text-2xl text-gray-800">28분</p>
+              </div>
+              <i data-lucide="timer" class="w-8 h-8 text-gray-600"></i>
             </div>
-            <i data-lucide="timer" class="w-8 h-8 text-gray-600"></i>
           </div>
         </div>
       </div>
     </div>
-  </div>
+    <!-- Available Orders -->
+    <div id="available-content" class="tab-content">
+      <!-- 오프라인 -->
+      <div v-if="!isOnline"
+           class="border-2 border-gray-400 bg-white rounded-lg p-8 text-center">
+        <i data-lucide="truck" class="w-12 h-12 mx-auto text-gray-500 mb-4"></i>
+        <h3 class="mb-2 text-gray-800">오프라인 상태</h3>
+        <p class="text-gray-600 mb-4">근무 상태를 온라인으로 변경하면 새로운 주문을 받을 수 있습니다.</p>
+        <button
+          @click="toggleOnlineStatus(true)"
+          class="border-2 border-gray-400 bg-gray-200 text-gray-800 hover:bg-gray-300 px-4 py-2 rounded">
+          온라인으로 변경
+        </button>
+      </div>
 
-  <!-- Available Orders -->
-  <div id="available-content" class="tab-content">
-    <!-- 오프라인 -->
-    <div v-if="!isOnline"
-         class="border-2 border-gray-400 bg-white rounded-lg p-8 text-center">
-      <i data-lucide="truck" class="w-12 h-12 mx-auto text-gray-500 mb-4"></i>
-      <h3 class="mb-2 text-gray-800">오프라인 상태</h3>
-      <p class="text-gray-600 mb-4">근무 상태를 온라인으로 변경하면 새로운 주문을 받을 수 있습니다.</p>
-      <button
-        @click="toggleOnlineStatus(true)"
-        class="border-2 border-gray-400 bg-gray-200 text-gray-800 hover:bg-gray-300 px-4 py-2 rounded">
-        온라인으로 변경
-      </button>
-    </div>
-
-    <!-- 온라인 + 대기중 -->
-    <div v-else-if="availableOrders.length === 0"
-         class="border-2 border-gray-400 bg-white rounded-lg p-8 text-center">
-      <i data-lucide="bell" class="w-12 h-12 mx-auto text-gray-500 mb-4"></i>
-      <h3 class="mb-2 text-gray-800">새로운 주문 대기 중</h3>
-      <p class="text-gray-600">새로운 배달 주문이 들어오면 알림을 보내드립니다.</p>
-    </div>
-    <!-- 온라인 + 주문 리스트 -->
-    <div v-else class="space-y-4">
-      <div v-for="order in availableOrders" :key="order._key"
-           class="border-2 border-gray-400 hover:bg-gray-200 transition-colors bg-white rounded-lg p-6">
-        <div class="flex justify-between items-start mb-4">
-          <div>
-            <h3 class="mb-1 text-gray-800">{{ order.restaurantName }}</h3>
-            <p class="text-sm text-gray-600">주문 시간: {{ order.orderTime }}</p>
-          </div>
-          <span class="bg-gray-200 text-gray-800 border border-gray-400 px-2 py-1 rounded text-sm">배달 가능</span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <div class="flex items-center gap-2 mb-2">
-              <i data-lucide="map-pin" class="w-4 h-4 text-gray-600"></i>
-              <span class="text-sm text-gray-700">픽업 주소</span>
+      <!-- 온라인 + 대기중 -->
+      <div v-else-if="availableOrders.length === 0"
+           class="border-2 border-gray-400 bg-white rounded-lg p-8 text-center">
+        <i data-lucide="bell" class="w-12 h-12 mx-auto text-gray-500 mb-4"></i>
+        <h3 class="mb-2 text-gray-800">새로운 주문 대기 중</h3>
+        <p class="text-gray-600">새로운 배달 주문이 들어오면 알림을 보내드립니다.</p>
+      </div>
+      <!-- 온라인 + 주문 리스트 -->
+      <div v-else class="space-y-4">
+        <div v-for="order in availableOrders" :key="order._key"
+             class="border-2 border-gray-400 hover:bg-gray-200 transition-colors bg-white rounded-lg p-6">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h3 class="mb-1 text-gray-800">{{ order.restaurantName }}</h3>
+              <p class="text-sm text-gray-600">주문 시간: {{ order.orderTime }}</p>
             </div>
-            <p class="text-sm pl-6 text-gray-600">{{ order.restaurantAddress + "\t" + order.restaurantDetailAddress }}</p>
+            <span class="bg-gray-200 text-gray-800 border border-gray-400 px-2 py-1 rounded text-sm">배달 가능</span>
           </div>
-          <div>
-            <div class="flex items-center gap-2 mb-2">
-              <i data-lucide="map-pin" class="w-4 h-4 text-gray-600"></i>
-              <span class="text-sm text-gray-700">배달 주소</span>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="map-pin" class="w-4 h-4 text-gray-600"></i>
+                <span class="text-sm text-gray-700">픽업 주소</span>
+              </div>
+              <p class="text-sm pl-6 text-gray-600">{{ order.restaurantAddress + "\t" + order.restaurantDetailAddress }}</p>
             </div>
-            <p class="text-sm pl-6 text-gray-600">{{ order.customerAddress }}</p>
+            <div>
+              <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="map-pin" class="w-4 h-4 text-gray-600"></i>
+                <span class="text-sm text-gray-700">배달 주소</span>
+              </div>
+              <p class="text-sm pl-6 text-gray-600">{{ order.customerAddress }}</p>
+            </div>
           </div>
-        </div>
 
-        <div class="flex items-center gap-4 mb-4 text-sm">
-          <div class="flex items-center gap-1">
-            <i data-lucide="clock" class="w-4 h-4 text-gray-600"></i>
-            <span class="text-gray-700">예상 배달: {{ order.estimatedDeliveryTime }}</span>
+          <div class="flex items-center gap-4 mb-4 text-sm">
+            <div class="flex items-center gap-1">
+              <i data-lucide="clock" class="w-4 h-4 text-gray-600"></i>
+              <span class="text-gray-700">예상 배달: {{ order.estimatedDeliveryTime }}</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <i data-lucide="navigation" class="w-4 h-4 text-gray-600"></i>
+              <span class="text-gray-700">거리: {{ order.distance }}</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <i data-lucide="dollar-sign" class="w-4 h-4 text-gray-600"></i>
+              <span class="text-gray-700">배달비: {{ order.deliveryFee.toLocaleString() }}원</span>
+            </div>
           </div>
-          <div class="flex items-center gap-1">
-            <i data-lucide="navigation" class="w-4 h-4 text-gray-600"></i>
-            <span class="text-gray-700">거리: {{ order.distance }}</span>
-          </div>
-          <div class="flex items-center gap-1">
-            <i data-lucide="dollar-sign" class="w-4 h-4 text-gray-600"></i>
-            <span class="text-gray-700">배달비: {{ order.deliveryFee.toLocaleString() }}원</span>
-          </div>
-        </div>
 
-        <div class="mb-4">
-          <h4 class="text-sm mb-2 text-gray-700">주문 내역</h4>
-          <div class="text-sm text-gray-600">
-            {{ order.items.map(i => `${i.name} x${i.quantity}`).join(', ') }}
+          <div class="mb-4">
+            <h4 class="text-sm mb-2 text-gray-700">주문 내역</h4>
+            <div class="text-sm text-gray-600">
+              {{ order.items.map(i => `${i.name} x${i.quantity}`).join(', ') }}
+            </div>
+            <p class="text-sm mt-1 text-gray-700">총 주문금액: {{ order.total.toLocaleString() }}원</p>
           </div>
-          <p class="text-sm mt-1 text-gray-700">총 주문금액: {{ order.total.toLocaleString() }}원</p>
-        </div>
 
-        <div class="flex gap-2">
-          <button
+          <div class="flex gap-2">
+            <button
               @click="acceptOrder(order.id)"
               :disabled="!!currentOrder || isAccepting"
               class="flex-1 bg-gray-600 text-white border-2 border-gray-800 hover:bg-gray-700 py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-            주문 수락
-          </button>
-          <button
-            @click="rejectOrder(order.id)"
-            class="flex-1 bg-white text-gray-800 border-2 border-gray-400 hover:bg-gray-100 py-2 rounded transition-colors">
-            거절
-          </button>
+              주문 수락
+            </button>
+            <button
+              @click="rejectOrder(order.id)"
+              class="flex-1 bg-white text-gray-800 border-2 border-gray-400 hover:bg-gray-100 py-2 rounded transition-colors">
+              거절
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-    <!-- ✅ Current Order (같은 루트 내부) -->
-    <div id="current-content" class="tab-content mt-6">
-      <div v-if="!currentOrder"
-           class="border-2 border-gray-400 bg-white rounded-lg p-8 text-center">
-        <i data-lucide="package" class="w-12 h-12 mx-auto text-gray-500 mb-4"></i>
-        <h3 class="mb-2 text-gray-800">진행 중인 배달이 없습니다</h3>
-        <p class="text-gray-600">새로운 주문을 수락하면 여기에 표시됩니다.</p>
-      </div>
+      <!-- ✅ Current Order (같은 루트 내부) -->
+      <div id="current-content" class="tab-content mt-6">
+        <div v-if="!currentOrder"
+             class="border-2 border-gray-400 bg-white rounded-lg p-8 text-center">
+          <i data-lucide="package" class="w-12 h-12 mx-auto text-gray-500 mb-4"></i>
+          <h3 class="mb-2 text-gray-800">진행 중인 배달이 없습니다</h3>
+          <p class="text-gray-600">새로운 주문을 수락하면 여기에 표시됩니다.</p>
+        </div>
 
-      <div v-else class="border-2 border-gray-400 bg-white rounded-lg p-6">
-        <h3 class="text-lg text-gray-800 mb-2">현재 배달</h3>
-        <p class="text-sm text-gray-600">가게: {{ currentOrder.restaurantName + " (" + currentOrder.restaurantAddress + "\t" + currentOrder.restaurantDetailAddress}}</p>
-        <p class="text-sm text-gray-600">배달 주소: {{ currentOrder.customerAddress }}</p>
-        <p class="text-sm text-gray-600">예상 배달 시간: {{ currentOrder.estimatedDeliveryTime }}</p>
+        <div v-else class="border-2 border-gray-400 bg-white rounded-lg p-6">
+          <h3 class="text-lg text-gray-800 mb-2">현재 배달</h3>
+          <p class="text-sm text-gray-600">가게: {{ currentOrder.restaurantName + " (" + currentOrder.restaurantAddress + "\t" + currentOrder.restaurantDetailAddress}}</p>
+          <p class="text-sm text-gray-600">배달 주소: {{ currentOrder.customerAddress }}</p>
+          <p class="text-sm text-gray-600">예상 배달 시간: {{ currentOrder.estimatedDeliveryTime }}</p>
 
-        <button
-          v-if="currentOrder"
-          @click="toggleOrderStatus()"
-          class="mt-4 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
-          {{ isPickedUp ? '배달 완료' : '픽업 완료' }}
-        </button>
+          <button
+            v-if="currentOrder"
+            @click="toggleOrderStatus()"
+            class="mt-4 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+            {{ isPickedUp ? '배달 완료' : '픽업 완료' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
