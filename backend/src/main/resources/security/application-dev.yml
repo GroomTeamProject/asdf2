@@ -26,4 +26,4 @@ cloud:
       auto: false
 
 jwt:
-  secret: ${JWT_SECRET_DEV}
+  secret: k9s8d7f6g5h4j3k2l1m0n9b8v7c6x5z4

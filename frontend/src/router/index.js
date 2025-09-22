@@ -1,6 +1,6 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
-import Home from '../pages/Home.vue'
+import Home from '../pages/payment/Home.vue'
 import Signup from '../pages/auth/Signup.vue'
 import Login from '../pages/auth/Login.vue'
 import StoreRegistration from '../pages/owner/StoreRegistration.vue'
@@ -13,12 +13,12 @@ import DriverMain from '../pages/driver/DriverMain.vue'
 import DefaultLayout from '../layouts/DefaultLayout.vue'
 
 import { customerRoutes } from './customerRoutes.js'
-import CartPage from '../pages/cartPage.vue'
-import OrderCheck from '../pages/OrderCheckout.vue'
-import PaymentWidget from '../pages/PaymentWidget.vue'
-import SuccessPage from '../pages/SuccessPage.vue'
-import FailPage from '../pages/FailPage.vue'
-import OrderStatus from '../pages/OrderStatus.vue'
+import CartPage from '../pages/payment/cartPage.vue'
+import OrderCheck from '../pages/payment/OrderCheckout.vue'
+import PaymentWidget from '../pages/payment/PaymentWidget.vue'
+import SuccessPage from '../pages/payment/SuccessPage.vue'
+import FailPage from '../pages/payment/FailPage.vue'
+import OrderStatus from '../pages/payment/OrderStatus.vue'
 
 const routes = [
   {
@@ -50,6 +50,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
 })
+
 
 //  라우터 가드 설정
 router.beforeEach((to, from, next) => {

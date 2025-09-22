@@ -12,9 +12,16 @@ const detailAddress = ref("");
 const phone = ref("");
 const orderMemo = ref("");
 
+// 테스트용 임의 데이터
 onMounted(() => {
-    items.value = JSON.parse(localStorage.getItem("cartForCheckout") || "[]");
-    console.log("장바구니 데이터 확인:", items.value);
+    items.value = [
+        { id: 1, name: "테스트 메뉴 1", price: 10000, quantity: 2 },
+        { id: 2, name: "테스트 메뉴 2", price: 5000, quantity: 1 }
+    ];
+    customerName.value = "테스트 고객";
+    deliveryAddress.value = "서울특별시 강남구";
+    detailAddress.value = "테스트동 123";
+    phone.value = "01012345678";
 });
 
 const totalAmount = computed(() =>
@@ -41,57 +48,43 @@ const goToPayment = async () => {
             productName: item.name,
             quantity: item.quantity,
             price: item.price
-        }))
+        })),
+        // 테스트용 임의 userId
+        userId: 1
     };
 
     try {
-        // 1️⃣ 주문 생성
-        const response = await axios.post("http://localhost:8080/api/orders/create", orderData);
-        const savedOrder = response.data; // 서버에서 { orderId, orderIdString } 반환 가정
-        console.log("주문 생성 응답:", savedOrder);
-
-        // 2️⃣ 로컬스토리지에 주문 정보 저장
-        localStorage.setItem(
-            "orderInfo",
-            JSON.stringify({
-                ...orderData,
-                orderId: savedOrder.orderId,
-                orderIdString: savedOrder.orderIdString
-            })
+        const response = await axios.post(
+            "http://localhost:8080/api/orders/create",
+            orderData
+            // 로그인 테스트이므로 Authorization 헤더 제거
         );
 
-        // 3️⃣ 장바구니 초기화
-        localStorage.removeItem("cartForCheckout");
+        const savedOrder = response.data;
+        console.log("테스트 주문 생성 성공:", savedOrder);
 
-        // 4️⃣ Toss 결제 호출 준비
-        // 예시: Toss 결제 파라미터 구성
-        const tossPaymentParams = {
-            amount: totalAmount.value,
-            orderId: savedOrder.orderIdString,
-            orderName: `주문 #${savedOrder.orderId}`,
-            customerName: customerName.value,
-            successUrl: `${window.location.origin}/payment/success`,
-            failUrl: `${window.location.origin}/payment/fail`,
-        };
+        // localStorage 관련 코드 주석 처리
+        // localStorage.setItem(
+        //     "orderInfo",
+        //     JSON.stringify({
+        //         ...orderData,
+        //         orderId: savedOrder.orderId,
+        //         orderIdString: savedOrder.orderIdString
+        //     })
+        // );
+        // localStorage.removeItem("cartForCheckout");
 
-        // 실제 Toss 위젯 호출
-        // tossPayments.requestPayment(tossPaymentParams); 
-        // 위 코드는 Toss SDK를 프론트에 import 하고 사용해야 함
-
-        // 5️⃣ 결제 페이지로 이동 (위젯 미사용시)
         router.push("/payment");
-
     } catch (err) {
-        console.error("주문 생성 실패:", err);
+        console.error("테스트 주문 생성 실패:", err);
         alert("주문 생성 중 오류가 발생했습니다.");
     }
 };
-
 </script>
 
 <template>
     <div class="max-w-md mx-auto p-4">
-        <h1 class="text-2xl font-bold mb-4">주문 결제</h1>
+        <h1 class="text-2xl font-bold mb-4">주문 결제 (테스트용)</h1>
 
         <!-- 이름 -->
         <div class="mb-4">
@@ -134,7 +127,7 @@ const goToPayment = async () => {
         </div>
 
         <button @click="goToPayment" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
-            결제하기
+            결제하기 (테스트)
         </button>
     </div>
 </template>
