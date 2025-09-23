@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,4 +45,38 @@ public class DeliveryQueryService {
     public Optional<Delivery> get(Long id) {
         return repo.findById(id);
     }
+
+    /**
+     * 주어진 라이더의 오늘(자정 기준) 완료된 배달 건들의 배달 수수료 합계를 계산한다.
+     *
+     * @param riderId 라이더 ID
+     * @return 오늘 완료된 배달들의 배달 수수료 합계 (없으면 0)
+     */
+    public Long getTodayDeliveredFee(Long riderId) {
+        LocalDate today = LocalDate.now();
+        LocalDateTime start = today.atStartOfDay();            // 오늘 00:00
+        LocalDateTime end = today.plusDays(1).atStartOfDay();  // 내일 00:00
+
+        Long sum = repo.sumFeeByRiderAndDate(
+                riderId, start, end, DeliveryStatus.DELIVERED);
+
+        return sum != null ? sum : 0L; // null 방지
+    }
+
+    public Long countByRiderId(Long riderId) {
+        LocalDate today = LocalDate.now();
+        LocalDateTime start = today.atStartOfDay();            // 오늘 00:00
+        LocalDateTime end = today.plusDays(1).atStartOfDay();  // 내일 00:00
+
+        Long cnt = repo.countByRiderId(
+                riderId, start, end, DeliveryStatus.DELIVERED);
+        return cnt != null ? cnt : 0L;
+    }
+
+    public Long AvgByRiderId(Long riderId) {
+
+        Long avg = repo.findAvgDeliveryMinutes(riderId);
+        return avg != null ? avg : 0L;
+    }
+
 }

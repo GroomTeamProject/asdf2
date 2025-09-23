@@ -63,4 +63,28 @@ public class RiderDeliveryController {
             default -> throw new IllegalArgumentException("allowed: PICKED_UP, DELIVERED");
         };
     }
+    /**
+     * 특정 라이더의 오늘(자정 기준) 완료된 배달 수익 합계를 조회한다.
+     *
+     * @param riderId 라이더 ID
+     * @return 오늘 완료된 배달들의 배달 수수료 합계 (없으면 0)
+     */
+    @GetMapping("/{riderId}/today-earnings")
+    public ResponseEntity<Long> getTodayEarnings(@PathVariable Long riderId) {
+        Long earnings = qry.getTodayDeliveredFee(riderId);
+        return ResponseEntity.ok(earnings);
+    }
+
+
+    @GetMapping("/{riderId}/count")
+    public ResponseEntity<Long> getCountByRiderId(@PathVariable Long riderId) {
+        Long count = qry.countByRiderId(riderId);
+        return ResponseEntity.ok(count);
+    }
+
+    @GetMapping("/{riderId}/avg")
+    public ResponseEntity<Long> getAvgByRiderId(@PathVariable Long riderId) {
+        Long avg = qry.AvgByRiderId(riderId);
+        return ResponseEntity.ok(avg);
+    }
 }
