@@ -28,7 +28,7 @@
 <img width="2090" height="1237" alt="Image" src="https://github.com/user-attachments/assets/8a5617e4-6bf7-4d2c-a66c-69e66abd2028" />
 
 ### 데이터베이스 설계
-<img width="2685" height="2063" alt="Image" src="https://github.com/user-attachments/assets/90f6d79d-7954-41ec-aa28-c942894af9a0" />
+<img width="3217" height="2064" alt="Image" src="https://github.com/user-attachments/assets/53ad8174-4a70-4edd-b62d-e0dd894c0138" />
 
 **주요 엔티티 관계:**
 - `users` ↔ `orders`: 1:N (사용자-주문)
