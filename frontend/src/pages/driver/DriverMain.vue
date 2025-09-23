@@ -22,15 +22,23 @@ export default {
       todayCount: 0,
       isAccepting: false,
       isPickedUp: false,
-      isBusy: false, // 클릭 중 중복 방지
+      isBusy: false,
+      riderStatus: '',
+      // 추가
+      notFound: false,   // 404면 true
+      error: null,       // 기타 오류 메시지
     }
   },
-
+  computed: {
+    isActiveStatus() {
+      return ['ACCEPTED','PICKED_UP']
+        .includes(String(this.riderStatus).trim().toUpperCase());
+    }
+  },
   mounted() {
     const token = localStorage.getItem('jwt');
     if (!token) { alert('로그인이 필요합니다.'); return; }
     this.riderId = Number(localStorage.getItem('userId'));
-
 
     this.rejectKey = `${REJECT_KEY_PREFIX}:${this.riderId ?? 'unknown'}`;
     const savedRejects = localStorage.getItem(this.rejectKey);
@@ -44,8 +52,9 @@ export default {
     this.fetchEarnings();
     this.fetchAvg();
     this.refreshLocation();
+    this.getRiderStatus(); // 초기 상태 조회
+    this.getCurrentOrder();
     this.$nextTick(() => window.lucide?.createIcons?.());
-
   },
 
   beforeUnmount() {
@@ -63,18 +72,79 @@ export default {
   },
 
   methods: {
+    async getCurrentOrder() {
+      console.log("getCurrentOrder 실행 rider_id:"+this.riderId);
+      try {
+        const r = await apiFetch(`${API_BASE}/rider/deliveries/${this.riderId}/currentDelivery`, {
+          method: 'GET', headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` },
+        });
+        if (r?.status === 404) { this.currentOrder=null; this.riderStatus=''; this.isPickedUp=false; return; }
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+
+        const data = await r.json();
+        const s = String(data?.status || '').trim().toUpperCase();
+        this.riderStatus = s;
+
+        if (s === 'DELIVERED') { this.currentOrder = null; this.isPickedUp = false; return; }
+
+        this.currentOrder = data;           // ← 반드시 세팅
+        this.isPickedUp  = s === 'PICKED_UP';
+        this.notFound = false;
+        console.log("getCurrent성공");
+      } catch (e) {
+        console.error('getCurrentOrder error 에러 발생', e);
+        this.currentOrder = null;
+      }
+      console.log("getCurrentOrder 종료");
+    },
+
+    // 404면 notFound=true로 전환. 그 외 에러는 error에 저장.
+    async getRiderStatus() {
+      this.notFound = false; this.error = null;
+      const url = `${API_BASE}/rider/deliveries/${this.riderId}/status`;
+      try {
+        const r = await apiFetch(url, { method:'GET', headers:{ Authorization:`Bearer ${localStorage.getItem('jwt')}` } });
+        console.log('[status] url=', url, 'isResp=', !!r?.json, 'code=', r?.status);
+        if (r?.headers) console.log('[status] ct=', r.headers.get('content-type'));
+
+        let payload;
+        if (r?.json) {
+          if (r.status === 404) { this.notFound = true; this.riderStatus=''; return; }
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          const ct = r.headers.get('content-type') || '';
+          payload = ct.includes('application/json') ? await r.json() : await r.text();
+        } else {
+          payload = r; // apiFetch가 이미 파싱했을 때
+        }
+        const statusStr = (typeof payload === 'string' ? payload : payload?.status);
+        this.riderStatus = String(statusStr || '').trim().toUpperCase();
+
+        if (this.riderStatus === 'DELIVERED') {
+          this.currentOrder = null;
+          this.isPickedUp = false;
+        } else {
+          this.isPickedUp = this.riderStatus === 'PICKED_UP';
+        }
+        this.notFound = false; // 성공 시 가드 해제
+        console.log('[status] payload=', payload, 'bound=', this.riderStatus);
+      } catch (e) {
+        console.error('[status] error', e, e?.response?.status ?? e?.status);
+        if ((e?.response?.status ?? e?.status) === 404) { this.notFound = true; this.riderStatus=''; return; }
+        this.error = '요청 실패';
+      }
+    },
+
+
     async toggleOrderStatus() {
       if (!this.currentOrder || this.isBusy) return;
       this.isBusy = true;
 
       try {
         if (!this.isPickedUp) {
-          // 픽업
           await this.pickupCurrentOrder();
-          this.isPickedUp = true; // 서버 성공 후 전환
+          this.isPickedUp = true;
         } else {
-          // 배달 완료
-          await this.completeCurrentOrder(); // 성공 시 currentOrder null 처리
+          await this.completeCurrentOrder();
           this.isPickedUp = false;
         }
       } catch (e) {
@@ -84,38 +154,39 @@ export default {
         this.isBusy = false;
       }
     },
+
     async pickupCurrentOrder() {
-      const id = this.currentOrder?.id;
+      const id = this.currentOrder?.orderId;
       console.log("pickupCurrentOrder: " + id);
       if (!id) throw new Error('currentOrder.id 없음');
 
       const token = localStorage.getItem('jwt');
-      const riderId = localStorage.getItem('userId'); // DB users.id 값
-
       const resp = await apiFetch(`${API_BASE}/rider/deliveries/${id}/pickup`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` },
-
       });
       if (!resp.ok) throw new Error(`픽업 실패 ${resp.status}`);
+
+      await this.getCurrentOrder();
     },
+
     async refreshLocation() {
       if (!navigator.geolocation) { this.riderAddress = '위치 지원 안됨'; return; }
       navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            const { latitude, longitude } = pos.coords;
-            try {
-              const res = await fetch(
-                  `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=ko`
-              );
-              const data = await res.json();
-              this.riderAddress = data.display_name || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-            } catch {
-              this.riderAddress = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-            }
-          },
-          () => { this.riderAddress = '위치 접근 거부됨' },
-          { enableHighAccuracy: true, timeout: 10000 }
+        async (pos) => {
+          const { latitude, longitude } = pos.coords;
+          try {
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=ko`
+            );
+            const data = await res.json();
+            this.riderAddress = data.display_name || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+          } catch {
+            this.riderAddress = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+          }
+        },
+        () => { this.riderAddress = '위치 접근 거부됨' },
+        { enableHighAccuracy: true, timeout: 10000 }
       );
     },
 
@@ -129,12 +200,11 @@ export default {
         if (this.poll) clearInterval(this.poll);
       }
     },
-    async fetchAvg()
-    {
+
+    async fetchAvg() {
       console.log("fetchAvg start: riderid = " + this.riderId);
       try {
         const token = localStorage.getItem('jwt');
-
         const res = await apiFetch(
           `${API_BASE}/rider/deliveries/${this.riderId}/avg`,
           {
@@ -142,29 +212,24 @@ export default {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-
         if (!res.ok) {
           console.error("fetchEarnings failed with status", res.status);
           return;
         }
-
         const avg = await res.json();
-        console.log("평균 배달 시간:", avg);
-        // DOM 반영 예시:
         const el = document.getElementById("today-avg");
         if (el) el.textContent = `${avg.toLocaleString()}분`;
-
       } catch (e) {
         console.error("fetchAvg error", e);
       } finally {
         console.log("fetchAvg: rider_id=" + this.riderId);
       }
     },
+
     async fetchEarnings() {
       console.log("fetchEarnings start: riderid = " + this.riderId);
       try {
         const token = localStorage.getItem('jwt');
-
         const res = await apiFetch(
           `${API_BASE}/rider/deliveries/${this.riderId}/today-earnings`,
           {
@@ -172,30 +237,24 @@ export default {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-
         if (!res.ok) {
           console.error("fetchEarnings failed with status", res.status);
           return;
         }
-
         const earnings = await res.json();
-        console.log("오늘 수익:", earnings);
-        // DOM 반영 예시:
         const el = document.getElementById("today-earnings");
         if (el) el.textContent = `${earnings.toLocaleString()}원`;
-
       } catch (e) {
         console.error("fetchEarnings error", e);
       } finally {
         console.log("fetchEarnings: rider_id=" + this.riderId);
       }
     },
-    async fetchCount()
-    {
+
+    async fetchCount() {
       console.log("fetch_count: " + this.riderId);
       try {
         const token = localStorage.getItem('jwt');
-
         const res = await apiFetch(
           `${API_BASE}/rider/deliveries/${this.riderId}/count`,
           {
@@ -203,18 +262,13 @@ export default {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-
         if (!res.ok) {
           console.error("fetchCount failed with status", res.status);
           return;
         }
-
         const count = await res.json();
-        console.log("오늘 건수:", count);
-        // DOM 반영 예시:
         const el = document.getElementById("today-count");
         if (el) el.textContent = `${count.toLocaleString()}건`;
-
       } catch (e) {
         console.error("fetchCount error", e);
       } finally {
@@ -227,7 +281,7 @@ export default {
       this.isAccepting = true;
       try {
         const token = localStorage.getItem('jwt');
-        const riderId = localStorage.getItem('userId'); // DB users.id 값
+        const riderId = localStorage.getItem('userId');
 
         const resp = await apiFetch(`${API_BASE}/rider/deliveries/${orderId}/accept`, {
           method: 'POST',
@@ -239,13 +293,12 @@ export default {
           return;
         }
 
-        const picked =
-            this.availableOrders.find(o => String(o.id) === String(orderId)) || null;
-
-        this.currentOrder = picked;
-        this.isPickedUp = false; // 새 주문 수락 시 초기화
+        // 성공 후
+        await this.getCurrentOrder();           // ← picked 쓰지 말 것
+        this.isPickedUp = false;
         this.availableOrders = this.availableOrders.filter(o => String(o.id) !== String(orderId));
-        if (picked) localStorage.setItem('currentOrder', JSON.stringify(picked));
+        localStorage.removeItem('currentOrder');
+
       } catch (e) {
         console.error('수락 실패:', e);
         alert('수락 실패');
@@ -268,24 +321,23 @@ export default {
     startPolling() {
       if (this.poll) clearInterval(this.poll);
       this.poll = setInterval(() => {
-        if (this.isOnline) this.fetchDeliveries();
+        if (this.isOnline) {
+          this.fetchDeliveries();
+          this.getRiderStatus(); // 주기적으로 상태 갱신
+          this.getCurrentOrder();
+        }
       }, 3000);
     },
 
     async fetchDeliveries() {
       try {
         const token = localStorage.getItem('jwt');
- 
         const res = await apiFetch(`${API_BASE}/orders/delivery/available`, {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
- 
         });
         const json = await res.json();
-        console.log(JSON.stringify(json, null, 2)); // 예쁘게 들여쓰기해서 출력
-        // 1) json이 배열이면 그대로 사용
         const items = Array.isArray(json) ? json : (json?.data ?? []);
-        // 2) OrderResponse 스키마에 맞게 매핑
         const mapped = items.map((o, idx) => ({
           _key: `ord:${o.id}|${o.orderNumber}|${idx}`,
           id: o.id,
@@ -300,15 +352,8 @@ export default {
           restaurantAddress: o.storeAddress,
           restaurantDetailAddress: o.storeDetailAddress,
           total: o.totalAmount ?? 0,
-
         }));
-        console.log('mapped len', mapped.length, mapped[0]);
-
-        this.availableOrders = mapped; // 필터·재할당 없음
-
-        // 디버그 로그
-        console.log('[final ids]', this.availableOrders.map(o => o.id), 'len=', this.availableOrders.length);
-        // 여기까지 ↑↑↑
+        this.availableOrders = mapped;
       } catch (e) {
         console.error('배달 목록 오류:', e);
         alert('배달 목록을 불러오지 못했습니다.');
@@ -317,9 +362,8 @@ export default {
 
     async completeCurrentOrder() {
       const co = this.currentOrder;
-      if (!co?.id) throw new Error('currentOrder.id 없음');
+      if (!co?.orderId) throw new Error('currentOrder.id 없음(배달완료)');
 
-      // 낙관적 반영 준비
       const now = new Date();
       const optimistic = {
         ...co,
@@ -328,34 +372,33 @@ export default {
         earnings: co.deliveryFee ?? 0,
       };
 
-      // 낙관적 반영
       this.completedDeliveries.unshift(optimistic);
 
       const token = localStorage.getItem('jwt');
       const riderId = this.riderId || JSON.parse(localStorage.getItem('rider') || '{}').riderId;
 
-      const resp = await apiFetch(`${API_BASE}/rider/deliveries/${co.id}/complete`, {
+      const resp = await apiFetch(`${API_BASE}/rider/deliveries/${co.orderId}/complete`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ riderId }),
       });
 
       if (!resp.ok) {
-        // 롤백
         this.completedDeliveries.shift();
         throw new Error(`완료 실패 ${resp.status}`);
       }
 
-      // 성공 처리
       this.currentOrder = null;
       localStorage.removeItem('currentOrder');
       await this.fetchCount();
       await this.fetchEarnings();
       await this.fetchAvg();
+      await this.getCurrentOrder();
     },
   },
 }
 </script>
+
 
 
 
@@ -530,27 +573,29 @@ export default {
       </div>
       <!-- ✅ Current Order (같은 루트 내부) -->
       <div id="current-content" class="tab-content mt-6">
-        <div v-if="!currentOrder"
-             class="border-2 border-gray-400 bg-white rounded-lg p-8 text-center">
-          <i data-lucide="package" class="w-12 h-12 mx-auto text-gray-500 mb-4"></i>
-          <h3 class="mb-2 text-gray-800">진행 중인 배달이 없습니다</h3>
-          <p class="text-gray-600">새로운 주문을 수락하면 여기에 표시됩니다.</p>
-        </div>
-
-        <div v-else class="border-2 border-gray-400 bg-white rounded-lg p-6">
+        <div v-if="isActiveStatus" class="border-2 border-gray-400 bg-white rounded-lg p-6">
           <h3 class="text-lg text-gray-800 mb-2">현재 배달</h3>
-          <p class="text-sm text-gray-600">가게: {{ currentOrder.restaurantName + " (" + currentOrder.restaurantAddress + "\t" + currentOrder.restaurantDetailAddress}}</p>
-          <p class="text-sm text-gray-600">배달 주소: {{ currentOrder.customerAddress }}</p>
-          <p class="text-sm text-gray-600">예상 배달 시간: {{ currentOrder.estimatedDeliveryTime }}</p>
+          <p class="text-sm text-gray-600">상태: {{ riderStatus }}</p>
+          <p class="text-sm text-gray-600">출발지: {{ currentOrder?.pickupAddress || '-' }}</p>
+          <p class="text-sm text-gray-600">배달 주소: {{ currentOrder?.deliveryAddress || '-' }}</p>
+          <p class="text-sm text-gray-600">
+            예상 배달 시간: {{ currentOrder?.estimatedTime != null ? currentOrder.estimatedTime + '분' : '-' }}
+          </p>
 
           <button
-            v-if="currentOrder"
             @click="toggleOrderStatus()"
-            class="mt-4 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
-            {{ isPickedUp ? '배달 완료' : '픽업 완료' }}
+            :disabled="!isActiveStatus || !currentOrder?.orderId || isBusy"
+            class="mt-4 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 disabled:opacity-50">
+            {{ riderStatus === 'PICKED_UP' ? '배달 완료' : '픽업 완료' }}
           </button>
         </div>
+
+        <div v-else class="border-2 border-gray-400 bg-white rounded-lg p-8 text-center">
+          <i data-lucide="package" class="w-12 h-12 mx-auto text-gray-500 mb-4"></i>
+          <h3 class="mb-2 text-gray-800">진행 중인 배달이 없습니다</h3>
+        </div>
       </div>
+
     </div>
   </div>
 </template>
