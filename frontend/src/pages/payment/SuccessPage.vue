@@ -26,9 +26,11 @@ onMounted(async () => {
 
     try {
         await axios.post("http://localhost:8080/api/payments/callback", {
+            userId: localStorage.getItem("userId"),
             paymentKey: paymentKey,
             amount: amount.value,
             pgProvider: "tosspay",
+            paymentMethod: "CARD",
             pgTid: null
         });
 
