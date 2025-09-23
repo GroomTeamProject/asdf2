@@ -26,5 +26,5 @@ cloud:
       auto: false
 
 jwt:
-  secret: "thisIsAReallyLongSecretKeyForJwtTokenExample1234"
+  secret: ${JWT_SECRET_DEV}
   expiration: 3600000

@@ -3,9 +3,9 @@ server:
 spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://dev-db-server:8080/quickdeliver?serverTimezone=UTC
-    username: root
-    password: Wnsrns3224!
+    url: ${DB_URL_PROD}
+    username: ${DB_USERNAME_PROD}
+    password: ${DB_PASSWORD_PROD}
   flyway:
     enabled: true
     baseline-on-migrate: true
@@ -27,5 +27,5 @@ cloud:
     stack:
       auto: false
 jwt:
-  secret: "thisIsAReallyLongSecretKeyForJwtTokenExample1234"
+  secret: ${JWT_SECRET_PROD}
   expiration: 3600000
