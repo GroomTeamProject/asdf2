@@ -63,7 +63,7 @@ class UserServiceTest {
         request.setPassword("password123");
         request.setPasswordCheck("password123");
         request.setName("홍길동");
-        request.setPhone("010-1234-5678");
+        request.setPhone("01012345678");
         request.setUserType(UserType.CUSTOMER);
 
         // 주소 정보
@@ -139,7 +139,7 @@ class UserServiceTest {
         request.setPassword("password123");
         request.setPasswordCheck("password123");
         request.setName("홍길동");
-        request.setPhone("010-1234-5678");
+        request.setPhone("01012345678");
         request.setUserType(UserType.CUSTOMER);
 
         // 주소 정보
@@ -199,7 +199,7 @@ class UserServiceTest {
 
         // 전화번호 중복
         User existingUser = new User();
-        existingUser.setPhone("010-1234-5678");
+        existingUser.setPhone("01012345678");
         when(userRepository.findByPhone(request.getPhone())).thenReturn(Optional.of(existingUser));
 
         // when & then
