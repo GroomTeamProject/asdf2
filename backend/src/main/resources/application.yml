@@ -48,7 +48,9 @@ app:
   s3:
     folder: store
 
-
+jwt:
+  secret: "thisIsAReallyLongSecretKeyForJwtTokenExample1234"
+  expiration-ms: 3600000
 
 # Rider 서비스에서 Order 서비스 API 호출용 베이스 URL
 # - 기본값은 로컬 실행 시 http://localhost:8080
@@ -58,3 +60,4 @@ order-service:
 
 toss:
   secretKey: test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm
+  
