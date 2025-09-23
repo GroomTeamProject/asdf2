@@ -43,11 +43,13 @@ jobs:
           -e DB_USERNAME_DEV="${{ secrets.DB_USERNAME_DEV }}" \
           -e DB_PASSWORD_DEV="${{ secrets.DB_PASSWORD_DEV }}" \
           -e ORIGIN_URL_DEV="${{ secrets.ORIGIN_URL_DEV }}" \
-          -e JWT_SECRET_DEV="${{ secrets.JWT_SECRET_DEV }}" \
+          -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
           -e AWS_ACCESS_KEY="${{ secrets.AWS_ACCESS_KEY }}" \
           -e AWS_SECRET_KEY="${{ secrets.AWS_SECRET_KEY }}" \
           -e AWS_REGION="${{ secrets.AWS_REGION }}" \
           -e AWS_S3_BUCKET="${{ secrets.AWS_S3_BUCKET }}" \
+          -e TOSS_CLIENT_KEY="${{ secrets.TOSS_CLIENT_KEY }}" \
+          -e TOSS_SECRET_KEY="${{ secrets.TOSS_SECRET_KEY }}" \
           "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
 
     - name: Verify deployment
