@@ -3,9 +3,9 @@ server:
 spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: ${DB_URL_LOCAL}
-    username: ${DB_USERNAME_LOCAL}
-    password: ${DB_PASSWORD_LOCAL}
+    url: "jdbc:mariadb://localhost:3306/quickdeliver"
+    username: "root"
+    password: "Wnsrns3224!"
   jpa:
     hibernate:
       ddl-auto: none
@@ -16,13 +16,14 @@ spring:
 cloud:
   aws:
     credentials:
-      access-key: ${AWS_ACCESS_KEY}
-      secret-key: ${AWS_SECRET_KEY}
+      access-key: "dummyKey"
+      secret-key: "dummySecret"
     s3:
-      bucket: ${AWS_S3_BUCKET}
+      bucket: your-bucket-name
     region:
-      static: ${AWS_REGION}
+      static: ap-northeast-2
     stack:
       auto: false
 jwt:
-  secret: ${JWT_SECRET_DEV}
+  secret: "thisIsAReallyLongSecretKeyForJwtTokenExample1234"
+  expiration: 3600000

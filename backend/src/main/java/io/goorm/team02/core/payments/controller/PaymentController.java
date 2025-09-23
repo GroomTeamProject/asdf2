@@ -51,32 +51,4 @@ public class PaymentController {
         return ResponseEntity.ok(payment);
     }
 
-    /*@PostMapping("/cancel/{orderId}")
-    @Transactional
-    public ResponseEntity<?> cancelPayment(@PathVariable Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElse(null);
-
-        if (order == null) {
-            return ResponseEntity.badRequest().body("주문을 찾을 수 없습니다.");
-        }
-
-        Payment payment = order.getPayment();
-        if (payment == null) {
-            return ResponseEntity.badRequest().body("결제 정보를 찾을 수 없습니다.");
-        }
-
-        try {
-            paymentService.cancelPayment(payment.getPaymentKey(), payment.getAmount());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("결제 취소 실패: " + e.getMessage());
-        }
-
-
-        order.setStatus(OrderStatus.CANCELLED.name()); 
-        orderRepository.save(order);
-
-        return ResponseEntity.ok("주문이 취소되었습니다.");
-    }
-*/
 }
