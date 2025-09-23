@@ -32,6 +32,11 @@ onMounted(async () => {
             pgProvider: "tosspay",
             paymentMethod: "CARD",
             pgTid: null
+        }, {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("jwt")}`
+            }
         });
 
     } catch (err) {
@@ -48,34 +53,34 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="payment-success p-6 text-center">
-        <h2 class="text-2xl font-bold mb-4">결제 성공</h2>
+  <div class="payment-success p-6 text-center">
+    <h2 class="text-2xl font-bold mb-4">결제 성공</h2>
 
-        <p v-if="orderId !== null" class="mb-2">주문 번호: {{ orderId }}</p>
-        <p class="mb-2">결제금액: {{ amount.toLocaleString() }}원</p>
+    <p v-if="orderId !== null" class="mb-2">주문 번호: {{ orderId }}</p>
+    <p class="mb-2">결제금액: {{ amount.toLocaleString() }}원</p>
 
-        <!-- 주문 상품 목록 -->
-        <div v-if="orderItems.length > 0" class="mt-4 text-left">
-            <h3 class="font-semibold mb-2">주문 상품</h3>
-            <ul>
-                <li v-for="(item, index) in orderItems" :key="index" class="flex justify-between mb-1">
-                    <span>{{ item.productName }} x {{ item.quantity }}</span>
-                    <span>{{ (item.price * item.quantity).toLocaleString() }}원</span>
-                </li>
-            </ul>
-        </div>
-
-        <p class="text-lg text-blue-600 mt-4">{{ message }}</p>
+    <!-- 주문 상품 목록 -->
+    <div v-if="orderItems.length > 0" class="mt-4 text-left">
+      <h3 class="font-semibold mb-2">주문 상품</h3>
+      <ul>
+        <li v-for="(item, index) in orderItems" :key="index" class="flex justify-between mb-1">
+          <span>{{ item.productName }} x {{ item.quantity }}</span>
+          <span>{{ (item.price * item.quantity).toLocaleString() }}원</span>
+        </li>
+      </ul>
     </div>
+
+    <p class="text-lg text-blue-600 mt-4">{{ message }}</p>
+  </div>
 </template>
 
 <style scoped>
 .payment-success {
-    max-width: 500px;
-    margin: 50px auto;
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: #f9f9f9;
+  max-width: 500px;
+  margin: 50px auto;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
 }
 </style>
