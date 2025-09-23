@@ -27,5 +27,8 @@ cloud:
     stack:
       auto: false
 jwt:
-  secret: ${JWT_SECRET_PROD}
+  secret: ${JWT_SECRET_DEV}
   expiration: 3600000
+
+toss:
+  secretKey: ${TOSS_SECRET_KEY}

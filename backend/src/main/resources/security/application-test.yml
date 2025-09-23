@@ -29,5 +29,9 @@ cloud:
     stack:
       auto: false
 jwt:
-  secret: "thisIsAReallyLongSecretKeyForJwtTokenExample1234"
+  secret: ${JWT_SECRET_DEV:"thisIsAReallyLongSecretKeyForJwtTokenExample1234"}
   expiration: 3600000
+
+# Toss 결제 설정 (테스트용)
+toss:
+  secretKey: ${TOSS_SECRET_KEY:test-toss-key}
