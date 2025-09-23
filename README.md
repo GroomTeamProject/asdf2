@@ -25,7 +25,7 @@
 
 ### 주요 서비스 플로우
 <img width="2090" height="1302" alt="Image" src="https://github.com/user-attachments/assets/c096ffa2-8862-48d3-bbfd-911bdd8d39bc" />
-<img width="2536" height="1252" alt="Image" src="https://github.com/user-attachments/assets/59e4fb2b-d480-4327-b96a-d12a636efa0d" />
+<img width="2090" height="1237" alt="Image" src="https://github.com/user-attachments/assets/8a5617e4-6bf7-4d2c-a66c-69e66abd2028" />
 
 ### 데이터베이스 설계
 <img width="2685" height="2063" alt="Image" src="https://github.com/user-attachments/assets/90f6d79d-7954-41ec-aa28-c942894af9a0" />
