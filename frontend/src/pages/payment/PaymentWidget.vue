@@ -33,12 +33,14 @@ const requestPayment = async () => {
         return;
     }
 
+    const phoneNumber = orderInfo.phoneNumber.replace(/\D/g, "");
+
     await widgets.requestPayment({
         orderId: orderInfo.orderIdString,
         orderName: "장바구니 주문",
         successUrl: window.location.origin + "/success",
         failUrl: window.location.origin + "/fail",
-        customerName: orderInfo.customerName,
+        customerMobilePhone: phoneNumber,
         customerMobilePhone: orderInfo.phoneNumber,
     });
 };
