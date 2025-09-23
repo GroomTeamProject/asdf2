@@ -24,6 +24,8 @@ cloud:
       static: ap-northeast-2
     stack:
       auto: false
+
 jwt:
+  secret: ${JWT_SECRET_DEV}
   secret: "thisIsAReallyLongSecretKeyForJwtTokenExample1234"
   expiration: 3600000
