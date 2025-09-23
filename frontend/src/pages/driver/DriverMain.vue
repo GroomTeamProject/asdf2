@@ -29,9 +29,8 @@ export default {
   mounted() {
     const token = localStorage.getItem('jwt');
     if (!token) { alert('로그인이 필요합니다.'); return; }
+    this.riderId = Number(localStorage.getItem('userId'));
 
-    const riderStr = localStorage.getItem('rider');
-    if (riderStr) { try { this.riderId = JSON.parse(riderStr).riderId; } catch {} }
 
     this.rejectKey = `${REJECT_KEY_PREFIX}:${this.riderId ?? 'unknown'}`;
     const savedRejects = localStorage.getItem(this.rejectKey);
@@ -41,8 +40,12 @@ export default {
     if (savedCurrent) { try { this.currentOrder = JSON.parse(savedCurrent); } catch {} }
 
     this.userName = localStorage.getItem('userName') || '게스트';
+    this.fetchCount();
+    this.fetchEarnings();
+    this.fetchAvg();
     this.refreshLocation();
     this.$nextTick(() => window.lucide?.createIcons?.());
+
   },
 
   beforeUnmount() {
@@ -83,6 +86,7 @@ export default {
     },
     async pickupCurrentOrder() {
       const id = this.currentOrder?.id;
+      console.log("pickupCurrentOrder: " + id);
       if (!id) throw new Error('currentOrder.id 없음');
 
       const token = localStorage.getItem('jwt');
@@ -125,15 +129,107 @@ export default {
         if (this.poll) clearInterval(this.poll);
       }
     },
+    async fetchAvg()
+    {
+      console.log("fetchAvg start: riderid = " + this.riderId);
+      try {
+        const token = localStorage.getItem('jwt');
 
-    async acceptOrder(deliveryId) {
+        const res = await apiFetch(
+          `${API_BASE}/rider/deliveries/${this.riderId}/avg`,
+          {
+            method: 'GET',
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (!res.ok) {
+          console.error("fetchEarnings failed with status", res.status);
+          return;
+        }
+
+        const avg = await res.json();
+        console.log("평균 배달 시간:", avg);
+        // DOM 반영 예시:
+        const el = document.getElementById("today-avg");
+        if (el) el.textContent = `${avg.toLocaleString()}분`;
+
+      } catch (e) {
+        console.error("fetchAvg error", e);
+      } finally {
+        console.log("fetchAvg: rider_id=" + this.riderId);
+      }
+    },
+    async fetchEarnings() {
+      console.log("fetchEarnings start: riderid = " + this.riderId);
+      try {
+        const token = localStorage.getItem('jwt');
+
+        const res = await apiFetch(
+          `${API_BASE}/rider/deliveries/${this.riderId}/today-earnings`,
+          {
+            method: 'GET',
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (!res.ok) {
+          console.error("fetchEarnings failed with status", res.status);
+          return;
+        }
+
+        const earnings = await res.json();
+        console.log("오늘 수익:", earnings);
+        // DOM 반영 예시:
+        const el = document.getElementById("today-earnings");
+        if (el) el.textContent = `${earnings.toLocaleString()}원`;
+
+      } catch (e) {
+        console.error("fetchEarnings error", e);
+      } finally {
+        console.log("fetchEarnings: rider_id=" + this.riderId);
+      }
+    },
+    async fetchCount()
+    {
+      console.log("fetch_count: " + this.riderId);
+      try {
+        const token = localStorage.getItem('jwt');
+
+        const res = await apiFetch(
+          `${API_BASE}/rider/deliveries/${this.riderId}/count`,
+          {
+            method: 'GET',
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (!res.ok) {
+          console.error("fetchCount failed with status", res.status);
+          return;
+        }
+
+        const count = await res.json();
+        console.log("오늘 건수:", count);
+        // DOM 반영 예시:
+        const el = document.getElementById("today-count");
+        if (el) el.textContent = `${count.toLocaleString()}건`;
+
+      } catch (e) {
+        console.error("fetchCount error", e);
+      } finally {
+        console.log("fetchCount: rider_id=" + this.riderId);
+      }
+    },
+
+    async acceptOrder(orderId) {
       if (this.currentOrder || this.isAccepting) return;
       this.isAccepting = true;
       try {
         const token = localStorage.getItem('jwt');
         const riderId = localStorage.getItem('userId'); // DB users.id 값
 
-        const resp = await apiFetch(`${API_BASE}/rider/deliveries/${deliveryId}/accept`, {
+        const resp = await apiFetch(`${API_BASE}/rider/deliveries/${orderId}/accept`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ riderId }),
@@ -144,11 +240,11 @@ export default {
         }
 
         const picked =
-            this.availableOrders.find(o => String(o.id) === String(deliveryId)) || null;
+            this.availableOrders.find(o => String(o.id) === String(orderId)) || null;
 
         this.currentOrder = picked;
         this.isPickedUp = false; // 새 주문 수락 시 초기화
-        this.availableOrders = this.availableOrders.filter(o => String(o.id) !== String(deliveryId));
+        this.availableOrders = this.availableOrders.filter(o => String(o.id) !== String(orderId));
         if (picked) localStorage.setItem('currentOrder', JSON.stringify(picked));
       } catch (e) {
         console.error('수락 실패:', e);
@@ -253,23 +349,9 @@ export default {
       // 성공 처리
       this.currentOrder = null;
       localStorage.removeItem('currentOrder');
-      this.updateStats();
-    },
-
-    updateStats() {
-      const today = new Date();
-      const todayDeliveries = this.completedDeliveries.filter(d => {
-        const dt = new Date(d.completedTime);
-        return dt.getFullYear() === today.getFullYear()
-            && dt.getMonth() === today.getMonth()
-            && dt.getDate() === today.getDate();
-      });
-      const earnings = todayDeliveries.reduce((sum, d) => sum + d.earnings, 0);
-
-      const earnEl = document.getElementById('today-earnings');
-      const cntEl = document.getElementById('today-deliveries');
-      if (earnEl) earnEl.textContent = `${earnings.toLocaleString()}원`;
-      if (cntEl) cntEl.textContent = `${todayDeliveries.length}건`;
+      await this.fetchCount();
+      await this.fetchEarnings();
+      await this.fetchAvg();
     },
   },
 }
@@ -340,7 +422,7 @@ export default {
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm text-gray-600">오늘 배달</p>
-                <p id="today-deliveries" class="text-2xl text-gray-800">0건</p>
+                <p id="today-count" class="text-2xl text-gray-800">0건</p>
               </div>
               <i data-lucide="package" class="w-8 h-8 text-gray-600"></i>
             </div>
@@ -349,7 +431,7 @@ export default {
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm text-gray-600">평균 배달 시간</p>
-                <p class="text-2xl text-gray-800">28분</p>
+                <p id="today-avg" class="text-2xl text-gray-800">0분</p>
               </div>
               <i data-lucide="timer" class="w-8 h-8 text-gray-600"></i>
             </div>

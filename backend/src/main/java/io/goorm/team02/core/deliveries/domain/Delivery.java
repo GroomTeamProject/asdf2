@@ -50,6 +50,7 @@ public class Delivery extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @lombok.Setter
+    @lombok.Getter
     private DeliveryStatus status = DeliveryStatus.REQUESTED;
 
     @lombok.Setter private LocalDateTime acceptedAt;
@@ -62,7 +63,25 @@ public class Delivery extends BaseEntity {
     // 필요하면 requestedAt도 게터만 유지
     private LocalDateTime requestedAt = LocalDateTime.now();
 
+    @lombok.Setter
+    @Column(precision = 10, scale = 2)
+    private BigDecimal deliveryFee = BigDecimal.ZERO;
+
     public void assignRider(User rider) {
         this.rider = rider;
+    }
+
+    public static Delivery create(Order order, User rider) {
+        Delivery delivery = new Delivery();
+        delivery.order = order;
+        delivery.rider = rider;
+        delivery.pickupAddress = order.getStoreAddress();
+        delivery.deliveryAddress = order.getDeliveryAddress();
+        delivery.deliveryFee = order.getDeliveryFee();
+        delivery.status = DeliveryStatus.ACCEPTED;
+        delivery.acceptedAt = LocalDateTime.now();
+        delivery.requestedAt = LocalDateTime.now();
+
+        return delivery;
     }
 }
