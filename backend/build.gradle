@@ -57,6 +57,10 @@ dependencies {
 	// AWS S3 - 최신 SDK 사용
 	implementation 'software.amazon.awssdk:s3:2.20.56'
 	implementation 'software.amazon.awssdk:auth:2.20.56'
+
+    // Actuator
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 
 tasks.named('test') {
