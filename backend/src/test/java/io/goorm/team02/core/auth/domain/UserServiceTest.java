@@ -200,7 +200,7 @@ class UserServiceTest {
         // 전화번호 중복
         User existingUser = new User();
         existingUser.setPhone("01012345678");
-        when(userRepository.findByPhone(request.getPhone())).thenReturn(Optional.of(existingUser));
+        when(userRepository.findByPhone("01012345678")).thenReturn(Optional.of(existingUser));
 
         // when & then
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
