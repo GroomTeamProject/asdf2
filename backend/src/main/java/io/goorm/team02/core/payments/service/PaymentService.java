@@ -10,6 +10,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,10 +25,16 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
+    private final RestTemplate restTemplate;
 
-    public PaymentService(PaymentRepository paymentRepository, OrderRepository orderRepository) {
+    private static final String TOSS_SECRET_KEY = "test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6";
+    private static final String TOSS_API_URL = "https://api.tosspayments.com/v1/payments/";
+
+    public PaymentService(PaymentRepository paymentRepository, OrderRepository orderRepository,
+            RestTemplate restTemplate) {
         this.paymentRepository = paymentRepository;
         this.orderRepository = orderRepository;
+        this.restTemplate = restTemplate;
     }
 
     // 결제 완료
@@ -35,9 +43,28 @@ public class PaymentService {
         if (order == null) {
             throw new IllegalArgumentException("주문 정보가 없습니다.");
         }
-
         if (paymentKey == null || paymentKey.isEmpty()) {
             throw new IllegalArgumentException("결제 키가 없습니다.");
+        }
+
+        if (amount == null || amount.compareTo(order.getTotalAmount()) != 0) {
+            throw new IllegalArgumentException("결제 금액 불일치");
+        }
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBasicAuth(TOSS_SECRET_KEY, "");
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            Map<String, Object> body = new HashMap<>();
+            body.put("amount", amount.longValue());
+            body.put("orderId", order.getId().toString());
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+
+            restTemplate.postForEntity(TOSS_API_URL + paymentKey, request, String.class);
+        } catch (Exception e) {
+            System.out.println("Toss API 호출 실패: " + e.getMessage());
         }
 
         Payment payment = paymentRepository.findByPaymentKey(paymentKey)
@@ -48,14 +75,9 @@ public class PaymentService {
                     return newPayment;
                 });
 
-        // 금액 검증
-        if (amount == null || amount.compareTo(order.getTotalAmount()) != 0) {
-            throw new IllegalArgumentException("결제 금액 불일치");
-        }
-
         payment.setAmount(amount);
         payment.setStatus(PaymentStatus.COMPLETED);
-        payment.setPgProvider(pgProvider != null ? pgProvider : "unknown");
+        payment.setPgProvider(pgProvider != null ? pgProvider : "toss");
         payment.setPgTid(pgTid != null ? pgTid : "");
 
         return paymentRepository.save(payment);

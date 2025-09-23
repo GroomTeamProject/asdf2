@@ -44,7 +44,7 @@ import { useOrderStore } from '@/stores/customer/order'
 import { useCartStore } from '@/stores/customer/cart'
 import { orderService } from '@/services/customer/orderService'
 import { storeToRefs } from 'pinia'
-import PaymentWidget from '@/pages/PaymentWidget.vue'
+import PaymentWidget from '@/pages/payment/PaymentWidget.vue'
 
 export default {
   name: 'PaymentButton',

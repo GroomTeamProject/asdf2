@@ -31,7 +31,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
@@ -44,8 +45,7 @@ public class SecurityConfig {
                         "/v3/api-docs/**",
                         "/v2/api-docs/**",
                         "/swagger-resources/**",
-                        "/webjars/**"
-                );
+                        "/webjars/**");
     }
 
     @Bean
@@ -65,12 +65,13 @@ public class SecurityConfig {
                         // OPTIONS 요청 허용 추가
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        //공통접근
+                        // 공통접근
                         .requestMatchers("/api/auth/**", "/error").permitAll() // 로그인/회원가입 허용
 
                         // 마이페이지 접근 허용
                         .requestMatchers("/api/users/me/password",
-                                                       "api/users/me/deactivate").authenticated()
+                                "api/users/me/deactivate")
+                        .authenticated()
 
                         // 역할별 접근(임시, api맞춰야함)
                         .requestMatchers("/api/stores/**").hasRole("CUSTOMER") // 이용자 전용
