@@ -40,32 +40,13 @@ public class PaymentService {
     // 결제 완료
     @Transactional
     public Payment completePayment(Order order, String paymentKey, String pgProvider, String pgTid, BigDecimal amount) {
-        if (order == null) {
-            throw new IllegalArgumentException("주문 정보가 없습니다.");
-        }
-        if (paymentKey == null || paymentKey.isEmpty()) {
-            throw new IllegalArgumentException("결제 키가 없습니다.");
+        // 기본 검증
+        if (order == null || paymentKey == null || paymentKey.isEmpty() || amount == null) {
+            throw new IllegalArgumentException("필수 정보가 누락되었습니다.");
         }
 
-        if (amount == null || amount.compareTo(order.getTotalAmount()) != 0) {
-            throw new IllegalArgumentException("결제 금액 불일치");
-        }
-
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBasicAuth(TOSS_SECRET_KEY, "");
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            Map<String, Object> body = new HashMap<>();
-            body.put("amount", amount.longValue());
-            body.put("orderId", order.getId().toString());
-
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-
-            restTemplate.postForEntity(TOSS_API_URL + paymentKey, request, String.class);
-        } catch (Exception e) {
-            System.out.println("Toss API 호출 실패: " + e.getMessage());
-        }
+        // TODO: Toss API 호출 - 결제 정보 검증
+        System.out.println("결제 키: " + paymentKey + ", 금액: " + amount);
 
         Payment payment = paymentRepository.findByPaymentKey(paymentKey)
                 .orElseGet(() -> {
@@ -79,6 +60,7 @@ public class PaymentService {
         payment.setStatus(PaymentStatus.COMPLETED);
         payment.setPgProvider(pgProvider != null ? pgProvider : "toss");
         payment.setPgTid(pgTid != null ? pgTid : "");
+        payment.setPaymentMethod("CARD");
 
         return paymentRepository.save(payment);
     }

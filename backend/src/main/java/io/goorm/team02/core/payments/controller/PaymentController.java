@@ -26,6 +26,7 @@ public class PaymentController {
     @PostMapping("/callback")
     @Transactional
     public ResponseEntity<?> completePayment(@RequestBody PaymentRequest request) {
+        System.out.println("request: " + request);
 
         // Request 검증
         if (request == null || request.getPaymentKey() == null || request.getAmount() == null) {
@@ -33,7 +34,7 @@ public class PaymentController {
         }
 
         // 최근 주문 조회
-        Order order = orderRepository.findTopByOrderByIdDesc()
+        Order order = orderRepository.findTopByUserIdOrderByOrderedAtDesc(request.getUserId())
                 .orElse(null);
 
         if (order == null) {
