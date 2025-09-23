@@ -14,7 +14,8 @@ CREATE TABLE `deliveries`
   `picked_up_at`     TIMESTAMP,
   `delivered_at`     TIMESTAMP,
   `created_at`       TIMESTAMP DEFAULT (now()),
-  `updated_at`       TIMESTAMP DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP
+  `updated_at`       TIMESTAMP DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+  `delivery_fee`     DECIMAL(10, 2) DEFAULT 0
 );
 
 CREATE TABLE `delivery_locations`
