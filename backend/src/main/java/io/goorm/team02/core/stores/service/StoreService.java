@@ -72,7 +72,7 @@ public class StoreService {
      * 가게 등록 (최초 1회)
      */
     @Transactional
-    public Store createStore(StoreCreateRequest request) {
+    public Store createStore(TempUser currentUser, StoreCreateRequest request) {
         log.info("=== 가게 등록 시작 ===");
 
         // JWT 토큰에서 현재 로그인한 사용자 ID 가져오기
@@ -172,7 +172,7 @@ public class StoreService {
     /**
      * 내 가게 정보 조회
      */
-    public Store getMyStore() {
+    public Store getMyStore(TempUser currentUser) {
         Long currentUserId = getCurrentUserId();
         log.debug("JWT에서 추출한 사용자 ID로 가게 정보 조회: {}", currentUserId);
 
@@ -191,13 +191,13 @@ public class StoreService {
      * 모든 가게 정보를 하나의 메소드에서 처리
      */
     @Transactional
-    public synchronized Store updateStore(StoreUpdateRequest request) {
+    public Store updateStore(TempUser currentUser, StoreUpdateRequest request) {
         log.info("=== 통합 가게 정보 수정 시작 ===");
 
         Long currentUserId = getCurrentUserId();
         log.info("JWT에서 추출한 사용자 ID: {}", currentUserId);
 
-        Store store = getMyStore();
+        Store store = getMyStore(currentUser);
         boolean hasChanges = false;
 
         // 🏪 기본 정보 업데이트
@@ -240,13 +240,13 @@ public class StoreService {
      * 통합 연락처 정보 수정
      */
     @Transactional
-    public synchronized Store updateContact(StoreContactRequest request) {
+    public Store updateContact(TempUser currentUser, StoreContactRequest request) {
         log.info("=== 가게 연락처 변경 시작 ===");
 
         Long currentUserId = getCurrentUserId();
         log.info("JWT에서 추출한 사용자 ID: {}", currentUserId);
 
-        Store store = getMyStore();
+        Store store = getMyStore(currentUser);
         boolean hasChanges = false;
 
         if (request.getPhone() != null && !request.getPhone().equals(store.getPhone())) {
@@ -269,13 +269,13 @@ public class StoreService {
      * 통합 배달 정보 수정
      */
     @Transactional
-    public synchronized Store updateDelivery(StoreDeliveryRequest request) {
+    public Store updateDelivery(TempUser currentUser, StoreDeliveryRequest request) {
         log.info("=== 배달비/최소주문금액 변경 시작 ===");
 
         Long currentUserId = getCurrentUserId();
         log.info("JWT에서 추출한 사용자 ID: {}", currentUserId);
 
-        Store store = getMyStore();
+        Store store = getMyStore(currentUser);
         boolean hasChanges = false;
 
         if (request.getDeliveryFee() != null && !request.getDeliveryFee().equals(store.getDeliveryFee())) {
@@ -316,13 +316,13 @@ public class StoreService {
      * 통합 위치 정보 수정
      */
     @Transactional
-    public synchronized Store updateLocation(StoreLocationRequest request) {
+    public Store updateLocation(TempUser currentUser, StoreLocationRequest request) {
         log.info("=== 가게 위치 정보 변경 시작 ===");
 
         Long currentUserId = getCurrentUserId();
         log.info("JWT에서 추출한 사용자 ID: {}", currentUserId);
 
-        Store store = getMyStore();
+        Store store = getMyStore(currentUser);
         boolean hasChanges = false;
 
         if (request.getAddress() != null && !request.getAddress().equals(store.getAddress())) {
@@ -363,13 +363,13 @@ public class StoreService {
      * 가게 삭제 (비활성화)
      */
     @Transactional
-    public void deleteStore() {
+    public void deleteStore(TempUser currentUser) {
         log.info("=== 가게 삭제(비활성화) 시작 ===");
 
         Long currentUserId = getCurrentUserId();
         log.info("JWT에서 추출한 사용자 ID: {}", currentUserId);
 
-        Store store = getMyStore();
+        Store store = getMyStore(currentUser);
         store.setIsActive(false);
         storeRepository.save(store);
 
@@ -381,13 +381,13 @@ public class StoreService {
      * 가게 이미지 업로드
      */
     @Transactional
-    public synchronized String uploadImage(MultipartFile file) {
+    public String uploadImage(TempUser currentUser, MultipartFile file) {
         log.info("=== 가게 이미지 수정 시작 ===");
 
         Long currentUserId = getCurrentUserId();
         log.info("JWT에서 추출한 사용자 ID: {}", currentUserId);
 
-        Store store = getMyStore();
+        Store store = getMyStore(currentUser);
         Long storeId = store.getId();
         String oldImageUrl = store.getImageUrl();
 
@@ -424,13 +424,13 @@ public class StoreService {
      * 가게 이미지 삭제
      */
     @Transactional
-    public void deleteImage(Long imageId) {
+    public void deleteImage(TempUser currentUser, Long imageId) {
         log.info("=== 가게 이미지 삭제 시작 ===");
 
         Long currentUserId = getCurrentUserId();
         log.info("JWT에서 추출한 사용자 ID: {}", currentUserId);
 
-        Store store = getMyStore();
+        Store store = getMyStore(currentUser);
         Long storeId = store.getId();
         String currentImageUrl = store.getImageUrl();
 
@@ -459,13 +459,13 @@ public class StoreService {
     /**
      * 가게 운영시간 조회
      */
-    public List<StoreHour> getStoreHours() {
+    public List<StoreHour> getStoreHours(TempUser currentUser) {
         log.info("=== 가게 운영 시간 조회 ===");
 
         Long currentUserId = getCurrentUserId();
         log.info("JWT에서 추출한 사용자 ID: {}", currentUserId);
 
-        Store store = getMyStore();
+        Store store = getMyStore(currentUser);
         List<StoreHour> storeHours = store.getStoreHours();
 
         log.info("운영시간 조회 완료: {}개의 운영시간 설정", storeHours.size());
@@ -476,13 +476,13 @@ public class StoreService {
      * 가게 운영시간 설정
      */
     @Transactional
-    public List<StoreHourResponse> updateStoreHours(List<StoreHourRequest> requests) {
+    public List<StoreHourResponse> updateStoreHours(TempUser currentUser, List<StoreHourRequest> requests) {
         log.info("=== 가게 운영 시간 설정 시작 ===");
 
         Long currentUserId = getCurrentUserId();
         log.info("JWT에서 추출한 사용자 ID: {}", currentUserId);
 
-        Store store = getMyStore();
+        Store store = getMyStore(currentUser);
 
         // 업데이트 대상 요일 수집
         Set<Integer> targetDays = new HashSet<>();
@@ -551,14 +551,14 @@ public class StoreService {
      * 휴무일 등록
      */
     @Transactional
-    public ResponseEntity<String> createHoliday(StoreHolidayRequest request) {
+    public ResponseEntity<String> createHoliday(TempUser currentUser, StoreHolidayRequest request) {
         log.info("=== 휴무일 설정 시작 ===");
 
         Long currentUserId = getCurrentUserId();
         log.info("JWT에서 추출한 사용자 ID: {}", currentUserId);
 
         try {
-            Store store = getMyStore();
+            Store store = getMyStore(currentUser);
 
             if (request.getDate() == null) {
                 return ResponseEntity.badRequest().body("휴무일을 입력해주세요");
@@ -612,14 +612,14 @@ public class StoreService {
     /**
      * 휴무일 목록 조회
      */
-    public List<StoreHolidayResponse> getHolidays() {
+    public List<StoreHolidayResponse> getHolidays(TempUser currentUser) {
         log.info("=== 휴무일 조회 시작 ===");
 
         Long currentUserId = getCurrentUserId();
         log.info("JWT에서 추출한 사용자 ID: {}", currentUserId);
 
         try {
-            Store store = getMyStore();
+            Store store = getMyStore(currentUser);
 
             // 현재 날짜 이후의 휴무일들만 조회
             List<StoreHoliday> holidays = storeHolidayRepository
@@ -649,7 +649,7 @@ public class StoreService {
      * 휴무일 삭제
      */
     @Transactional
-    public ResponseEntity<String> deleteHoliday(Long holidayId) {
+    public ResponseEntity<String> deleteHoliday(TempUser currentUser, Long holidayId) {
         log.info("=== 휴무일 삭제 시작 ===");
         log.info("삭제 요청 휴무일 ID: {}", holidayId);
 
@@ -657,7 +657,7 @@ public class StoreService {
         log.info("JWT에서 추출한 사용자 ID: {}", currentUserId);
 
         try {
-            Store store = getMyStore();
+            Store store = getMyStore(currentUser);
 
             // 휴무일 존재 및 권한 확인
             StoreHoliday holiday = storeHolidayRepository.findById(holidayId)
@@ -694,13 +694,13 @@ public class StoreService {
     /**
      * 가게 상태 조회
      */
-    public StoreStatusResponse getStoreStatus() {
+    public StoreStatusResponse getStoreStatus(TempUser currentUser) {
         log.info("=== 가게 상태 조회 시작 ===");
 
         Long currentUserId = getCurrentUserId();
         log.info("JWT에서 추출한 사용자 ID: {}", currentUserId);
 
-        Store store = getMyStore();
+        Store store = getMyStore(currentUser);
 
         // 현재 시간 기준 영업 상태 체크
         boolean isCurrentlyOpen = checkIfCurrentlyOpen(store);
@@ -718,7 +718,7 @@ public class StoreService {
      * 영업 상태 변경
      */
     @Transactional
-    public synchronized StoreStatusModifyResponse updateStoreStatus(StoreStatusRequest request) {
+    public StoreStatusModifyResponse updateStoreStatus(TempUser currentUser, StoreStatusRequest request) {
         log.info("=== 영업 상태 변경 시작 ===");
 
         Long currentUserId = getCurrentUserId();
@@ -729,7 +729,7 @@ public class StoreService {
             throw new IllegalArgumentException("영업 상태는 필수입니다.");
         }
 
-        Store store = getMyStore();
+        Store store = getMyStore(currentUser);
 
         // 현재 상태와 동일한지 확인
         if (store.getStatus() == request.getStatus()) {
@@ -838,13 +838,13 @@ public class StoreService {
     /**
      * 가게 대시보드 데이터 조회
      */
-    public StoreDashboardResponse getDashboard() {
+    public StoreDashboardResponse getDashboard(TempUser currentUser) {
         log.info("=== 가게 대시보드 조회 시작 ===");
 
         Long currentUserId = getCurrentUserId();
         log.info("JWT에서 추출한 사용자 ID: {}", currentUserId);
 
-        Store store = getMyStore();
+        Store store = getMyStore(currentUser);
         if (store == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없음");
         }
