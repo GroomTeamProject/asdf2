@@ -65,9 +65,14 @@ router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('jwt')
   const userType = localStorage.getItem('userType')
 
-  // 로그인 필요 없는 페이지
+  /*// 로그인 필요 없는 페이지 : 초기화면 유저 화면으로 바꿀시
   if (['/','/main-page', '/login', '/signup','/customer-main','/store-card','/store-list'].includes(to.path)
   || to.path.startsWith('/customer/stores')) {
+    return next()
+  }*/
+
+  // 로그인 필요 없는 페이지
+  if (['/', '/login', '/signup','/main-page'].includes(to.path)) {
     return next()
   }
 
