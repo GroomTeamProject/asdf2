@@ -74,7 +74,14 @@ public class SecurityConfig {
                         .authenticated()
 
                         // 역할별 접근(임시, api맞춰야함)
-                        .requestMatchers("/api/stores/**").hasRole("CUSTOMER") // 이용자 전용
+                        //.requestMatchers("/api/stores/**").hasRole("CUSTOMER") // 이용자 전용
+                        .requestMatchers(HttpMethod.GET , "/api/stores/**").permitAll()  // 로그인 안한 사용자 가게 목록까지만 볼 수 있음
+                        .requestMatchers("/api/reviews/**").hasRole("CUSTOMER")// 리뷰 작성/조회 (고객만)
+                        .requestMatchers("/api/stores/*/menus/**").hasRole("CUSTOMER")// 메뉴 관리 (점주만)
+                        // 주문, 결제 관련 API도 CUSTOMER만
+                        .requestMatchers("/api/orders/**").hasRole("CUSTOMER") // 결제하기 버튼
+                        .requestMatchers("/api/payments/**").hasRole("CUSTOMER")  // 결제창
+
                         .requestMatchers("/api/owner/**").hasRole("OWNER")
                         .requestMatchers("/api/rider/**").hasRole("RIDER")
 

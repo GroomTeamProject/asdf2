@@ -25,7 +25,7 @@ public class JwtTokenProvider {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    private final long EXPIRATION = 1000L * 60 * 60; // 1시간  1000L * 60 * 60;
+    private final long EXPIRATION = 1000L * 60 * 10; // 1시간  1000L * 60 * 60;
     private final long REFRESH_EXPIRATION = 1000L * 60 * 60 * 24 * 7; // 7일  1000L * 60 * 60 * 24 * 7;
 
     // access 토큰 : 이메일+ userId(PK) 포함

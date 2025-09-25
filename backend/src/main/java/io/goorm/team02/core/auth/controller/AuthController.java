@@ -7,9 +7,13 @@ import io.goorm.team02.core.auth.controller.dto.SignupRequest;
 import io.goorm.team02.core.auth.controller.dto.SignupResponse;
 import io.goorm.team02.core.auth.service.AuthService;
 import io.goorm.team02.core.users.service.UserService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+//import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,10 +40,31 @@ public class AuthController {
 
     // ✅ 로그인 API
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletResponse response) {
         try {
-            LoginResponse response = authService.login(request.getEmail(), request.getPassword());
-            return ResponseEntity.ok(response);
+            LoginResponse loginResponse = authService.login(request.getEmail(), request.getPassword());
+            // JSON에는 Access Token만 내려주고
+            LoginResponse responseBody = new LoginResponse(
+                loginResponse.getId(),
+                loginResponse.getEmail(),
+                loginResponse.getName(),
+                loginResponse.getUserType(),
+                loginResponse.getToken(), // Access Token
+                null // refreshToken 제거
+            );
+
+            ResponseCookie cookie = ResponseCookie.from("refreshToken", loginResponse.getRefreshtoken())
+                    .httpOnly(true)
+                    .secure(false) // HTTPS 환경에서는 true
+                    .path("/api/auth/refresh")
+                    .maxAge(7 * 24 * 60 * 60)
+                    .sameSite("Lax")
+                    .build();
+
+            response.addHeader("Set-Cookie", cookie.toString());
+
+            return ResponseEntity.ok(responseBody);
+
         } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                                 .body(Map.of("error", ex.getMessage()));
