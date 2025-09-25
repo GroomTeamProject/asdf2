@@ -79,7 +79,8 @@
 </template>
 
 <script>
-import axios from 'axios'
+//import axios from 'axios'
+import api from '../../api/index.js'
 
 export default {
   name: 'LoginPage',
@@ -97,10 +98,11 @@ export default {
     async onSubmit() {
       this.loading = true
       try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, this.form)
-        const { token, refreshtoken, id, email, name, userType } = response.data
+        //const response = await api.post(`${import.meta.env.VITE_API_URL}/auth/login`, this.form)
+        const response = await api.post('/auth/login', this.form)
+        const { token, id, email, name, userType } = response.data
         localStorage.setItem('jwt', token)
-        localStorage.setItem('refreshToken', refreshtoken)
+        //localStorage.setItem('refreshToken', refreshtoken)
         localStorage.setItem('userId', id)
         localStorage.setItem('userEmail', email)
         localStorage.setItem('userName', name)
