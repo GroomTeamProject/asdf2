@@ -2,7 +2,9 @@
 package io.goorm.team02.core.stores.controller;
 
 import io.goorm.team02.core.auth.annotation.CurrentUser;
+import io.goorm.team02.core.stores.component.FileUploadValidator;
 import io.goorm.team02.core.stores.controller.StoreControllerDocs;
+import io.goorm.team02.core.stores.controller.dto.FileValidationResult;
 import io.goorm.team02.core.stores.controller.dto.dashboard.StoreDashboardResponse;
 import io.goorm.team02.core.stores.controller.dto.storemanagement.*;
 import io.goorm.team02.core.stores.domain.Store;
@@ -25,6 +27,7 @@ import java.util.Map;
 public class StoreController implements StoreControllerDocs {
 
     private final StoreService storeService;
+    private final FileUploadValidator fileUploadValidator;
 
     // ================================
     // 테스트
@@ -104,28 +107,44 @@ public class StoreController implements StoreControllerDocs {
     }
 
     // ================================
-    // 2.3 이미지 관리
-    // ================================
+// 2.3 이미지 관리
+// ================================
 
     @PostMapping(value = "/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Override
     public ResponseEntity<String> uploadImage(@CurrentUser TempUser currentUser,
                                               @RequestParam("file") MultipartFile file) {
-        // 🔒 기본 검증
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body("파일이 비어있습니다");
+
+        // 🔒 파일 검증 (한 번에 처리)
+        FileValidationResult validationResult = fileUploadValidator.validate(file, currentUser.getId());
+        if (!validationResult.isValid()) {
+            return ResponseEntity.status(validationResult.getStatus())
+                    .body(validationResult.getMessage());
         }
 
-        String imageUrl = storeService.uploadImage(currentUser, file);
-        return ResponseEntity.ok(imageUrl);
+        try {
+            String imageUrl = storeService.uploadImage(currentUser, file);
+            return ResponseEntity.ok(imageUrl);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("이미지 업로드에 실패했습니다");
+        }
     }
 
     @DeleteMapping("/images/{id}")
     @Override
     public ResponseEntity<Void> deleteImage(@CurrentUser TempUser currentUser,
                                             @PathVariable Long id) {
-        storeService.deleteImage(currentUser, id);
-        return ResponseEntity.ok().build();
+        try {
+            storeService.deleteImage(currentUser, id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     // ================================

@@ -26,6 +26,7 @@ import io.goorm.team02.core.stores.controller.dto.storemanagement.StoreUpdateReq
 import io.goorm.team02.core.stores.domain.Store;
 import io.goorm.team02.core.stores.domain.StoreHoliday;
 import io.goorm.team02.core.stores.domain.StoreHour;
+import io.goorm.team02.core.stores.events.ImageCleanupEvent;
 import io.goorm.team02.core.stores.repository.StoreHolidayRepository;
 import io.goorm.team02.core.stores.repository.StoreHourRepository;
 import io.goorm.team02.core.stores.domain.TempUser;
@@ -44,6 +45,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -65,6 +67,7 @@ public class StoreService {
     private final OrderService orderService;
     private final ReviewRepository reviewRepository;
     private final S3Service s3Service;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 가게 등록 (최초 1회)
@@ -293,51 +296,45 @@ public class StoreService {
     }
 
     /**
-     * 가게 이미지 업로드
+     * 트랜잭션 안전한 이미지 업로드
      */
     @Transactional
     public String uploadImage(TempUser currentUser, MultipartFile file) {
-        log.info("=== 이미지 업로드 시작 - 사용자 ID: {} ===", currentUser.getId());
-
         Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다"));
 
         String oldImageUrl = store.getImageUrl();
+        String tempImageUrl = null;
+        String finalImageUrl = null;
 
         try {
-            // S3에 새 이미지 업로드
-            String newImageUrl = s3Service.uploadFile(file, store.getId());
-            log.info("S3 업로드 성공 - Store ID: {}, URL: {}", store.getId(), newImageUrl);
+            // 1단계: 임시 위치에 업로드
+            tempImageUrl = s3Service.uploadFileWithTransaction(file, store.getId());
 
-            // DB에 새 URL 저장
-            store.setImageUrl(newImageUrl);
+            // 2단계: DB 트랜잭션 내에서 파일 이동 및 저장
+            finalImageUrl = s3Service.moveToFinalPath(tempImageUrl, store.getId());
+            store.setImageUrl(finalImageUrl);
             storeRepository.save(store);
 
-            // 기존 이미지 삭제 (새 이미지 저장 후)
+            // 3단계: 기존 파일 비동기 삭제 (트랜잭션 커밋 후)
             if (oldImageUrl != null && !oldImageUrl.isEmpty()) {
-                try {
-                    s3Service.deleteFile(oldImageUrl);
-                    log.info("기존 이미지 삭제 완료: {}", oldImageUrl);
-                } catch (Exception e) {
-                    log.warn("기존 이미지 삭제 실패 (무시): {}", e.getMessage());
-                }
+                eventPublisher.publishEvent(new ImageCleanupEvent(oldImageUrl));
             }
 
-            return newImageUrl;
+            return finalImageUrl;
 
         } catch (Exception e) {
-            log.error("이미지 업로드 실패 - Store ID: {}, 오류: {}", store.getId(), e.getMessage());
+            // 보상 트랜잭션: 실패시 업로드된 파일들 정리
+            cleanupFailedUpload(tempImageUrl, finalImageUrl);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드에 실패했습니다");
         }
     }
 
     /**
-     * 가게 이미지 삭제
+     * 안전한 이미지 삭제
      */
     @Transactional
     public void deleteImage(TempUser currentUser, Long imageId) {
-        log.info("=== 이미지 삭제 시작 - 사용자 ID: {} ===", currentUser.getId());
-
         Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다"));
 
@@ -347,18 +344,31 @@ public class StoreService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "삭제할 이미지가 없습니다");
         }
 
-        try {
-            // S3에서 이미지 삭제
-            s3Service.deleteFile(currentImageUrl);
-            log.info("S3에서 이미지 삭제 완료 - Store ID: {}, URL: {}", store.getId(), currentImageUrl);
+        // DB에서 먼저 제거 (트랜잭션 내)
+        store.setImageUrl(null);
+        storeRepository.save(store);
 
-            // DB에서 URL 제거
-            store.setImageUrl(null);
-            storeRepository.save(store);
+        // S3에서 비동기 삭제 (트랜잭션 커밋 후)
+        eventPublisher.publishEvent(new ImageCleanupEvent(currentImageUrl));
+    }
 
-        } catch (Exception e) {
-            log.error("이미지 삭제 실패 - Store ID: {}, 오류: {}", store.getId(), e.getMessage());
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 삭제에 실패했습니다");
+    /**
+     * 실패한 업로드 정리
+     */
+    private void cleanupFailedUpload(String tempUrl, String finalUrl) {
+        if (tempUrl != null) {
+            try {
+                s3Service.deleteFile(tempUrl);
+            } catch (Exception e) {
+                // 무시 - 배치에서 정리
+            }
+        }
+        if (finalUrl != null) {
+            try {
+                s3Service.deleteFile(finalUrl);
+            } catch (Exception e) {
+                // 무시 - 배치에서 정리
+            }
         }
     }
 
