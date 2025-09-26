@@ -8,6 +8,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import io.goorm.team02.core.sse.service.SSEConnectionService;
 import io.goorm.team02.core.auth.annotation.CurrentUser;
+import io.goorm.team02.core.stores.domain.TempUser;
 
 /**
  * SSE 컨트롤러
@@ -27,8 +28,8 @@ public class SSEController {
      * @return SseEmitter
      */
     @GetMapping(value = "/connect", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter connect(@CurrentUser Long userId) {
-        return sseConnectionService.createConnection(userId);
+    public SseEmitter connect(@CurrentUser TempUser user) {
+        return sseConnectionService.createConnection(user.getId());
     }
 
     /**
@@ -37,7 +38,7 @@ public class SSEController {
      * @return 연결 상태
      */
     @GetMapping("/status")
-    public boolean getConnectionStatus(@CurrentUser Long userId) {
-        return sseConnectionService.isUserConnected(userId);
+    public boolean getConnectionStatus(@CurrentUser TempUser user) {
+        return sseConnectionService.isUserConnected(user.getId());
     }
 }

@@ -10,6 +10,7 @@ import io.goorm.team02.core.orders.domain.Order;
 import io.goorm.team02.core.orders.service.OrderStatusService;
 import io.goorm.team02.core.orders.service.OrderService;
 import io.goorm.team02.core.auth.annotation.CurrentUser;
+import io.goorm.team02.core.stores.domain.TempUser;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -32,8 +33,8 @@ public class OrderController implements OrderControllerDocs {
     private final OrderStatusService orderStatusService;
 
     @PostMapping
-    public OrderResponse create(@Valid @RequestBody OrderRequest orderRequest, @CurrentUser Long userId) {
-        Order order = orderService.create(orderRequest, userId);
+    public OrderResponse create(@Valid @RequestBody OrderRequest orderRequest, @CurrentUser TempUser user) {
+        Order order = orderService.create(orderRequest, user.getId());
         return OrderResponse.from(order);
     }
 
@@ -44,8 +45,8 @@ public class OrderController implements OrderControllerDocs {
     }
 
     @GetMapping("/{orderId}")
-    public OrderResponse getOrderDetail(@PathVariable Long orderId, @CurrentUser Long userId) {
-        Order order = orderService.getOrderDetail(orderId, userId);
+    public OrderResponse getOrderDetail(@PathVariable Long orderId, @CurrentUser TempUser user) {
+        Order order = orderService.getOrderDetail(orderId, user.getId());
         return OrderResponse.from(order);
     }
 
