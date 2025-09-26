@@ -1,5 +1,6 @@
 package io.goorm.team02.core.store.domain;
 
+import io.goorm.team02.core.stores.events.ImageCleanupEvent;
 import io.goorm.team02.core.common.service.S3Service;
 import io.goorm.team02.core.orders.service.OrderService;
 import io.goorm.team02.core.reviews.repository.ReviewRepository;
@@ -19,9 +20,11 @@ import io.goorm.team02.core.stores.repository.UserRepository;
 import io.goorm.team02.core.stores.service.StoreService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -64,6 +67,9 @@ class StoreServiceTest {
 
     @Mock
     private S3Service s3Service;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher; // 👈 추가
 
     @Mock
     private MultipartFile mockFile;
@@ -452,35 +458,156 @@ class StoreServiceTest {
     }
 
     @Nested
-    @DisplayName("이미지 관리 테스트")
-    class ImageManagementTest {
+    @DisplayName("트랜잭션 안전한 이미지 관리 테스트") // 👈 새로운 테스트 그룹
+    class TransactionalImageManagementTest {
 
         @Test
-        @DisplayName("이미지 업로드 성공")
-        void uploadImage_Success() {
+        @DisplayName("트랜잭션 안전한 이미지 업로드 성공")
+        void uploadImage_TransactionSafe_Success() {
             // Given
-            String newImageUrl = "https://s3.amazonaws.com/bucket/store/1/new-image.jpg";
+            String oldImageUrl = "https://s3.amazonaws.com/bucket/store/1/old-image.jpg";
+            String tempImageUrl = "https://s3.amazonaws.com/bucket/temp/1/temp-image.jpg";
+            String finalImageUrl = "https://s3.amazonaws.com/bucket/store/1/new-image.jpg";
+
+            testStore.setImageUrl(oldImageUrl);
 
             when(storeRepository.findByOwnerIdAndIsActiveTrue(testUser.getId()))
                     .thenReturn(Optional.of(testStore));
-            when(s3Service.uploadFile(mockFile, testStore.getId())).thenReturn(newImageUrl);
+            when(s3Service.uploadFileWithTransaction(mockFile, testStore.getId()))
+                    .thenReturn(tempImageUrl);
+            when(s3Service.moveToFinalPath(tempImageUrl, testStore.getId()))
+                    .thenReturn(finalImageUrl);
             when(storeRepository.save(any(Store.class))).thenReturn(testStore);
 
             // When
             String result = storeService.uploadImage(testUser, mockFile);
 
             // Then
-            assertThat(result).isEqualTo(newImageUrl);
-            verify(s3Service).uploadFile(mockFile, testStore.getId());
+            assertThat(result).isEqualTo(finalImageUrl);
+
+            // 이벤트 발행 검증
+            ArgumentCaptor<ImageCleanupEvent> eventCaptor = ArgumentCaptor.forClass(ImageCleanupEvent.class);
+            verify(eventPublisher).publishEvent(eventCaptor.capture());
+            assertThat(eventCaptor.getValue().getImageUrl()).isEqualTo(oldImageUrl);
+
+            // 메소드 호출 순서 및 횟수 검증
+            verify(s3Service).uploadFileWithTransaction(mockFile, testStore.getId());
+            verify(s3Service).moveToFinalPath(tempImageUrl, testStore.getId());
             verify(storeRepository).save(any(Store.class));
         }
 
         @Test
-        @DisplayName("이미지 삭제 성공")
-        void deleteImage_Success() {
+        @DisplayName("임시 업로드 실패 시 보상 처리")
+        void uploadImage_TempUploadFails_CompensationHandling() {
+            // Given
+            when(storeRepository.findByOwnerIdAndIsActiveTrue(testUser.getId()))
+                    .thenReturn(Optional.of(testStore));
+            when(s3Service.uploadFileWithTransaction(mockFile, testStore.getId()))
+                    .thenThrow(new RuntimeException("S3 임시 업로드 실패"));
+
+            // When & Then
+            ResponseStatusException exception = assertThrows(
+                    ResponseStatusException.class,
+                    () -> storeService.uploadImage(testUser, mockFile)
+            );
+
+            assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+            assertThat(exception.getReason()).isEqualTo("이미지 업로드에 실패했습니다");
+
+            // 실패 시 이벤트 발행되지 않음
+            verify(eventPublisher, never()).publishEvent(any(ImageCleanupEvent.class));
+            // DB 저장되지 않음
+            verify(storeRepository, never()).save(any(Store.class));
+        }
+
+        @Test
+        @DisplayName("파일 이동 실패 시 보상 처리")
+        void uploadImage_MoveToFinalPathFails_CompensationHandling() {
+            // Given
+            String tempImageUrl = "https://s3.amazonaws.com/bucket/temp/1/temp-image.jpg";
+
+            when(storeRepository.findByOwnerIdAndIsActiveTrue(testUser.getId()))
+                    .thenReturn(Optional.of(testStore));
+            when(s3Service.uploadFileWithTransaction(mockFile, testStore.getId()))
+                    .thenReturn(tempImageUrl);
+            when(s3Service.moveToFinalPath(tempImageUrl, testStore.getId()))
+                    .thenThrow(new RuntimeException("파일 이동 실패"));
+
+            // When & Then
+            ResponseStatusException exception = assertThrows(
+                    ResponseStatusException.class,
+                    () -> storeService.uploadImage(testUser, mockFile)
+            );
+
+            assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+
+            // 보상 처리로 임시 파일 삭제 시도 (실패해도 무시)
+            verify(s3Service).deleteFile(tempImageUrl);
+        }
+
+        @Test
+        @DisplayName("DB 저장 실패 시 보상 처리")
+        void uploadImage_DbSaveFails_CompensationHandling() {
+            // Given
+            String tempImageUrl = "https://s3.amazonaws.com/bucket/temp/1/temp-image.jpg";
+            String finalImageUrl = "https://s3.amazonaws.com/bucket/store/1/new-image.jpg";
+
+            when(storeRepository.findByOwnerIdAndIsActiveTrue(testUser.getId()))
+                    .thenReturn(Optional.of(testStore));
+            when(s3Service.uploadFileWithTransaction(mockFile, testStore.getId()))
+                    .thenReturn(tempImageUrl);
+            when(s3Service.moveToFinalPath(tempImageUrl, testStore.getId()))
+                    .thenReturn(finalImageUrl);
+            when(storeRepository.save(any(Store.class)))
+                    .thenThrow(new RuntimeException("DB 저장 실패"));
+
+            // When & Then
+            ResponseStatusException exception = assertThrows(
+                    ResponseStatusException.class,
+                    () -> storeService.uploadImage(testUser, mockFile)
+            );
+
+            assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+
+            // 보상 처리로 최종 파일 삭제 시도
+            verify(s3Service).deleteFile(finalImageUrl);
+            // 이벤트 발행되지 않음
+            verify(eventPublisher, never()).publishEvent(any(ImageCleanupEvent.class));
+        }
+
+        @Test
+        @DisplayName("기존 이미지가 없는 경우 이벤트 발행하지 않음")
+        void uploadImage_NoOldImage_NoEventPublished() {
+            // Given
+            String tempImageUrl = "https://s3.amazonaws.com/bucket/temp/1/temp-image.jpg";
+            String finalImageUrl = "https://s3.amazonaws.com/bucket/store/1/new-image.jpg";
+
+            testStore.setImageUrl(null); // 기존 이미지 없음
+
+            when(storeRepository.findByOwnerIdAndIsActiveTrue(testUser.getId()))
+                    .thenReturn(Optional.of(testStore));
+            when(s3Service.uploadFileWithTransaction(mockFile, testStore.getId()))
+                    .thenReturn(tempImageUrl);
+            when(s3Service.moveToFinalPath(tempImageUrl, testStore.getId()))
+                    .thenReturn(finalImageUrl);
+            when(storeRepository.save(any(Store.class))).thenReturn(testStore);
+
+            // When
+            String result = storeService.uploadImage(testUser, mockFile);
+
+            // Then
+            assertThat(result).isEqualTo(finalImageUrl);
+
+            // 기존 이미지가 없으므로 이벤트 발행되지 않음
+            verify(eventPublisher, never()).publishEvent(any(ImageCleanupEvent.class));
+        }
+
+        @Test
+        @DisplayName("안전한 이미지 삭제 - 이벤트 기반")
+        void deleteImage_EventBased_Success() {
             // Given
             String existingImageUrl = "https://s3.amazonaws.com/bucket/store/1/old-image.jpg";
-            testStore.setImageUrl(existingImageUrl); // 💡 수정: 명시적으로 URL 설정
+            testStore.setImageUrl(existingImageUrl);
 
             when(storeRepository.findByOwnerIdAndIsActiveTrue(testUser.getId()))
                     .thenReturn(Optional.of(testStore));
@@ -490,16 +617,24 @@ class StoreServiceTest {
             assertDoesNotThrow(() -> storeService.deleteImage(testUser, 1L));
 
             // Then
-            verify(s3Service).deleteFile(existingImageUrl); // 💡 수정: 실제 URL로 검증
+            // DB에서 URL 제거
             verify(storeRepository).save(any(Store.class));
-            assertThat(testStore.getImageUrl()).isNull(); // 이미지 URL이 null로 설정되는지 확인
+            assertThat(testStore.getImageUrl()).isNull();
+
+            // 비동기 삭제를 위한 이벤트 발행
+            ArgumentCaptor<ImageCleanupEvent> eventCaptor = ArgumentCaptor.forClass(ImageCleanupEvent.class);
+            verify(eventPublisher).publishEvent(eventCaptor.capture());
+            assertThat(eventCaptor.getValue().getImageUrl()).isEqualTo(existingImageUrl);
+
+            // S3 삭제는 이벤트 리스너에서 처리하므로 직접 호출되지 않음
+            verify(s3Service, never()).deleteFile(anyString());
         }
 
         @Test
         @DisplayName("삭제할 이미지가 없는 경우 예외 발생")
         void deleteImage_NoImage_ThrowsException() {
             // Given
-            testStore.setImageUrl(null); // 💡 명시적으로 null 설정
+            testStore.setImageUrl(null);
 
             when(storeRepository.findByOwnerIdAndIsActiveTrue(testUser.getId()))
                     .thenReturn(Optional.of(testStore));
@@ -513,29 +648,8 @@ class StoreServiceTest {
             assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
             assertThat(exception.getReason()).isEqualTo("삭제할 이미지가 없습니다");
 
-            // S3 삭제가 호출되지 않아야 함
-            verify(s3Service, never()).deleteFile(any());
-        }
-
-        @Test
-        @DisplayName("빈 문자열 이미지 URL인 경우 예외 발생")
-        void deleteImage_EmptyImageUrl_ThrowsException() {
-            // Given
-            testStore.setImageUrl(""); // 빈 문자열
-
-            when(storeRepository.findByOwnerIdAndIsActiveTrue(testUser.getId()))
-                    .thenReturn(Optional.of(testStore));
-
-            // When & Then
-            ResponseStatusException exception = assertThrows(
-                    ResponseStatusException.class,
-                    () -> storeService.deleteImage(testUser, 1L)
-            );
-
-            assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-            assertThat(exception.getReason()).isEqualTo("삭제할 이미지가 없습니다");
-
-            // S3 삭제가 호출되지 않아야 함
+            // 이벤트 발행되지 않음
+            verify(eventPublisher, never()).publishEvent(any(ImageCleanupEvent.class));
             verify(s3Service, never()).deleteFile(any());
         }
     }
@@ -574,7 +688,7 @@ class StoreServiceTest {
         @Test
         @DisplayName("운영시간 설정 성공")
         void updateStoreHours_Success() {
-            // Given - Builder 대신 일반 생성자와 setter 사용
+            // Given
             StoreHourRequest hourRequest = new StoreHourRequest();
             hourRequest.setDayOfWeek(1);
             hourRequest.setOpenTime(LocalTime.of(9, 0));
@@ -768,10 +882,6 @@ class StoreServiceTest {
             StoreStatusRequest statusRequest = new StoreStatusRequest();
             statusRequest.setStatus(null);
 
-            // 💡 수정: 불필요한 stubbing 제거
-            // when(storeRepository.findByOwnerIdAndIsActiveTrue(testUser.getId()))
-            //         .thenReturn(Optional.of(testStore));
-
             // When & Then
             IllegalArgumentException exception = assertThrows(
                     IllegalArgumentException.class,
@@ -900,12 +1010,12 @@ class StoreServiceTest {
     class ExceptionTest {
 
         @Test
-        @DisplayName("이미지 업로드 실패 시 예외 발생")
-        void uploadImage_S3UploadFails_ThrowsException() {
+        @DisplayName("트랜잭션 안전 이미지 업로드 실패 시 예외 발생")
+        void uploadImage_TransactionSafeUploadFails_ThrowsException() {
             // Given
             when(storeRepository.findByOwnerIdAndIsActiveTrue(testUser.getId()))
                     .thenReturn(Optional.of(testStore));
-            when(s3Service.uploadFile(mockFile, testStore.getId()))
+            when(s3Service.uploadFileWithTransaction(mockFile, testStore.getId()))
                     .thenThrow(new RuntimeException("S3 업로드 실패"));
 
             // When & Then
@@ -919,24 +1029,26 @@ class StoreServiceTest {
         }
 
         @Test
-        @DisplayName("이미지 삭제 실패 시 예외 발생")
-        void deleteImage_S3DeleteFails_ThrowsException() {
+        @DisplayName("이미지 삭제 시 DB 오류 발생")
+        void deleteImage_DatabaseError_ThrowsException() {
             // Given
             testStore.setImageUrl("https://s3.amazonaws.com/bucket/store/1/image.jpg");
 
             when(storeRepository.findByOwnerIdAndIsActiveTrue(testUser.getId()))
                     .thenReturn(Optional.of(testStore));
-            doThrow(new RuntimeException("S3 삭제 실패"))
-                    .when(s3Service).deleteFile(testStore.getImageUrl());
+            when(storeRepository.save(any(Store.class)))
+                    .thenThrow(new RuntimeException("DB 저장 실패"));
 
             // When & Then
-            ResponseStatusException exception = assertThrows(
-                    ResponseStatusException.class,
+            RuntimeException exception = assertThrows(
+                    RuntimeException.class,
                     () -> storeService.deleteImage(testUser, 1L)
             );
 
-            assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-            assertThat(exception.getReason()).isEqualTo("이미지 삭제에 실패했습니다");
+            assertThat(exception.getMessage()).isEqualTo("DB 저장 실패");
+
+            // 트랜잭션 롤백으로 이벤트가 발행되지 않음
+            verify(eventPublisher, never()).publishEvent(any(ImageCleanupEvent.class));
         }
 
         @Test
@@ -1040,7 +1152,7 @@ class StoreServiceTest {
         @Test
         @DisplayName("운영시간 전체 요일 설정 (dayOfWeek = 7)")
         void updateStoreHours_AllDays_Success() {
-            // Given - Builder 대신 일반 생성자와 setter 사용
+            // Given
             StoreHourRequest hourRequest = new StoreHourRequest();
             hourRequest.setDayOfWeek(7); // 모든 요일
             hourRequest.setOpenTime(LocalTime.of(9, 0));
@@ -1115,6 +1227,79 @@ class StoreServiceTest {
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
             assertThat(result.getBody()).isEqualTo("휴무일을 입력해주세요");
             verify(storeHolidayRepository, never()).save(any(StoreHoliday.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("이벤트 발행 검증 테스트")
+    class EventPublishingTest {
+
+        @Test
+        @DisplayName("이미지 업로드 시 기존 이미지 정리 이벤트 발행")
+        void uploadImage_PublishesCleanupEvent() {
+            // Given
+            String oldImageUrl = "https://s3.amazonaws.com/bucket/store/1/old-image.jpg";
+            String tempImageUrl = "https://s3.amazonaws.com/bucket/temp/1/temp-image.jpg";
+            String finalImageUrl = "https://s3.amazonaws.com/bucket/store/1/new-image.jpg";
+
+            testStore.setImageUrl(oldImageUrl);
+
+            when(storeRepository.findByOwnerIdAndIsActiveTrue(testUser.getId()))
+                    .thenReturn(Optional.of(testStore));
+            when(s3Service.uploadFileWithTransaction(mockFile, testStore.getId()))
+                    .thenReturn(tempImageUrl);
+            when(s3Service.moveToFinalPath(tempImageUrl, testStore.getId()))
+                    .thenReturn(finalImageUrl);
+            when(storeRepository.save(any(Store.class))).thenReturn(testStore);
+
+            // When
+            storeService.uploadImage(testUser, mockFile);
+
+            // Then
+            ArgumentCaptor<ImageCleanupEvent> eventCaptor = ArgumentCaptor.forClass(ImageCleanupEvent.class);
+            verify(eventPublisher).publishEvent(eventCaptor.capture());
+
+            ImageCleanupEvent capturedEvent = eventCaptor.getValue();
+            assertThat(capturedEvent.getImageUrl()).isEqualTo(oldImageUrl);
+        }
+
+        @Test
+        @DisplayName("이미지 삭제 시 정리 이벤트 발행")
+        void deleteImage_PublishesCleanupEvent() {
+            // Given
+            String existingImageUrl = "https://s3.amazonaws.com/bucket/store/1/existing-image.jpg";
+            testStore.setImageUrl(existingImageUrl);
+
+            when(storeRepository.findByOwnerIdAndIsActiveTrue(testUser.getId()))
+                    .thenReturn(Optional.of(testStore));
+            when(storeRepository.save(any(Store.class))).thenReturn(testStore);
+
+            // When
+            storeService.deleteImage(testUser, 1L);
+
+            // Then
+            ArgumentCaptor<ImageCleanupEvent> eventCaptor = ArgumentCaptor.forClass(ImageCleanupEvent.class);
+            verify(eventPublisher).publishEvent(eventCaptor.capture());
+
+            ImageCleanupEvent capturedEvent = eventCaptor.getValue();
+            assertThat(capturedEvent.getImageUrl()).isEqualTo(existingImageUrl);
+        }
+
+        @Test
+        @DisplayName("업로드 실패 시 이벤트 발행하지 않음")
+        void uploadImage_Failure_NoEventPublished() {
+            // Given
+            when(storeRepository.findByOwnerIdAndIsActiveTrue(testUser.getId()))
+                    .thenReturn(Optional.of(testStore));
+            when(s3Service.uploadFileWithTransaction(mockFile, testStore.getId()))
+                    .thenThrow(new RuntimeException("업로드 실패"));
+
+            // When & Then
+            assertThrows(ResponseStatusException.class,
+                    () -> storeService.uploadImage(testUser, mockFile));
+
+            // 실패 시 이벤트 발행되지 않음
+            verify(eventPublisher, never()).publishEvent(any(ImageCleanupEvent.class));
         }
     }
 }
