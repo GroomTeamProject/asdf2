@@ -9,6 +9,8 @@ import io.goorm.team02.core.orders.controller.dto.OrderSearchRequest;
 import io.goorm.team02.core.orders.domain.Order;
 import io.goorm.team02.core.orders.service.OrderStatusService;
 import io.goorm.team02.core.orders.service.OrderService;
+import io.goorm.team02.core.auth.annotation.CurrentUser;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -30,8 +32,8 @@ public class OrderController implements OrderControllerDocs {
     private final OrderStatusService orderStatusService;
 
     @PostMapping
-    public OrderResponse create(@RequestBody OrderRequest orderRequest) {
-        Order order = orderService.create(orderRequest);
+    public OrderResponse create(@Valid @RequestBody OrderRequest orderRequest, @CurrentUser Long userId) {
+        Order order = orderService.create(orderRequest, userId);
         return OrderResponse.from(order);
     }
 
@@ -42,8 +44,8 @@ public class OrderController implements OrderControllerDocs {
     }
 
     @GetMapping("/{orderId}")
-    public OrderResponse getOrderDetail(@PathVariable Long orderId) {
-        Order order = orderService.getOrderDetail(orderId);
+    public OrderResponse getOrderDetail(@PathVariable Long orderId, @CurrentUser Long userId) {
+        Order order = orderService.getOrderDetail(orderId, userId);
         return OrderResponse.from(order);
     }
 

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import io.goorm.team02.core.sse.service.SSEConnectionService;
+import io.goorm.team02.core.auth.annotation.CurrentUser;
 
 /**
  * SSE 컨트롤러
@@ -21,24 +22,22 @@ public class SSEController {
     private final SSEConnectionService sseConnectionService;
 
     /**
-     * 사용자 SSE 연결 생성
+     * 사용자 SSE 연결 생성 (인증된 사용자만)
      * 
-     * @param userId 사용자 ID
      * @return SseEmitter
      */
-    @GetMapping(value = "/connect/{userId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter connect(@PathVariable Long userId) {
+    @GetMapping(value = "/connect", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter connect(@CurrentUser Long userId) {
         return sseConnectionService.createConnection(userId);
     }
 
     /**
-     * 연결 상태 확인
+     * 연결 상태 확인 (인증된 사용자만)
      * 
-     * @param userId 사용자 ID
      * @return 연결 상태
      */
-    @GetMapping("/status/{userId}")
-    public boolean getConnectionStatus(@PathVariable Long userId) {
+    @GetMapping("/status")
+    public boolean getConnectionStatus(@CurrentUser Long userId) {
         return sseConnectionService.isUserConnected(userId);
     }
 }

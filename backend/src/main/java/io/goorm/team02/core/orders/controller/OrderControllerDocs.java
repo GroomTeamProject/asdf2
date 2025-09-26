@@ -26,7 +26,7 @@ public interface OrderControllerDocs {
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
             @ApiResponse(responseCode = "404", description = "사용자 또는 가게를 찾을 수 없음")
     })
-    public OrderResponse create(@RequestBody OrderRequest order);
+    public OrderResponse create(@RequestBody OrderRequest order, Long userId);
 
     @Operation(summary = "주문 목록 조회", description = "다양한 조건으로 주문 목록을 조회합니다 (페이지네이션 지원)")
     @ApiResponses({
@@ -41,7 +41,7 @@ public interface OrderControllerDocs {
             @ApiResponse(responseCode = "404", description = "주문을 찾을 수 없음")
     })
     public OrderResponse getOrderDetail(
-            @Parameter(description = "주문 ID", required = true) @PathVariable Long orderId);
+            @Parameter(description = "주문 ID", required = true) @PathVariable Long orderId, Long userId);
 
     @Operation(summary = "주문 수락", description = "가게에서 주문을 수락하고 예상 조리 시간을 설정합니다 (PENDING → ACCEPTED)")
     @ApiResponses({
