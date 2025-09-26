@@ -5,6 +5,8 @@ import io.goorm.team02.core.orders.repository.OrderRepository;
 import io.goorm.team02.core.payments.domain.Payment;
 import io.goorm.team02.core.payments.domain.enums.PaymentStatus;
 import io.goorm.team02.core.payments.repository.PaymentRepository;
+import io.goorm.team02.core.payments.dto.PaymentConfirmRequest;
+import io.goorm.team02.core.payments.dto.PaymentResponse;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -15,113 +17,55 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpMethod;
+import org.springframework.beans.factory.annotation.Value;
+
+
 
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Base64;
+
 
 @Service
 public class PaymentService {
 
-    private final PaymentRepository paymentRepository;
-    private final OrderRepository orderRepository;
     private final RestTemplate restTemplate;
 
-    private static final String TOSS_SECRET_KEY = "test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6";
-    private static final String TOSS_API_URL = "https://api.tosspayments.com/v1/payments/";
+    @Value("${toss.secret-key}")
+    private String secretKey;
 
-    public PaymentService(PaymentRepository paymentRepository, OrderRepository orderRepository,
-            RestTemplate restTemplate) {
-        this.paymentRepository = paymentRepository;
-        this.orderRepository = orderRepository;
-        this.restTemplate = restTemplate;
+    public PaymentService(RestTemplateBuilder builder) {
+        this.restTemplate = builder.build();
     }
 
-    // 결제 완료
-    @Transactional
-    public Payment completePayment(Order order, String paymentKey, String pgProvider, String pgTid, BigDecimal amount) {
-        if (order == null) {
-            throw new IllegalArgumentException("주문 정보가 없습니다.");
-        }
-        if (paymentKey == null || paymentKey.isEmpty()) {
-            throw new IllegalArgumentException("결제 키가 없습니다.");
-        }
+    public PaymentResponse confirmPayment(PaymentConfirmRequest request) {
+        String url = "https://api.tosspayments.com/v1/payments/confirm";
 
-        if (amount == null || amount.compareTo(order.getTotalAmount()) != 0) {
-            throw new IllegalArgumentException("결제 금액 불일치");
-        }
+        String encodedKey = Base64.getEncoder().encodeToString((secretKey + ":").getBytes());
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Basic " + encodedKey);
+
+        Map<String, Object> body = Map.of(
+                "paymentKey", request.getPaymentKey(),
+                "orderId", request.getOrderId(),
+                "amount", request.getAmount()
+        );
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBasicAuth(TOSS_SECRET_KEY, "");
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            Map<String, Object> body = new HashMap<>();
-            body.put("amount", amount.longValue());
-            body.put("orderId", order.getId().toString());
-
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-
-            restTemplate.postForEntity(TOSS_API_URL + paymentKey, request, String.class);
-        } catch (Exception e) {
-            System.out.println("Toss API 호출 실패: " + e.getMessage());
-        }
-
-        Payment payment = paymentRepository.findByPaymentKey(paymentKey)
-                .orElseGet(() -> {
-                    Payment newPayment = new Payment();
-                    newPayment.setPaymentKey(paymentKey);
-                    newPayment.setOrder(order);
-                    return newPayment;
-                });
-
-        payment.setAmount(amount);
-        payment.setStatus(PaymentStatus.COMPLETED);
-        payment.setPgProvider(pgProvider != null ? pgProvider : "toss");
-        payment.setPgTid(pgTid != null ? pgTid : "");
-
-        return paymentRepository.save(payment);
-    }
-
-    // 결제 상태 변경
-    @Transactional
-    public Payment updatePaymentStatus(Long paymentId, PaymentStatus newStatus) {
-        if (paymentId == null) {
-            throw new IllegalArgumentException("결제 ID가 없습니다.");
-        }
-
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 결제를 찾을 수 없음"));
-
-        if (payment.getStatus() == PaymentStatus.CANCELLED || payment.getStatus() == PaymentStatus.REFUNDED) {
-            throw new IllegalStateException("이미 종료된 결제는 상태 변경 불가");
-        }
-
-        payment.setStatus(newStatus != null ? newStatus : payment.getStatus());
-        return paymentRepository.save(payment);
-    }
-
-    public void cancelPayment(String paymentKey, BigDecimal amount) {
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBasicAuth("test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6", "");
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        Map<String, Object> body = new HashMap<>();
-        body.put("cancelAmount", amount.longValue());
-        body.put("cancelReason", "사용자 주문 취소");
-        body.put("taxFreeAmount", 0L);
-
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> response = restTemplate.postForEntity(
-                "https://api.tosspayments.com/v1/payments/" + paymentKey + "/cancel",
-                request,
-                String.class);
-
-        if (!response.getStatusCode().is2xxSuccessful()) {
-            throw new RuntimeException("Toss 결제 취소 실패");
+            ResponseEntity<PaymentResponse> response =
+                    restTemplate.exchange(url, HttpMethod.POST, entity, PaymentResponse.class);
+            return response.getBody();
+        } catch (HttpClientErrorException e) {
+            throw new RuntimeException("결제 승인 실패: " + e.getResponseBodyAsString());
+        } catch (RestClientException e) {
+            throw new RuntimeException("결제 API 호출 실패", e);
         }
     }
 

@@ -66,7 +66,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // 공통접근
-                        .requestMatchers("/api/auth/**", "/error").permitAll() // 로그인/회원가입 허용
+                        .requestMatchers("/api/auth/**", "/error", "/api/payments/**").permitAll() // 로그인/회원가입 허용
+
 
                         // 마이페이지 접근 허용
                         .requestMatchers("/api/users/me/password",
