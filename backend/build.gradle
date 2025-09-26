@@ -59,9 +59,6 @@ dependencies {
 	implementation 'software.amazon.awssdk:auth:2.20.56'
 
 	// Bucket4j core
-	//implementation 'com.github.vladimir-bukhtoyarov:bucket4j-core:8.7.0'
-	//implementation 'com.bucket4j:bucket4j-core:8.3.0'
-	//implementation 'com.bucket4j:bucket4j-core:8.10.1'
 	implementation 'com.bucket4j:bucket4j_jdk8-core:8.10.1'
 	implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
 }
