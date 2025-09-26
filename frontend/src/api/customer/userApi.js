@@ -94,6 +94,8 @@ export const userApi = {
       localStorage.removeItem('jwt')
       localStorage.removeItem('userType')
       localStorage.removeItem('userId')
+      localStorage.removeItem('userName')
+      localStorage.removeItem('userEmail')
       //return { success: true, message: '로그아웃되었습니다.' }
 
       return response.data
