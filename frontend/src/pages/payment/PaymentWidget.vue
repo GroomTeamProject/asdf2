@@ -1,15 +1,20 @@
 <script setup>
 import { ref, onMounted } from "vue";
+import axios from "axios";
 
 const orderInfo = JSON.parse(localStorage.getItem("orderInfo") || "{}");
-const orderId = orderInfo.orderId;             // 숫자 ID, 백엔드 조회용
-const orderIdString = orderInfo.orderIdString; // PG용 문자열
+const user = ref(null);
+const orderId = `Order-${Date.now()}`;
+//const orderIdString = orderInfo.orderIdString;
 const amount = ref(orderInfo.totalAmount || 0);
 const widgetsReady = ref(false);
 let widgets = null;
 
 onMounted(async () => {
   if (!window.TossPayments) return;
+
+  const res = await axios.get("/api/user/me");
+  user.value = res.data;
 
   const tossPayments = window.TossPayments("test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm");
   const customerKey = "Pu_CmJW3lO06qzdfilC8J";
@@ -33,16 +38,14 @@ const requestPayment = async () => {
     return;
   }
 
-  const phoneNumber = orderInfo.phoneNumber.replace(/\D/g, "");
 
-  //Todo: 주문 DB & 사용자 DB값 받아와서 해야함
   await widgets.requestPayment({
-    orderId: "Order-Id-12345678", //랜덤값? 서버에서 관리하는 주문 ID와 동일하게 하는 것이 안전
-    orderName: "장바구니 주문",
+    orderId: orderId,
+    orderName: orderInfo.items.map(item => item.name).join(", "),
     successUrl: window.location.origin + "/success",
     failUrl: window.location.origin + "/fail",
-    customerEmail: "leejoonhee1024@gmail.com",  //Todo: 사용자 DB에서 불러오기
-    customerName: "xxx",
+    customerEmail: user.value.email,
+    customerName: user.value.name,
     customerMobilePhone: orderInfo.phoneNumber,
   });
 };
