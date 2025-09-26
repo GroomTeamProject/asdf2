@@ -109,7 +109,15 @@ export default {
         localStorage.setItem('userType', userType)
 
         alert(`로그인 성공! 환영합니다, ${name}님.`)
-        this.$router.push('/main-page')
+        //this.$router.push('/main-page')
+
+        if (userType === 'CUSTOMER') {
+          this.$router.push('/customer')
+        } else if (userType === 'OWNER') {
+          this.$router.push('/owner-main')
+        } else if (userType === 'RIDER') {
+          this.$router.push('/driver-main')
+        }
       } catch (error) {
         console.error('로그인 실패:', error.response?.data || error)
         alert('로그인 실패: ' + (error.response?.data?.error || error.message))
