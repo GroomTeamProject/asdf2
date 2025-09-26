@@ -228,6 +228,8 @@ export default {
           localStorage.removeItem('jwt')
           localStorage.removeItem('userType')
           localStorage.removeItem('userId')
+          localStorage.removeItem('userEmail')
+          localStorage.removeItem('userName')
           router.push('/login')
         }
       }
