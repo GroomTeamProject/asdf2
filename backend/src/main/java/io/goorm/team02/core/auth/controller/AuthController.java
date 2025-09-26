@@ -6,6 +6,7 @@ import io.goorm.team02.core.auth.controller.dto.LoginResponse;
 import io.goorm.team02.core.auth.controller.dto.SignupRequest;
 import io.goorm.team02.core.auth.controller.dto.SignupResponse;
 import io.goorm.team02.core.auth.service.AuthService;
+import io.goorm.team02.core.auth.service.RefreshTokenService;
 import io.goorm.team02.core.users.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,6 +27,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final UserService userService;
+    private final RefreshTokenService refreshTokenService;
 
     // ✅ 회원가입 API
     @PostMapping("/signup")
@@ -70,5 +72,27 @@ public class AuthController {
                                 .body(Map.of("error", ex.getMessage()));
         }
     }
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@CookieValue(value = "refreshToken", required = false) String refreshToken,
+                                HttpServletResponse response) {
+
+        // 1) 쿠키 삭제
+        ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/api/auth/refresh")
+                .maxAge(0)
+                .sameSite("Lax")
+                .build();
+        response.addHeader("Set-Cookie", deleteCookie.toString());
+
+        // 2) DB에서 Refresh Token 삭제
+        if (refreshToken != null) {
+            refreshTokenService.deleteRefreshToken(refreshToken);
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+    }
+
 
 }
