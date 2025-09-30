@@ -25,7 +25,7 @@ export default {
       activeTab: TabStatus.CURRENT_DELIVERY,
       riderAddress: '위치 확인 중…',
       today: {income:0,count:0,avg_time:0},
-
+      currentDelivery: null,
     }
   },
   mounted() {
@@ -40,6 +40,12 @@ export default {
     this.getAvg();  this.getEarnings(); this.getCount();
   },
   methods: {
+    onAccepted(d){
+      this.currentDelivery = d;                      // 옵션: 상세에 전달할 데이터
+      this.activeTab = TabStatus.CURRENT_DELIVERY;   // 탭 전환
+      this.handleComplete();                         // 상단 카드 수치 갱신
+      // this.currentDeliveryKey++;                  // 필요 시 리마운트
+    },
     async handleComplete(){
       await this.getAvg();
       await this.getCount();
@@ -175,7 +181,9 @@ export default {
     <div class="p-4">
       <DashBoard v-if="activeTab === TabStatus.DASH_BOARD && riderInfo.riderId !==null"
                  :active-tab="activeTab"
-                 :rider-info="riderInfo" />
+                 :rider-info="riderInfo"
+                 @accepted="onAccepted"
+      />
       <History v-if="activeTab === TabStatus.HISTORY && riderInfo.riderId !==null"
                :active-tab="activeTab"
                :rider-info="riderInfo" />

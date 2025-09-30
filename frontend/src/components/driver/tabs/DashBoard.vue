@@ -31,6 +31,7 @@ export default{
     this.getAvailableDeliveries();
     this.getRiderStatus();
   },
+  emits: ['accepted'],
   methods:{
     formatDate(data){
       return dayjs(data).format('YYYY년 M월 D일 HH시 mm분')
@@ -46,6 +47,7 @@ export default{
         this.availableDeliveries = this.availableDeliveries.filter(
             x => x.id !== d.id
         )
+         this.$emit('accepted',d)
         console.log(`${this.activeTab} accept rider_id=${this.riderInfo.riderId}`);
       }
     },
