@@ -41,7 +41,9 @@ public class Payment {
 
 	private LocalDateTime updatedAt = LocalDateTime.now();
 
-	@ManyToOne(fetch = FetchType.LAZY)
+    private LocalDateTime approvedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "order_id")
 	@JsonBackReference
 	private Order order;
