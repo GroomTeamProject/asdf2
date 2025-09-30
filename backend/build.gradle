@@ -2,10 +2,19 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.5'
     id 'io.spring.dependency-management' version '1.1.7'
+	id "org.sonarqube" version '5.0.0.4638'
 }
 
 group = 'io.goorm.team02'
 version = '0.0.1-SNAPSHOT-' + new Date().format('yyyy-MM-dd-HHmm')
+
+sonarqube {
+    properties {
+        property "sonar.projectKey", "team02-core"
+        property "sonar.host.url", "http://localhost:9000"
+        property "sonar.login", "sqp_f0c4591bf66edcb44c8e9c63b66ec803c4a01eaf"
+    }
+}
 
 java {
     toolchain {
