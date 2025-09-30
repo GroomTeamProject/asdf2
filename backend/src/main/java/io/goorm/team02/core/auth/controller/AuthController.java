@@ -83,7 +83,7 @@ public class AuthController {
                                 @RequestHeader(value = "Authorization", required = false) String authHeader,
                                 HttpServletResponse response) {
 
-        System.out.println("[LOGOUT] endpoint called");
+        System.out.println("Authorization header: " + authHeader); // 디버깅 : 로그아웃 요청시 헤더 포함 여부
 
         // 1) 쿠키 삭제
         ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")

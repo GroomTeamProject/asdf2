@@ -21,6 +21,11 @@ public class JwtTokenProvider {
     private String secret;
     private Key key;
 
+    public void setSecret(String secret) {  // 테스트용
+        this.secret = secret;
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+    }
+
     @PostConstruct
     public void init() {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
