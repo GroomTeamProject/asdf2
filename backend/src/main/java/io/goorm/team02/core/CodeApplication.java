@@ -8,7 +8,7 @@ import org.springframework.web.client.RestTemplate;
 
 @SpringBootApplication
 @EnableScheduling 
-public class CodeApplication {
+public class CoreApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(CodeApplication.class, args);
