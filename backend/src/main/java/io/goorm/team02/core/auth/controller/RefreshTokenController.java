@@ -25,11 +25,12 @@ public class RefreshTokenController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<RefreshResponse> refreshToken(@RequestBody RefreshRequest request) {
-        String requestToken = request.getRefreshToken();
+    public ResponseEntity<RefreshResponse> refreshToken(@CookieValue(name = "refreshToken", required = false) String refreshTokenCookie) {
+        if (refreshTokenCookie == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Refresh token missing");
+        }
 
-        // DB에서 토큰 조회
-        RefreshToken refreshToken = refreshTokenService.findByToken(requestToken)
+        RefreshToken refreshToken = refreshTokenService.findByToken(refreshTokenCookie)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid refresh token"));
 
         // 만료 체크 : RuntimeException는 500 에러

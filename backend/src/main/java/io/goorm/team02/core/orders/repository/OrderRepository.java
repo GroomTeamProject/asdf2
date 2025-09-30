@@ -71,6 +71,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "ORDER BY o.cookingCompletedAt ASC")
     List<Order> findByStoreIdAndStatus(@Param("storeId") Long storeId, @Param("status") OrderStatus status);
 
-    Optional<Order> findTopByOrderByIdDesc();
+    Optional<Order> findTopByUserIdOrderByOrderedAtDesc(Long userId);
 
 }

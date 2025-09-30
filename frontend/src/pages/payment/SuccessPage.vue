@@ -52,7 +52,6 @@ onMounted(async () => {
 });
 </script>
 
-
 <template>
   <div class="payment-success p-6 text-center">
     <h2 class="text-2xl font-bold mb-4">결제 성공</h2>

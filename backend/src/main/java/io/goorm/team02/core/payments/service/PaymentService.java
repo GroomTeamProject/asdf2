@@ -33,6 +33,7 @@ public class PaymentService {
     private final RestTemplate restTemplate;
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
+    private final RestTemplate restTemplate;
 
     @Value("${toss.secret-key}")
     private String secretKey;
@@ -47,11 +48,12 @@ public class PaymentService {
 
     @Transactional
     public PaymentResponse confirmPayment(PaymentConfirmRequest request) {
-        // 1️⃣ 토스 결제 승인 확인
+        // 토스 결제 승인 확인
         String url = "https://api.tosspayments.com/v1/payments/confirm";
         String encodedKey = Base64.getEncoder().encodeToString((secretKey + ":").getBytes());
 
         HttpHeaders headers = new HttpHeaders();
+        headers.setBasicAuth("test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6", "");
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "Basic " + encodedKey);
 
@@ -74,7 +76,6 @@ public class PaymentService {
             throw new RuntimeException("결제 API 호출 실패", e);
         }
 
-        // 2️⃣ DB 저장
         // 주문 객체 가져오기
         Order latestOrder = orderRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
                 .stream()
@@ -100,4 +101,5 @@ public class PaymentService {
 
         return paymentResponse;
     }
+
 }

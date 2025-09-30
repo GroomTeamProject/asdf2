@@ -54,15 +54,6 @@ public class RiderDeliveryController {
         return ResponseEntity.ok(ApiResponse.ok(DeliveryResponse.of(cmd.complete(id))));
     }
 
-    // 옵션: PATCH /status 는 두 값만 허용
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<ApiResponse<DeliveryResponse>> patch(@PathVariable Long id, @RequestBody @Valid StatusPatchRequest req){
-        return switch (req.status()) {
-            case PICKED_UP -> ResponseEntity.ok(ApiResponse.ok(DeliveryResponse.of(cmd.pickup(id))));
-            case DELIVERED -> ResponseEntity.ok(ApiResponse.ok(DeliveryResponse.of(cmd.complete(id))));
-            default -> throw new IllegalArgumentException("allowed: PICKED_UP, DELIVERED");
-        };
-    }
     /**
      * 특정 라이더의 오늘(자정 기준) 완료된 배달 수익 합계를 조회한다.
      *
@@ -86,5 +77,17 @@ public class RiderDeliveryController {
     public ResponseEntity<Long> getAvgByRiderId(@PathVariable Long riderId) {
         Long avg = qry.AvgByRiderId(riderId);
         return ResponseEntity.ok(avg);
+    }
+
+    @GetMapping("/{riderId}/status")
+    public ResponseEntity<DeliveryStatus> getStatusByRiderId(@PathVariable Long riderId) {
+        return ResponseEntity.ok(qry.getRiderStatus(riderId));
+    }
+
+    @GetMapping("/{riderId}/currentDelivery")
+    public ResponseEntity<DeliveryResponse> getCurrentDelivery(@PathVariable Long riderId) {
+        return ResponseEntity.of(
+                qry.getDeliveryByRiderId(riderId).map(DeliveryResponse::of)
+        );
     }
 }

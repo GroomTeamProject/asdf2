@@ -5,16 +5,20 @@ import io.goorm.team02.core.deliveries.domain.Delivery;
 import io.goorm.team02.core.deliveries.domain.enums.DeliveryStatus;
 import io.goorm.team02.core.deliveries.repository.DeliveryRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -77,6 +81,19 @@ public class DeliveryQueryService {
 
         Long avg = repo.findAvgDeliveryMinutes(riderId);
         return avg != null ? avg : 0L;
+    }
+
+    public DeliveryStatus getRiderStatus(Long riderId) {
+        var st = List.of(DeliveryStatus.ACCEPTED, DeliveryStatus.PICKED_UP);
+        return repo.findTop1ByRider_IdAndStatusInOrderByIdDesc(riderId, st)
+                .map(Delivery::getStatus)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "No in-progress delivery for riderId=" + riderId));
+    }
+
+    public Optional<Delivery> getDeliveryByRiderId(Long riderId) {
+        var st = List.of(DeliveryStatus.ACCEPTED, DeliveryStatus.PICKED_UP);
+        return repo.findTop1ByRider_IdAndStatusInOrderByIdDesc(riderId, st);
     }
 
 }

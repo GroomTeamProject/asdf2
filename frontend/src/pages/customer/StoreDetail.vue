@@ -19,8 +19,6 @@
       <StoreMenu :menuItems="menuItems" :storeId="storeId" />
     </section>
   </CustomerContainer>
-
-  <!-- 장바구니/주문 버튼 -->
   <StoreCartButton />
 </template>
 
@@ -29,7 +27,6 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import StoreInfo from '@/components/customer/storeDetail/StoreInfo.vue'
 import StoreMenuCard from '@/components/customer/storeDetail/StoreMenuCard.vue'
-import StoreCartButton from '@/components/customer/storeDetail/StoreCartButton.vue'
 import CustomerContainer from '@/components/customer/CustomerContainer.vue'
 import { customerApi } from '@/api/customer/customerApi'
 
@@ -38,7 +35,6 @@ export default {
   components: {
     StoreInfo,
     StoreMenu: StoreMenuCard,
-    StoreCartButton,
     CustomerContainer,
   },
   setup() {

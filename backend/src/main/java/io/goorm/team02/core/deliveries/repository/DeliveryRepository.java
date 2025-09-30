@@ -20,6 +20,8 @@ public interface DeliveryRepository extends JpaRepository<Delivery, Long> {
 
     Page<Delivery> findByRiderIdAndStatus(String riderId, DeliveryStatus status, Pageable pageable);
 
+
+
     @Query("SELECT COUNT (d.id) FROM Delivery d " +
             "WHERE d.rider.id = :riderId " +
             "AND d.createdAt >= :start " +
@@ -51,4 +53,34 @@ public interface DeliveryRepository extends JpaRepository<Delivery, Long> {
     Long findAvgDeliveryMinutes(@Param("riderId") Long riderId);
 
     Optional<Delivery> findByOrder_Id(Long orderId); // 주문으로 배달 조회
+
+    @Query("""
+    select d.status
+    from Delivery d
+    where d.rider.id = :riderId 
+    order by d.id desc
+  """)
+    Optional<DeliveryStatus> findTop1StatusByRiderId(@Param("riderId") Long riderId);
+
+    @Query("select count(d) from Delivery d where d.rider.id=:riderId")
+    long smokeCount(@Param("riderId") Long riderId);
+
+    long countByRider_Id(Long riderId);
+
+    Optional<Delivery> findTop1ByRider_IdOrderByIdDesc(Long riderId);
+
+    // 엔티티 1건
+    Optional<Delivery> findTop1ByRider_IdAndStatusInOrderByIdDesc(
+            Long riderId, Collection<DeliveryStatus> statuses);
+
+    // 상태만 1건
+    @Query("""
+  select d.status
+  from Delivery d
+  where d.rider.id = :riderId and d.status in :st
+  order by d.id desc
+""")
+    Optional<DeliveryStatus> findTop1StatusInProgress(@Param("riderId") Long riderId,
+                                                      @Param("st") Collection<DeliveryStatus> st);
+
 }
