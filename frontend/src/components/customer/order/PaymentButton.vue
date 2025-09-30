@@ -65,7 +65,7 @@ export default {
     const deliveryFee = computed(() => {
       const storeInfo = orderItems.value[0].storeInfo
       const storeDeliveryFee = storeInfo?.deliveryFee
-      
+
       return storeDeliveryFee
     })
 
@@ -133,8 +133,12 @@ export default {
         })),
       })
 
-      // 결제 팝업 띄우기
-      showPaymentPopup.value = true
+      // 로컬 환경에서는 결제 팝업 띄우지 않고 바로 완료 페이지로
+      if (window.location.hostname === 'localhost') {
+        router.push('/customer/order-complete')
+      } else {
+        showPaymentPopup.value = true
+      }
     }
 
     return {
