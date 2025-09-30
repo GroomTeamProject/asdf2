@@ -88,7 +88,7 @@ public class OrderService {
     /**
      * 주문 목록 조회 (페이지네이션 지원)
      */
-    public Page<Order> getAllByParams(OrderSearchRequest searchRequest) {
+    public Page<Order> getAllByParams(OrderSearchRequest searchRequest, Long userId) {
         Page<Order> orders;
         Pageable pageable = PageRequest.of(searchRequest.getPageOrDefault(), searchRequest.getSizeOrDefault());
 
@@ -96,7 +96,7 @@ public class OrderService {
         if (searchRequest.hasStoreId()) {
             orders = orderRepository.findAllByStoreIdWithPagination(searchRequest.getStoreId(), pageable);
         } else if (searchRequest.hasUserId()) {
-            orders = orderRepository.findAllByUserIdWithPagination(searchRequest.getUserId(), pageable);
+            orders = orderRepository.findAllByUserIdWithPagination(userId, pageable);
         } else {
             // 모든 주문 조회
             orders = orderRepository.findAllWithPagination(pageable);

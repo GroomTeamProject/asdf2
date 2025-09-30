@@ -39,8 +39,8 @@ public class OrderController implements OrderControllerDocs {
     }
 
     @GetMapping
-    public Page<OrderResponse> getAllByParams(OrderSearchRequest searchRequest) {
-        Page<Order> orders = orderService.getAllByParams(searchRequest);
+    public Page<OrderResponse> getAllByParams(OrderSearchRequest searchRequest, @CurrentUser TempUser user) {
+        Page<Order> orders = orderService.getAllByParams(searchRequest, user.getId());
         return orders.map(OrderResponse::from);
     }
 

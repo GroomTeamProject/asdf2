@@ -35,7 +35,7 @@ public interface OrderControllerDocs {
             @ApiResponse(responseCode = "200", description = "주문 목록 조회 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 파라미터")
     })
-    public Page<OrderResponse> getAllByParams(OrderSearchRequest searchRequest);
+    public Page<OrderResponse> getAllByParams(OrderSearchRequest searchRequest, @CurrentUser TempUser user);
 
     @Operation(summary = "주문 상세 조회", description = "특정 주문의 상세 정보를 조회합니다")
     @ApiResponses({
@@ -43,7 +43,8 @@ public interface OrderControllerDocs {
             @ApiResponse(responseCode = "404", description = "주문을 찾을 수 없음")
     })
     public OrderResponse getOrderDetail(
-            @Parameter(description = "주문 ID", required = true) @PathVariable Long orderId, @CurrentUser TempUser user);
+            @Parameter(description = "주문 ID", required = true) @PathVariable Long orderId,
+            @CurrentUser TempUser user);
 
     @Operation(summary = "주문 수락", description = "가게에서 주문을 수락하고 예상 조리 시간을 설정합니다 (PENDING → ACCEPTED)")
     @ApiResponses({
@@ -102,14 +103,12 @@ public interface OrderControllerDocs {
             @Parameter(description = "주문 ID", required = true) @PathVariable Long orderId,
             @RequestBody OrderCancelRequest request);
 
-    @Operation(summary = "[배달기사] 픽업 가능한 주문 목록 조회",
-            description = "조리 완료된 주문들을 조회합니다 (READY 상태)")
+    @Operation(summary = "[배달기사] 픽업 가능한 주문 목록 조회", description = "조리 완료된 주문들을 조회합니다 (READY 상태)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "픽업 가능한 주문 목록 조회 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 파라미터")
     })
     List<OrderResponse> getAvailableOrders(
-            @Parameter(description = "가게 ID (선택사항, 특정 가게의 주문만 조회)")
-            @RequestParam(value = "storeId", required = false) Long storeId);
+            @Parameter(description = "가게 ID (선택사항, 특정 가게의 주문만 조회)") @RequestParam(value = "storeId", required = false) Long storeId);
 
 }
