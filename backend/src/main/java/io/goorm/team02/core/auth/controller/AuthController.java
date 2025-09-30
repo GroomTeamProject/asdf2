@@ -5,19 +5,23 @@ import io.goorm.team02.core.auth.controller.dto.LoginRequest;
 import io.goorm.team02.core.auth.controller.dto.LoginResponse;
 import io.goorm.team02.core.auth.controller.dto.SignupRequest;
 import io.goorm.team02.core.auth.controller.dto.SignupResponse;
+import io.goorm.team02.core.auth.security.JwtTokenProvider;
 import io.goorm.team02.core.auth.service.AuthService;
 import io.goorm.team02.core.auth.service.RefreshTokenService;
+import io.goorm.team02.core.auth.service.TokenBlacklistService;
 import io.goorm.team02.core.users.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 //import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
+import io.goorm.team02.core.auth.service.TokenBlacklistService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.Map;
 
 @RestController
@@ -28,6 +32,8 @@ public class AuthController {
     private final AuthService authService;
     private final UserService userService;
     private final RefreshTokenService refreshTokenService;
+    private final TokenBlacklistService blacklistService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     // ✅ 회원가입 API
     @PostMapping("/signup")
@@ -74,7 +80,10 @@ public class AuthController {
     }
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@CookieValue(value = "refreshToken", required = false) String refreshToken,
+                                @RequestHeader(value = "Authorization", required = false) String authHeader,
                                 HttpServletResponse response) {
+
+        System.out.println("Authorization header: " + authHeader); // 디버깅 : 로그아웃 요청시 헤더 포함 여부
 
         // 1) 쿠키 삭제
         ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
@@ -89,6 +98,20 @@ public class AuthController {
         // 2) DB에서 Refresh Token 삭제
         if (refreshToken != null) {
             refreshTokenService.deleteRefreshToken(refreshToken);
+        }
+
+        // 3) Access Token 블랙리스트 처리
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String accessToken = authHeader.substring(7);
+
+            if (jwtTokenProvider.validateToken(accessToken)) {
+                String jti = jwtTokenProvider.getJtiFromToken(accessToken);
+                System.out.println("[LOGOUT] Extracted jti: " + jti);
+                Date exp = jwtTokenProvider.getExpirationFromToken(accessToken);
+
+                blacklistService.blacklistToken(jti, exp);
+                System.out.println("[LOGOUT] Token saved to blacklist DB");
+            }
         }
 
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
