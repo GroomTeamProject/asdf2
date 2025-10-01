@@ -5,6 +5,7 @@ import io.goorm.team02.core.users.domain.User;
 import io.goorm.team02.core.users.domain.enums.UserType;
 import io.goorm.team02.core.auth.controller.dto.SignupRequest;
 import io.goorm.team02.core.auth.controller.dto.SignupResponse;
+import io.goorm.team02.core.auth.service.RefreshTokenService;
 import io.goorm.team02.core.users.repository.UserinfoRepository;
 import io.goorm.team02.core.users.domain.UserAddress;
 import io.goorm.team02.core.users.repository.UserAddressRepository;
@@ -25,6 +26,7 @@ public class UserService {
     private final UserinfoRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserAddressRepository userAddressRepository;
+    private final RefreshTokenService refreshTokenService;
 
     /**
      * 사용자 ID로 사용자 정보 조회
@@ -238,6 +240,7 @@ public class UserService {
         // 새 비밀번호 인코딩 후 저장
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        refreshTokenService.deleteByUser(user);
     }
 
 

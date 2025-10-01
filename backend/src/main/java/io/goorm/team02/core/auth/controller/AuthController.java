@@ -65,6 +65,7 @@ public class AuthController {
                     .httpOnly(true)
                     .secure(false) // HTTPS 환경에서는 true
                     .path("/api/auth/refresh")
+                    //.path("/")
                     .maxAge(7 * 24 * 60 * 60)
                     .sameSite("Lax")
                     .build();

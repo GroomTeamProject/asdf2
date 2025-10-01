@@ -76,6 +76,14 @@ export const userApi = {
       // data: { email, currentPassword, newPassword }
       const response = await api.patch(`/users/me/password`, data)
       console.log('✅ 비밀번호 변경 성공')
+
+      localStorage.removeItem('jwt')
+      localStorage.removeItem('userType')
+      localStorage.removeItem('userId')
+      localStorage.removeItem('userName')
+      localStorage.removeItem('userEmail')
+
+      
       return response.data
     }),
 
