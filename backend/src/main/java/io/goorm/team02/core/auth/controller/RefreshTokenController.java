@@ -2,6 +2,7 @@ package io.goorm.team02.core.auth.controller;
 
 import io.goorm.team02.core.auth.domain.RefreshToken;
 import io.goorm.team02.core.auth.service.RefreshTokenService;
+import io.goorm.team02.core.common.exception.dto.client.UnauthorizedException;
 import io.goorm.team02.core.auth.security.JwtTokenProvider;
 import io.goorm.team02.core.auth.controller.dto.RefreshRequest;
 import io.goorm.team02.core.auth.controller.dto.RefreshResponse;
@@ -26,16 +27,20 @@ public class RefreshTokenController {
 
     @PostMapping("/refresh")
     public ResponseEntity<RefreshResponse> refreshToken(@CookieValue(name = "refreshToken", required = false) String refreshTokenCookie) {
-        if (refreshTokenCookie == null) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Refresh token missing");
+        if (refreshTokenCookie == null) { // 쿠키 없음 
+            //throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token missing. Please login again.");
+            throw new UnauthorizedException("Refresh token missing. Please login again.");
         }
 
+        // db에 없는 토큰
         RefreshToken refreshToken = refreshTokenService.findByToken(refreshTokenCookie)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid refresh token"));
+                //.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
+                .orElseThrow(() -> new UnauthorizedException("Invalid refresh token"));
 
         // 만료 체크 : RuntimeException는 500 에러
         if (refreshToken.getExpiryDate().isBefore(java.time.LocalDateTime.now())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Refresh token expired. Please login again.");
+            //throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token expired. Please login again.");
+            throw new UnauthorizedException("Refresh token expired. Please login again.");
         }
 
         // Access Token 재발급
