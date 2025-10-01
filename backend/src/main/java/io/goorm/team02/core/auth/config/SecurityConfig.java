@@ -79,7 +79,7 @@ public class SecurityConfig {
 
                         // 역할별 접근(임시, api맞춰야함)
                         .requestMatchers("/api/stores/**").hasRole("CUSTOMER") // 이용자 전용
-                        .requestMatchers("/api/orders/**").hasRole("CUSTOMER") // 결제하기 버튼
+                        .requestMatchers("/api/orders/**").hasAnyRole("CUSTOMER", "OWNER")
                         .requestMatchers("/api/payments/**").hasRole("CUSTOMER")  // 결제창
                         .requestMatchers("/api/owner/**").hasRole("OWNER")
                         .requestMatchers("/api/rider/**").hasRole("RIDER")
