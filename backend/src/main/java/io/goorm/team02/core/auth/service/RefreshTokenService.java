@@ -45,4 +45,9 @@ public class RefreshTokenService {
             .ifPresent(refreshTokenRepository::delete);
     }
 
+    // 비밀번호 변경시 토큰 삭제 , 모든 
+    public void deleteByUser(User user) {
+        refreshTokenRepository.deleteByUser(user);
+    }
+
 }
