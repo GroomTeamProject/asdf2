@@ -48,12 +48,16 @@ export const orderApi = {
   }),
 
   // 주문 목록 조회 (가게별)
-  getOrders: (storeId) => orderApiManager.queueRequest(async () => {
-    console.log('🔄 주문 목록 조회 중..., 가게 ID:', storeId);
-    const response = await api.get(`/orders?storeId=${storeId}`);
-    console.log('✅ 주문 목록 조회 성공');
-    return response.data;
-  }),
+getOrders: (storeId) => orderApiManager.queueRequest(async () => {
+  console.log('🔄 주문 목록 조회 중..., storeId:', storeId);
+  
+  // storeId를 쿼리 파라미터로 전달
+  const url = storeId ? `/orders?storeId=${storeId}` : `/orders`;
+  
+  const response = await api.get(url);
+  console.log('✅ 주문 목록 조회 성공');
+  return response.data;
+}),
 
   // 주문 상세 조회
   getOrderDetail: (orderId) => orderApiManager.queueRequest(async () => {

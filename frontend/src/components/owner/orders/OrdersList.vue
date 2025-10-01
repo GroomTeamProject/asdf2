@@ -105,62 +105,33 @@ const loadStoreInfo = async () => {
 }
 
 const loadOrders = async () => {
-  if (!props.storeId) {
-    console.warn('⚠️ storeId가 설정되지 않았습니다. 가게 정보를 먼저 불러와주세요.')
-    orders.value = []
-    return
-  }
-
   loading.value = true
   error.value = null
   
   try {
-    console.log('📋 주문 목록 로드, 가게 ID:', props.storeId)
+    console.log('📋 주문 목록 로드 중..., storeId:', props.storeId)
     
-    // 가게 정보와 주문 목록을 병렬로 로드
-    const [ordersData] = await Promise.all([
-      orderApi.getOrders(props.storeId),
-      storeInfo.value ? Promise.resolve() : loadStoreInfo()
-    ])
+    // props.storeId를 전달
+    const ordersData = await orderApi.getOrders(props.storeId)
     
     console.log('🔍 Raw ordersData:', ordersData)
     
-    // 페이지네이션된 응답 처리
+    // 기존 페이지네이션 처리 코드는 그대로 유지
     let ordersList = []
     
     if (ordersData && ordersData.content && Array.isArray(ordersData.content)) {
-      // Spring Boot 페이지네이션 응답 구조
       ordersList = ordersData.content
-      console.log('✅ 페이지네이션 응답에서 content 추출:', ordersList.length, '개')
-      
-      // 페이지네이션 정보 로깅
-      console.log('📄 페이지 정보:', {
-        totalElements: ordersData.totalElements,
-        totalPages: ordersData.totalPages,
-        currentPage: ordersData.number,
-        size: ordersData.size,
-        isLast: ordersData.last
-      })
+      console.log('✅ 페이지네이션 응답:', ordersList.length, '개')
     } else if (Array.isArray(ordersData)) {
-      // 일반 배열 응답
       ordersList = ordersData
-      console.log('✅ 배열 응답 처리:', ordersList.length, '개')
+      console.log('✅ 배열 응답:', ordersList.length, '개')
     } else {
       console.error('❌ 예상하지 못한 응답 구조:', ordersData)
       ordersList = []
     }
     
-    // 유효한 주문 객체만 필터링
-    const validOrders = ordersList.filter((order, index) => {
-      const isValid = order && typeof order === 'object' && (order.id || order.orderId)
-      if (!isValid) {
-        console.warn(`⚠️ 잘못된 주문 데이터 [${index}]:`, order)
-      }
-      return isValid
-    })
-    
-    orders.value = validOrders
-    console.log('✅ 주문 목록 로드 완료:', validOrders.length, '개')
+    orders.value = ordersList
+    console.log('✅ 주문 목록 로드 완료:', ordersList.length, '개')
     
   } catch (err) {
     console.error('❌ 주문 목록 로드 실패:', err)
@@ -275,10 +246,8 @@ const stopAutoRefresh = () => {
 
 // 컴포넌트 라이프사이클
 onMounted(() => {
-  if (props.storeId) {
-    loadOrders()
-    startAutoRefresh()
-  }
+  loadOrders() 
+  startAutoRefresh()
 })
 
 onUnmounted(() => {
