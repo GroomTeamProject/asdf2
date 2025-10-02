@@ -19,9 +19,15 @@ public class RiderDeliveryService {
     private final UserinfoRepository userInfoRepository;
     private final OrderRepository orderRepository;
 
+    @Transactional
     public Delivery accept(Long orderId, Long riderId) {
         var order = orderRepository.findById(orderId).orElseThrow(() -> new IllegalArgumentException("Order not found" + orderId));
         var rider = userInfoRepository.findById(riderId).orElseThrow(() -> new IllegalArgumentException("Rider not found" + riderId));
+
+        // 주문 상태 검증 (예: READY 상태에서만 ACCEPT 가능)
+        if (order.getStatus() != OrderStatus.READY) {
+            throw new IllegalStateException("잘못된 요청입니다. orderId=" + orderId);
+        }
 
         // 이미 Delivery가 있는지 확인
         if (deliveryRepository.findByOrderId(orderId) != null) {
