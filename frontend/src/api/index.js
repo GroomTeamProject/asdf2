@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getCookie } from '../utils/cookie'
 
 // Axios 인스턴스 생성
 const api = axios.create({
@@ -59,6 +60,12 @@ api.interceptors.request.use(
         config.headers.Authorization.substring(0, 20) + '...'
       )
     }
+
+    /*// ✅ CSRF 토큰 추가
+    const csrfToken = getCookie('XSRF-TOKEN')
+    if (csrfToken) {
+      config.headers['X-CSRF-TOKEN'] = csrfToken
+    }*/
 
     console.log('🔍 요청 URL:', config.baseURL + config.url)
     return config

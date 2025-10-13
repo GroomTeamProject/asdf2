@@ -1,0 +1,3 @@
+rootProject.name = 'team02core'
+
+include 'common-lib','user-service'

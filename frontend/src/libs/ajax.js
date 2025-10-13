@@ -1,3 +1,5 @@
+import { getCookie } from '../utils/cookie'
+
 const API_URL = import.meta.env.VITE_API_URL
 
 async function handleResponse(response) {
@@ -10,12 +12,15 @@ async function handleResponse(response) {
 }
 
 async function request(url, method, data) {
+  //const csrfToken = getCookie('XSRF-TOKEN')
+
   const options = {
     method,
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      //...(csrfToken && { 'X-CSRF-TOKEN': csrfToken }), // ✅ 추가
     },
     body: data ? JSON.stringify(data) : undefined,
   }

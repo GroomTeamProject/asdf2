@@ -1,4 +1,6 @@
 // src/lib/apiFetch.js
+import { getCookie } from '../utils/cookie'
+
 const API_BASE = import.meta.env.VITE_API_URL
 let refreshing = null
 
@@ -32,6 +34,12 @@ export async function apiFetch(input, init = {}) {
   const t = localStorage.getItem('jwt')
   if (t && !headers.has('Authorization')) headers.set('Authorization', `Bearer ${t}`)
 
+  /*// ✅ CSRF 토큰 추가
+  const csrfToken = getCookie('XSRF-TOKEN')
+  if (csrfToken && !headers.has('X-CSRF-TOKEN')) {
+    headers.set('X-CSRF-TOKEN', csrfToken)
+  }*/
+
   let res = await fetch(input, { ...init, headers, credentials: 'include' })
 
   if (res.status === 401 || res.status === 403) {
@@ -39,6 +47,11 @@ export async function apiFetch(input, init = {}) {
     try {
       const newToken = await refreshAccessToken()
       headers.set('Authorization', `Bearer ${newToken}`)
+
+      /*// CSRF 토큰도 다시 세팅
+      const newCsrf = getCookie('XSRF-TOKEN')
+      if (newCsrf) headers.set('X-CSRF-TOKEN', newCsrf)*/
+        
       res = await fetch(input, { ...init, headers, credentials: 'include' })
       console.warn('[apiFetch] retried. status=', res.status)
     } catch (e) {
