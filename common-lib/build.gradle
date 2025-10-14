@@ -43,3 +43,12 @@ dependencies {
 	implementation 'com.bucket4j:bucket4j_jdk8-core:8.10.1'
 	implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
 }
+
+// jar 빌드만
+tasks.named('jar') {
+    enabled = true
+}
+
+tasks.named('bootJar') {
+    enabled = false
+}
