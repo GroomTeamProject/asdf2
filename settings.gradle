@@ -1,3 +1,0 @@
-rootProject.name = 'team02'
-
-include 'libs:kafka-client'

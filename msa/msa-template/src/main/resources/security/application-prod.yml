@@ -1,15 +1,17 @@
 spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: ${DEMO_DB_URL}
-    username: ${DEMO_DB_USERNAME}
-    password: ${DEMO_DB_PASSWORD}
+    url: ${SERVICE_DB_URL}
+    username: ${SERVICE_DB_USERNAME}
+    password: ${SERVICE_DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: none
       dialect: org.hibernate.dialect.MariaDBDialect
   flyway:
     enabled: false # 수동으로 Bean을 등록하기 위해 비활성화
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
 
 feign:
   client:

@@ -1,10 +1,10 @@
-package io.goorm.team02.demo.exception;
+package io.goorm.team02.demo.handler;
 
-import io.goorm.team02.demo.exception.errors.ErrorResponse;
-import io.goorm.team02.demo.exception.errors.NotFoundException;
-import io.goorm.team02.demo.exception.errors.ForbiddenException;
-import io.goorm.team02.demo.exception.errors.UnauthorizedException;
-import io.goorm.team02.demo.exception.errors.ConflictException;
+import io.goorm.team02.demo.handler.exceptions.ConflictException;
+import io.goorm.team02.demo.handler.exceptions.ErrorResponse;
+import io.goorm.team02.demo.handler.exceptions.ForbiddenException;
+import io.goorm.team02.demo.handler.exceptions.NotFoundException;
+import io.goorm.team02.demo.handler.exceptions.UnauthorizedException;
 import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

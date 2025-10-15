@@ -1,4 +1,4 @@
-package io.goorm.team02.demo.exception;
+package io.goorm.team02.demo.handler;
 
 import feign.Response;
 import feign.codec.ErrorDecoder;

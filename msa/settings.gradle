@@ -1,0 +1,5 @@
+rootProject.name = 'team02backend'
+
+include 'libs:kafka-client'
+
+include 'msa-template'

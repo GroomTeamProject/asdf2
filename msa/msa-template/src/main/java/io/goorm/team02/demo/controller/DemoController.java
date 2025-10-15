@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import io.goorm.team02.demo.dto.OrderResponse;
+import io.goorm.team02.demo.dto.TestEventResponse;
 import io.goorm.team02.demo.service.DemoService;
 import lombok.RequiredArgsConstructor;
 
@@ -14,9 +15,28 @@ public class DemoController {
 
     private final DemoService demoService;
 
+    /**
+     * 테스트 API
+     */
     @GetMapping("/{id}")
     public ResponseEntity<OrderResponse> getOrderById(@PathVariable Long id) {
         return ResponseEntity.ok(demoService.getOrderById(id));
+    }
+
+    /**
+     * 이벤트 발행 테스트
+     */
+    @PostMapping("/events")
+    public TestEventResponse publishTestEvent() {
+        return demoService.publishEvent();
+    }
+
+    /**
+     * 동기 이벤트 발행 테스트
+     */
+    @PostMapping("/events/sync")
+    public TestEventResponse publishSyncTestEvent() {
+        return demoService.publishEventSync();
     }
 
 }

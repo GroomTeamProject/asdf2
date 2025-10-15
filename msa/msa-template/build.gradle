@@ -17,6 +17,10 @@ java {
     }
 }
 
+compileJava {
+    options.compilerArgs += ['-parameters']
+}
+
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
@@ -28,6 +32,9 @@ repositories {
 }
 
 dependencies {
+	// Kafka Client
+	implementation project(':libs:kafka-client')
+	
 	// Springdoc OpenAPI
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
 
