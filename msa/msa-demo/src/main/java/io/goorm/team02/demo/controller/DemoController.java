@@ -3,6 +3,7 @@ package io.goorm.team02.demo.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import io.goorm.team02.security.annotation.CurrentUser;
 import io.goorm.team02.demo.dto.OrderResponse;
 import io.goorm.team02.demo.dto.TestEventResponse;
 import io.goorm.team02.demo.service.DemoService;
@@ -47,4 +48,11 @@ public class DemoController {
         return demoService.publishEventSync();
     }
 
+    /**
+     * @CurrentUser 테스트
+     */
+    @PostMapping("/private-route")
+    public ResponseEntity<Long> publishCurrentUserTestEvent(@CurrentUser Long userId) {
+        return ResponseEntity.ok(userId);
+    }
 }

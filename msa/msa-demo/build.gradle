@@ -17,10 +17,6 @@ java {
     }
 }
 
-compileJava {
-    options.compilerArgs += ['-parameters']
-}
-
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
@@ -32,7 +28,9 @@ repositories {
 }
 
 dependencies {
-	// Kafka Client
+	// libs
+	implementation project(':libs:common')
+	implementation project(':libs:security')
 	implementation project(':libs:kafka-client')
 	
 	// Spring Kafka

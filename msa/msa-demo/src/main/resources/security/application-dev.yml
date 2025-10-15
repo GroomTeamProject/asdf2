@@ -16,3 +16,6 @@ spring:
 msa:
   gateway:
     url: ${MSA_GATEWAY_URL}
+
+jwt:
+  secret: ${JWT_SECRET}
