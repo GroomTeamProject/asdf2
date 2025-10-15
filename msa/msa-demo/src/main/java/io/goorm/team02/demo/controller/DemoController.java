@@ -24,6 +24,14 @@ public class DemoController {
     }
 
     /**
+     * 이벤트 조회 테스트
+     */
+    @GetMapping("/events")
+    public TestEventResponse getTestEvents() {
+        return demoService.getEvents();
+    }
+
+    /**
      * 이벤트 발행 테스트
      */
     @PostMapping("/events")

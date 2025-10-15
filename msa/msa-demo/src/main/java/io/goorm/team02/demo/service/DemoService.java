@@ -26,6 +26,16 @@ public class DemoService {
     }
 
     /**
+     * 이벤트 조회
+     */
+    public TestEventResponse getEvents() {
+        return TestEventResponse.builder()
+                .success(true)
+                .message("Events retrieved successfully")
+                .build();
+    }
+
+    /**
      * 비동기 이벤트 발행
      */
     public TestEventResponse publishEvent() {

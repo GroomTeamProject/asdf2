@@ -11,10 +11,8 @@ spring:
   flyway:
     enabled: false # 수동으로 Bean을 등록하기 위해 비활성화
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    bootstrap-servers: localhost:9092
 
-feign:
-  client:
-    config:
-      order-service:
-        url: http://localhost:8091
+msa:
+  gateway:
+    url: http://localhost:8080
