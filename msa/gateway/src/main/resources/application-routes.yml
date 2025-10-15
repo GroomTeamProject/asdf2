@@ -1,0 +1,11 @@
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            # Demo Service
+            - id: demo-service
+              uri: http://localhost:8090
+              predicates:
+                - Path=/api/demo/**
