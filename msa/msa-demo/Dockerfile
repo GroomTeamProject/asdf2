@@ -2,7 +2,7 @@ FROM eclipse-temurin:17-jre
 
 WORKDIR /app
 
-COPY build/libs/*.jar app.jar
+COPY build/libs/msa-demo-*.jar app.jar
 
 EXPOSE 8080
 

@@ -1,8 +1,8 @@
-FROM eclipse-temurin:17-jdk-slim
+FROM eclipse-temurin:17-jre
 
 WORKDIR /app
 
-COPY build/libs/*.jar app.jar
+COPY build/libs/gateway-*.jar app.jar
 
 EXPOSE 8080
 

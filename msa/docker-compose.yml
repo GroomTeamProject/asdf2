@@ -19,7 +19,7 @@ services:
       - "9092:9092"
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
       - zookeeper
@@ -47,22 +47,28 @@ services:
 
   # Demo Service
   demo-service:
-    image: msa-demo:latest
+    build:
+      context: ./msa-demo
+      dockerfile: Dockerfile
     container_name: msa-demo
     ports:
       - "8090:8090"
-    environment:
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    env_file:
+      - .env.dev
     depends_on:
       - kafka
       - mariadb
 
   # API Gateway
   api-gateway:
-    image: msa-gateway:latest
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
     container_name: msa-gateway
     ports:
       - "8080:8080"
+    env_file:
+      - .env.dev
     environment:
       DEMO_SERVICE_URL: http://demo-service:8090
     depends_on:
