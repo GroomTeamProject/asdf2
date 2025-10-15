@@ -15,8 +15,11 @@ spring:
                 allowedMethods: "*"
                 allowedHeaders: "*"
                 allowCredentials: false
-  config:
-    import: classpath:application-routes.yml
+          routes:
+            - id: demo-service
+              uri: ${DEMO_SERVICE_URL:http://localhost:8090}
+              predicates:
+                - Path=/api/demo/**
 
 # Logging
 logging:

@@ -1,61 +1,76 @@
-version: "3.8"
+version: '3.8'
 
 services:
-  # Zookeeper (Kafka 의존성)
+  # Zookeeper
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
+    container_name: msa-zookeeper
+    ports:
+      - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-    volumes:
-      - zookeeper_data:/var/lib/zookeeper/data
-      - zookeeper_logs:/var/lib/zookeeper/log
-    networks:
-      - msa-network
 
-  # Kafka 메시지 브로커
+  # Kafka
   kafka:
     image: confluentinc/cp-kafka:7.4.0
-    depends_on:
-      - zookeeper
+    container_name: msa-kafka
     ports:
       - "9092:9092"
-      - "29092:29092"
     environment:
-      KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      KAFKA_DELETE_TOPIC_ENABLE: "true"
-      KAFKA_LOG_RETENTION_HOURS: 168 # 7일
-    volumes:
-      - kafka_data:/var/lib/kafka/data
-    networks:
-      - msa-network
+    depends_on:
+      - zookeeper
 
-  # Kafka UI (모니터링)
+  # Kafka UI
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
+    container_name: msa-kafka-ui
     ports:
       - "9001:8080"
+    environment:
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
     depends_on:
       - kafka
+
+  # MariaDB
+  mariadb:
+    image: mariadb:12.0
+    container_name: msa-mariadb
     environment:
-      KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
-      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
-    networks:
-      - msa-network
-    profiles:
-      - dev # 개발 환경에서만 실행
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: team02demo
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  # Demo Service
+  demo-service:
+    image: msa-demo:latest
+    container_name: msa-demo
+    ports:
+      - "8090:8090"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - kafka
+      - mariadb
+
+  # API Gateway
+  api-gateway:
+    image: msa-gateway:latest
+    container_name: msa-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      DEMO_SERVICE_URL: http://demo-service:8090
+    depends_on:
+      - demo-service
 
 volumes:
-  zookeeper_data:
-  zookeeper_logs:
-  kafka_data:
+  mariadb_data:
 
 networks:
-  msa-network:
-    driver: bridge
+  default:
+    name: msa-network
