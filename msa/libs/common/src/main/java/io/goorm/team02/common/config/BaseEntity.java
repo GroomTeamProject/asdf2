@@ -1,4 +1,4 @@
-package io.goorm.team02.common.domain;
+package io.goorm.team02.common.config;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;

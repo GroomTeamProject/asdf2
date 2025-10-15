@@ -1,8 +1,7 @@
 package io.goorm.team02.security.resolver;
 
 import io.goorm.team02.security.annotation.CurrentUser;
-import io.goorm.team02.security.domain.TempUser;
-import io.goorm.team02.security.repository.UserRepository;
+import io.goorm.team02.security.jwt.JwtUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -17,12 +16,12 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 @RequiredArgsConstructor
 public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolver {
 
-    private final UserRepository userRepository;
+    private final JwtUtils jwtUtils;
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         return parameter.hasParameterAnnotation(CurrentUser.class) &&
-                parameter.getParameterType().equals(TempUser.class);
+                parameter.getParameterType().equals(Long.class);
     }
 
     @Override
@@ -33,13 +32,23 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
             WebDataBinderFactory binderFactory) throws Exception {
 
         HttpServletRequest request = (HttpServletRequest) webRequest.getNativeRequest();
-        Object userId = request.getAttribute("userId");
-
-        if (userId == null) {
-            throw new IllegalStateException("인증된 사용자 정보를 찾을 수 없습니다.");
+        
+        // Authorization 헤더에서 JWT 토큰 추출
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new IllegalStateException("인증 토큰이 없습니다.");
         }
-
-        return userRepository.findById((Long) userId)
-                .orElseThrow(() -> new IllegalStateException("유효하지 않은 사용자입니다."));
+        
+        String token = authHeader.substring(7); // "Bearer " 제거
+        
+        // JWT 토큰 검증
+        if (!jwtUtils.validateToken(token)) {
+            throw new IllegalStateException("유효하지 않은 토큰입니다.");
+        }
+        
+        // JWT에서 사용자 ID 추출
+        Long userId = jwtUtils.getUserIdFromToken(token);
+        
+        return userId;
     }
 }

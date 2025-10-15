@@ -1,4 +1,4 @@
-package io.goorm.team02.common.exception.dto;
+package io.goorm.team02.common.exception.errors;
 
 import java.time.LocalDateTime;
 

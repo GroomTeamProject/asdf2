@@ -1,4 +1,4 @@
-package io.goorm.team02.common.exception.dto.client;
+package io.goorm.team02.common.exception.errors;
 
 import org.springframework.http.HttpStatus;
 import lombok.Getter;
