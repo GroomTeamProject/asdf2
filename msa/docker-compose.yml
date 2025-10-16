@@ -81,6 +81,30 @@ services:
       - kafka
       - order-mariadb
 
+  # Notification Service MariaDB
+  notification-mariadb:
+    image: mariadb:12.0
+    container_name: msa-notification-mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: team02notification
+    volumes:
+      - notification_mariadb_data:/var/lib/mysql
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: msa-notification
+    ports:
+      - "8088:8088"
+    env_file:
+      - .env.dev
+    depends_on:
+      - kafka
+      - notification-mariadb
+
   # API Gateway
   api-gateway:
     build:
@@ -101,6 +125,7 @@ services:
 volumes:
   demo_mariadb_data:
   order_mariadb_data:
+  notification_mariadb_data:
 
 networks:
   default:
