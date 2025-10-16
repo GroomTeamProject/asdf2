@@ -1,5 +1,6 @@
 package io.goorm.team02.security.resolver;
 
+import io.goorm.team02.common.exception.errors.UnauthorizedException;
 import io.goorm.team02.security.annotation.CurrentUser;
 import io.goorm.team02.security.jwt.JwtUtils;
 
@@ -36,14 +37,14 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
         // Authorization 헤더에서 JWT 토큰 추출
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new IllegalStateException("인증 토큰이 없습니다.");
+            throw new UnauthorizedException("인증 토큰이 없습니다.");
         }
         
         String token = authHeader.substring(7); // "Bearer " 제거
         
         // JWT 토큰 검증
         if (!jwtUtils.validateToken(token)) {
-            throw new IllegalStateException("유효하지 않은 토큰입니다.");
+            throw new UnauthorizedException("유효하지 않은 토큰입니다.");
         }
         
         // JWT에서 사용자 ID 추출
