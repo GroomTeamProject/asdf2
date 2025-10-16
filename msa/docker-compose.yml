@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Zookeeper
   zookeeper:
@@ -35,15 +33,15 @@ services:
     depends_on:
       - kafka
 
-  # MariaDB
-  mariadb:
+  # Demo Service MariaDB
+  demo-mariadb:
     image: mariadb:12.0
-    container_name: msa-mariadb
+    container_name: msa-demo-mariadb
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: team02demo
     volumes:
-      - mariadb_data:/var/lib/mysql
+      - demo_mariadb_data:/var/lib/mysql
 
   # Demo Service
   demo-service:
@@ -57,7 +55,31 @@ services:
       - .env.dev
     depends_on:
       - kafka
-      - mariadb
+      - demo-mariadb
+
+  # Order Service MariaDB
+  order-mariadb:
+    image: mariadb:12.0
+    container_name: msa-order-mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: team02order
+    volumes:
+      - order_mariadb_data:/var/lib/mysql
+
+  # Order Service
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    container_name: msa-order
+    ports:
+      - "8085:8085"
+    env_file:
+      - .env.dev
+    depends_on:
+      - kafka
+      - order-mariadb
 
   # API Gateway
   api-gateway:
@@ -71,11 +93,14 @@ services:
       - .env.dev
     environment:
       DEMO_SERVICE_URL: http://demo-service:8090
+      ORDER_SERVICE_URL: http://order-service:8085
     depends_on:
       - demo-service
+      - order-service
 
 volumes:
-  mariadb_data:
+  demo_mariadb_data:
+  order_mariadb_data:
 
 networks:
   default:

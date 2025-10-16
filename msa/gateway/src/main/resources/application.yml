@@ -20,6 +20,10 @@ spring:
               uri: ${DEMO_SERVICE_URL:http://localhost:8090}
               predicates:
                 - Path=/api/demo/**
+            - id: order-service
+              uri: ${ORDER_SERVICE_URL:http://localhost:8085}
+              predicates:
+                - Path=/api/orders/**
 
 # Logging
 logging:
