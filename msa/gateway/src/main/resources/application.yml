@@ -24,4 +24,9 @@ spring:
 # Logging
 logging:
   level:
-    org.springframework.cloud.gateway: DEBUG
+    io.goorm.team02.gateway: INFO
+    org.springframework.cloud.gateway: WARN
+    org.springframework.web.reactive: WARN
+    reactor.netty: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"
