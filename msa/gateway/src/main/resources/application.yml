@@ -24,6 +24,10 @@ spring:
               uri: ${ORDER_SERVICE_URL:http://order-service:8085}
               predicates:
                 - Path=/api/orders/**
+            - id: review-service
+              uri: ${REVIEW_SERVICE_URL:http://review-service:8086}
+              predicates:
+                - Path=/api/reviews/**
             - id: notification-service
               uri: ${NOTIFICATION_SERVICE_URL:http://notification-service:8088}
               predicates:
