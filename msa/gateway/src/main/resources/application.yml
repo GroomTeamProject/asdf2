@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              "[/**]":
+                allowedOrigins: "*"
+                allowedMethods: "*"
+                allowedHeaders: "*"
+                allowCredentials: false
+          routes:
+            - id: demo-service
+              uri: ${DEMO_SERVICE_URL:http://localhost:8090}
+              predicates:
+                - Path=/api/demo/**
+
+# Logging
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
