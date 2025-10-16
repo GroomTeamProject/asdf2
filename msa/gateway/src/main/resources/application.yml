@@ -20,8 +20,17 @@ spring:
               uri: ${DEMO_SERVICE_URL:http://localhost:8090}
               predicates:
                 - Path=/api/demo/**
+            - id: order-service
+              uri: ${ORDER_SERVICE_URL:http://localhost:8085}
+              predicates:
+                - Path=/api/orders/**
 
 # Logging
 logging:
   level:
-    org.springframework.cloud.gateway: DEBUG
+    io.goorm.team02.gateway: INFO
+    org.springframework.cloud.gateway: WARN
+    org.springframework.web.reactive: WARN
+    reactor.netty: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"
