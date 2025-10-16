@@ -22,12 +22,12 @@ spring:
                 - Path=/api/demo/**
 
             - id: owner-service
-              uri: http://localhost:8081
+              uri: ${DEMO_SERVICE_URL:http://localhost:8090}
               predicates:
                 - Path=/api/owner/**
 
             - id: owner-swagger
-              uri: http://localhost:8081
+              uri: ${DEMO_SERVICE_URL:http://localhost:8090}
               predicates:
                 - Path=/owner/swagger-ui.html
 
