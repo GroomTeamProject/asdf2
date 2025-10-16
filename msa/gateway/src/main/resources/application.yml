@@ -17,15 +17,19 @@ spring:
                 allowCredentials: false
           routes:
             - id: demo-service
-              uri: ${DEMO_SERVICE_URL:http://localhost:8090}
+              uri: ${DEMO_SERVICE_URL:http://demo-service:8090}
               predicates:
                 - Path=/api/demo/**
             - id: order-service
-              uri: ${ORDER_SERVICE_URL:http://localhost:8085}
+              uri: ${ORDER_SERVICE_URL:http://order-service:8085}
               predicates:
                 - Path=/api/orders/**
             - id: notification-service
-              uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8088}
+              uri: ${NOTIFICATION_SERVICE_URL:http://notification-service:8088}
+              predicates:
+                - Path=/api/notifications/**
+            - id: notification-service-sse
+              uri: ${NOTIFICATION_SERVICE_URL:http://notification-service:8088}
               predicates:
                 - Path=/api/sse/**
 

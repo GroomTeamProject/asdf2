@@ -118,9 +118,11 @@ services:
     environment:
       DEMO_SERVICE_URL: http://demo-service:8090
       ORDER_SERVICE_URL: http://order-service:8085
+      NOTIFICATION_SERVICE_URL: http://notification-service:8088
     depends_on:
       - demo-service
       - order-service
+      - notification-service
 
 volumes:
   demo_mariadb_data:
