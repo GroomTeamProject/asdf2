@@ -1,40 +1,65 @@
 package io.goorm.team02.notification.service;
 
+import io.goorm.team02.notification.entity.Notification;
+import io.goorm.team02.notification.entity.enums.NotificationType;
+import io.goorm.team02.notification.repository.NotificationRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
 
-    public void handleOrderEvent(String eventType, String message) {
+    private final NotificationRepository notificationRepository;
+
+    /**
+     * 사용자 알림 조회 (전체)
+     */
+    public List<Notification> getUserNotifications(Long userId) {
+        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    }
+
+    /**
+     * 사용자 알림 페이징 조회
+     */
+    public Page<Notification> getUserNotifications(Long userId, Pageable pageable) {
+        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+    }
+
+    public void handleOrderEvent(String eventType, Map<String, Object> eventData) {
+        log.info("Handling order event: {}", eventType);
         switch (eventType) {
             case "ORDER_CREATED":
-                processOrderCreatedEvent(message);
+                processOrderCreatedEvent(eventData);
                 break;
             case "ORDER_ACCEPTED":
-                processOrderAcceptedEvent(message);
+                processOrderAcceptedEvent(eventData);
                 break;
             case "ORDER_COOKING":
-                processOrderCookingEvent(message);
+                processOrderCookingEvent(eventData);
                 break;
             case "ORDER_READY":
-                processOrderReadyEvent(message);
+                processOrderReadyEvent(eventData);
                 break;
             case "ORDER_PICKED_UP":
-                processOrderPickedUpEvent(message);
+                processOrderPickedUpEvent(eventData);
                 break;
             case "ORDER_DELIVERED":
-                processOrderDeliveredEvent(message);
+                processOrderDeliveredEvent(eventData);
                 break;
             case "ORDER_CANCELLED":
-                processOrderCancelledEvent(message);
+                processOrderCancelledEvent(eventData);
                 break;
             case "ORDER_REJECTED":
-                processOrderRejectedEvent(message);
+                processOrderRejectedEvent(eventData);
                 break;
             default:
                 log.warn("Unknown event type: {}", eventType);
@@ -42,43 +67,147 @@ public class NotificationService {
         }
     }
 
-    private void processOrderCreatedEvent(String message) {
-        log.info("Processing order created event: {}", message);
-        // 여기에 실제 비즈니스 로직을 구현
+    @Transactional
+    private void processOrderCreatedEvent(Map<String, Object> eventData) {
+        log.info("Processing order created event: {}", eventData);
+
+        Long orderId = ((Number) eventData.get("orderId")).longValue();
+        Long userId = ((Number) eventData.get("userId")).longValue();
+
+        // 고객에게 주문 접수 알림
+        createNotification(
+                userId,
+                NotificationType.ORDER_STATUS,
+                "주문이 접수되었습니다",
+                String.format("주문번호 %d가 접수되었습니다.", orderId));
+
+        // 가게에게 새 주문 알림
+        // TODO: storeId -> ownerId로 알림 발송
+        // createNotification(
+        //         storeId,
+        //         NotificationType.ORDER_STATUS,
+        //         "새로운 주문이 들어왔습니다",
+        //         String.format("주문이 접수되었습니다. 주문 번호: %d", orderId));
     }
 
-    private void processOrderAcceptedEvent(String message) {
-        log.info("Processing order accepted event: {}", message);
-        // 여기에 실제 비즈니스 로직을 구현
+    @Transactional
+    private void processOrderAcceptedEvent(Map<String, Object> eventData) {
+        log.info("Processing order accepted event: {}", eventData);
+
+        Long orderId = ((Number) eventData.get("orderId")).longValue();
+        Long userId = ((Number) eventData.get("userId")).longValue();
+        Integer minCookingTime = (Integer) eventData.get("minCookingTime");
+        Integer maxCookingTime = (Integer) eventData.get("maxCookingTime");
+
+        // 고객에게 주문 수락 알림
+        createNotification(
+                userId,
+                NotificationType.ORDER_STATUS,
+                "주문이 수락되었습니다",
+                String.format("주문이 수락되었습니다. 주문 번호: %d, 예상 조리 시간: %d-%d분",
+                        orderId, minCookingTime, maxCookingTime));
     }
 
-    private void processOrderCookingEvent(String message) {
-        log.info("Processing order cooking event: {}", message);
-        // 여기에 실제 비즈니스 로직을 구현
+    @Transactional
+    private void processOrderCookingEvent(Map<String, Object> eventData) {
+        log.info("Processing order cooking event: {}", eventData);
+
+        Long orderId = ((Number) eventData.get("orderId")).longValue();
+        Long userId = ((Number) eventData.get("userId")).longValue();
+
+        createNotification(
+                userId,
+                NotificationType.ORDER_STATUS,
+                "주문 조리가 시작되었습니다",
+                String.format("주문 번호: %d의 조리가 시작되었습니다.", orderId));
     }
 
-    private void processOrderReadyEvent(String message) {
-        log.info("Processing order ready event: {}", message);
-        // 여기에 실제 비즈니스 로직을 구현
+    @Transactional
+    private void processOrderReadyEvent(Map<String, Object> eventData) {
+        log.info("Processing order ready event: {}", eventData);
+
+        Long orderId = ((Number) eventData.get("orderId")).longValue();
+        Long userId = ((Number) eventData.get("userId")).longValue();
+
+        createNotification(
+                userId,
+                NotificationType.ORDER_STATUS,
+                "주문이 준비되었습니다",
+                String.format("주문 번호: %d가 준비되었습니다. 픽업 또는 배달 준비가 완료되었습니다.", orderId));
     }
 
-    private void processOrderPickedUpEvent(String message) {
-        log.info("Processing order picked up event: {}", message);
-        // 여기에 실제 비즈니스 로직을 구현
+    @Transactional
+    private void processOrderPickedUpEvent(Map<String, Object> eventData) {
+        log.info("Processing order picked up event: {}", eventData);
+
+        Long orderId = ((Number) eventData.get("orderId")).longValue();
+        Long userId = ((Number) eventData.get("userId")).longValue();
+
+        createNotification(
+                userId, 
+                NotificationType.ORDER_STATUS,
+                "주문이 픽업되었습니다",
+                String.format("주문 번호: %d가 픽업되었습니다.", orderId));
     }
 
-    private void processOrderDeliveredEvent(String message) {
-        log.info("Processing order delivered event: {}", message);
-        // 여기에 실제 비즈니스 로직을 구현
+    @Transactional
+    private void processOrderDeliveredEvent(Map<String, Object> eventData) {
+        log.info("Processing order delivered event: {}", eventData);
+
+        Long orderId = ((Number) eventData.get("orderId")).longValue();
+        Long userId = ((Number) eventData.get("userId")).longValue();
+
+        createNotification(
+                userId,
+                NotificationType.ORDER_STATUS,
+                "주문이 배달되었습니다",
+                String.format("주문 번호: %d가 배달되었습니다. 맛있게 드세요!", orderId));
     }
 
-    private void processOrderCancelledEvent(String message) {
-        log.info("Processing order cancelled event: {}", message);
-        // 여기에 실제 비즈니스 로직을 구현
+    @Transactional
+    private void processOrderCancelledEvent(Map<String, Object> eventData) {
+        log.info("Processing order cancelled event: {}", eventData);
+
+        Long orderId = ((Number) eventData.get("orderId")).longValue();
+        Long userId = ((Number) eventData.get("userId")).longValue();
+
+        Map<String, Object> order = (Map<String, Object>) eventData.get("order");
+        String cancelReason = (String) order.get("cancelReason");
+
+        createNotification(
+                userId,
+                NotificationType.ORDER_STATUS,
+                "주문이 취소되었습니다",
+                String.format("주문이 취소되었습니다. 주문 번호: %d, 취소 사유: %s", orderId, cancelReason));
     }
 
-    private void processOrderRejectedEvent(String message) {
-        log.info("Processing order rejected event: {}", message);
-        // 여기에 실제 비즈니스 로직을 구현
+    @Transactional
+    private void processOrderRejectedEvent(Map<String, Object> eventData) {
+        log.info("Processing order rejected event: {}", eventData);
+
+        Long orderId = ((Number) eventData.get("id")).longValue();
+        Long customerId = ((Number) eventData.get("customerId")).longValue();
+
+        Map<String, Object> order = (Map<String, Object>) eventData.get("order");
+        String rejectReason = (String) order.get("rejectReason");
+
+        createNotification(
+                customerId,
+                NotificationType.ORDER_STATUS,
+                "주문이 거절되었습니다",
+                String.format("주문이 거절되었습니다. 주문 번호: %d, 거절 사유: %s", orderId, rejectReason));
     }
+
+    private void createNotification(Long userId, NotificationType type, String title, String content) {
+        Notification notification = new Notification();
+        notification.setUserId(userId);
+        notification.setType(type);
+        notification.setTitle(title);
+        notification.setContent(content);
+        notification.setIsRead(false);
+
+        notificationRepository.save(notification);
+        log.info("Notification created for user {}: {}", userId, title);
+    }
+
 }
