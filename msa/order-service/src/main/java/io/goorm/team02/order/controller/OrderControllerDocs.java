@@ -6,7 +6,6 @@ import io.goorm.team02.order.controller.dto.OrderRejectRequest;
 import io.goorm.team02.order.controller.dto.OrderAcceptRequest;
 import io.goorm.team02.order.controller.dto.OrderCancelRequest;
 import io.goorm.team02.order.controller.dto.OrderSearchRequest;
-import io.goorm.team02.security.annotation.CurrentUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -15,7 +14,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "주문 관리", description = "주문 관련 API")
@@ -27,14 +25,14 @@ public interface OrderControllerDocs {
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
             @ApiResponse(responseCode = "404", description = "사용자 또는 가게를 찾을 수 없음")
     })
-    public OrderResponse create(@RequestBody OrderRequest order, @CurrentUser Long userId);
+    public OrderResponse create(OrderRequest order, @RequestParam Long userId);
 
     @Operation(summary = "주문 목록 조회", description = "다양한 조건으로 주문 목록을 조회합니다 (페이지네이션 지원)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "주문 목록 조회 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 파라미터")
     })
-    public Page<OrderResponse> getAllByParams(OrderSearchRequest searchRequest, @CurrentUser Long userId);
+    public Page<OrderResponse> getAllByParams(OrderSearchRequest searchRequest, @RequestParam Long userId);
 
     @Operation(summary = "주문 상세 조회", description = "특정 주문의 상세 정보를 조회합니다")
     @ApiResponses({
@@ -43,7 +41,7 @@ public interface OrderControllerDocs {
     })
     public OrderResponse getOrderDetail(
             @Parameter(description = "주문 ID", required = true) @PathVariable Long orderId,
-            @CurrentUser Long userId);
+            @RequestParam Long userId);
 
     @Operation(summary = "주문 수락", description = "가게에서 주문을 수락하고 예상 조리 시간을 설정합니다 (PENDING → ACCEPTED)")
     @ApiResponses({
@@ -53,7 +51,7 @@ public interface OrderControllerDocs {
     })
     public OrderResponse acceptOrder(
             @Parameter(description = "주문 ID", required = true) @PathVariable Long orderId,
-            @RequestBody OrderAcceptRequest request);
+            OrderAcceptRequest request);
 
     @Operation(summary = "주문 거절", description = "가게에서 주문을 거절합니다 (PENDING → CANCELLED)")
     @ApiResponses({
@@ -63,7 +61,7 @@ public interface OrderControllerDocs {
     })
     public OrderResponse rejectOrder(
             @Parameter(description = "주문 ID", required = true) @PathVariable Long orderId,
-            @RequestBody OrderRejectRequest request);
+            OrderRejectRequest request);
 
     @Operation(summary = "조리 시작", description = "가게에서 조리를 시작합니다 (ACCEPTED → COOKING)")
     @ApiResponses({
@@ -100,7 +98,7 @@ public interface OrderControllerDocs {
     })
     public OrderResponse cancelOrder(
             @Parameter(description = "주문 ID", required = true) @PathVariable Long orderId,
-            @RequestBody OrderCancelRequest request);
+            OrderCancelRequest request);
 
     @Operation(summary = "[배달기사] 픽업 가능한 주문 목록 조회", description = "조리 완료된 주문들을 조회합니다 (READY 상태)")
     @ApiResponses({
@@ -108,6 +106,6 @@ public interface OrderControllerDocs {
             @ApiResponse(responseCode = "400", description = "잘못된 요청 파라미터")
     })
     List<OrderResponse> getAvailableOrders(
-            @Parameter(description = "가게 ID (선택사항, 특정 가게의 주문만 조회)") @RequestParam(value = "storeId", required = false) Long storeId);
+            @Parameter(description = "가게 ID (선택사항, 특정 가게의 주문만 조회)") @RequestParam(required = false) Long storeId);
 
 }

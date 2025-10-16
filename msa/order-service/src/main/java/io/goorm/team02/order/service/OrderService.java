@@ -56,9 +56,10 @@ public class OrderService {
         // TODO: 사용자/메뉴 서비스 호출 및 검증
 
         // 2. 메뉴 정보 조회 (주문 시점에서의 메뉴 정보 스냅샷)
-        // FIXME: 메뉴 데이터 없이 처리
+        // TODO: 실제 메뉴 정보 사용 (스냅샷)
 
         // 3. Order 도메인에 생성 요청
+        // TODO: 실제 배달비 사용
         Order order = Order.create(orderRequest, userId, orderRequest.storeId(), BigDecimal.ZERO);
 
         // 4. 저장

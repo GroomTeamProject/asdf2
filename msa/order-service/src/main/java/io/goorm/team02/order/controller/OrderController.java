@@ -32,19 +32,19 @@ public class OrderController implements OrderControllerDocs {
     private final OrderStatusService orderStatusService;
 
     @PostMapping
-    public OrderResponse create(@Valid @RequestBody OrderRequest orderRequest, @CurrentUser Long userId) {
+    public OrderResponse create(@Valid @RequestBody OrderRequest orderRequest, @RequestParam Long userId) {
         Order order = orderService.create(orderRequest, userId);
         return OrderResponse.from(order);
     }
 
     @GetMapping
-    public Page<OrderResponse> getAllByParams(OrderSearchRequest searchRequest, @CurrentUser Long userId) {
+    public Page<OrderResponse> getAllByParams(OrderSearchRequest searchRequest, @RequestParam Long userId) {
         Page<Order> orders = orderService.getAllByParams(searchRequest, userId);
         return orders.map(OrderResponse::from);
     }
 
     @GetMapping("/{orderId}")
-    public OrderResponse getOrderDetail(@PathVariable Long orderId, @CurrentUser Long userId) {
+    public OrderResponse getOrderDetail(@PathVariable Long orderId, @RequestParam Long userId) {
         Order order = orderService.getOrderDetail(orderId, userId);
         return OrderResponse.from(order);
     }

@@ -1,4 +1,3 @@
-// domain/OrderItemOption.java
 package io.goorm.team02.order.entity;
 
 import io.goorm.team02.order.controller.dto.OrderRequest;
@@ -14,6 +13,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "order_item_options")
@@ -26,6 +26,7 @@ public class OrderItemOption{
 
 	@ManyToOne
 	@JoinColumn(name = "order_item_id", nullable = false)
+	@JsonIgnore
 	private OrderItem orderItem;
 
 	@Column(nullable = false, length = 50)
