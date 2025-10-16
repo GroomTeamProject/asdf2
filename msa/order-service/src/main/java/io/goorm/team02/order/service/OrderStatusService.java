@@ -22,6 +22,7 @@ import io.goorm.team02.kafka.client.EventPublisher;
 @Service
 @RequiredArgsConstructor
 public class OrderStatusService {
+    public static final String ORDER_EVENTS_TOPIC = "order-events";
 
     private final OrderRepository orderRepository;
     private final OrderService orderService;
@@ -39,7 +40,7 @@ public class OrderStatusService {
         Order dbOrder = orderRepository.save(order);
 
         // 주문 상태 변경 이벤트 발행 (Kafka)
-        eventPublisher.publish("order-accepted", new OrderAcceptedEvent(dbOrder));
+        eventPublisher.publish(ORDER_EVENTS_TOPIC, new OrderAcceptedEvent(dbOrder));
 
         return OrderResponse.from(dbOrder);
     }
@@ -55,7 +56,7 @@ public class OrderStatusService {
         Order dbOrder = orderRepository.save(order);
 
         // 주문 조리 시작 이벤트 발행 (Kafka)
-        eventPublisher.publish("order-cooking", new OrderCookingEvent(dbOrder));
+        eventPublisher.publish(ORDER_EVENTS_TOPIC, new OrderCookingEvent(dbOrder));
 
         return OrderResponse.from(dbOrder);
     }
@@ -71,7 +72,7 @@ public class OrderStatusService {
         Order dbOrder = orderRepository.save(order);
 
         // 주문 준비 완료 이벤트 발행 (Kafka)
-        eventPublisher.publish("order-ready", new OrderReadyEvent(dbOrder));
+        eventPublisher.publish(ORDER_EVENTS_TOPIC, new OrderReadyEvent(dbOrder));
 
         return OrderResponse.from(dbOrder);
     }
@@ -87,7 +88,7 @@ public class OrderStatusService {
         Order dbOrder = orderRepository.save(order);
 
         // 주문 배달 시작 이벤트 발행 (Kafka)
-        eventPublisher.publish("order-delivering", new OrderDeliveringEvent(dbOrder));
+        eventPublisher.publish(ORDER_EVENTS_TOPIC, new OrderDeliveringEvent(dbOrder));
 
         return OrderResponse.from(dbOrder);
     }
@@ -103,7 +104,7 @@ public class OrderStatusService {
         Order dbOrder = orderRepository.save(order);
 
         // 주문 배달 완료 이벤트 발행 (Kafka)
-        eventPublisher.publish("order-delivered", new OrderDeliveredEvent(dbOrder));
+        eventPublisher.publish(ORDER_EVENTS_TOPIC, new OrderDeliveredEvent(dbOrder));
 
         return OrderResponse.from(dbOrder);
     }
@@ -119,7 +120,7 @@ public class OrderStatusService {
         Order dbOrder = orderRepository.save(order);
 
         // 주문 취소 이벤트 발행 (Kafka)
-        eventPublisher.publish("order-cancelled", new OrderCancelledEvent(dbOrder, request.cancelReason()));
+        eventPublisher.publish(ORDER_EVENTS_TOPIC, new OrderCancelledEvent(dbOrder, request.cancelReason()));
 
         return OrderResponse.from(dbOrder);
     }
@@ -135,7 +136,7 @@ public class OrderStatusService {
         Order dbOrder = orderRepository.save(order);
 
         // 주문 거절 이벤트 발행 (Kafka)
-        eventPublisher.publish("order-rejected", new OrderRejectedEvent(dbOrder, request.rejectReason()));
+        eventPublisher.publish(ORDER_EVENTS_TOPIC, new OrderRejectedEvent(dbOrder, request.rejectReason()));
 
         return OrderResponse.from(dbOrder);
     }

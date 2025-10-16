@@ -1,6 +1,7 @@
 package io.goorm.team02.order.service;
 
-import io.goorm.team02.order.client.dto.MenuDTO;
+import static io.goorm.team02.order.service.OrderStatusService.ORDER_EVENTS_TOPIC;
+
 import io.goorm.team02.order.controller.dto.OrderRequest;
 import io.goorm.team02.order.controller.dto.OrderResponse;
 import io.goorm.team02.order.controller.dto.OrderSearchRequest;
@@ -8,8 +9,6 @@ import io.goorm.team02.order.entity.Order;
 import io.goorm.team02.order.entity.enums.OrderStatus;
 import io.goorm.team02.order.repository.OrderRepository;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -66,7 +65,7 @@ public class OrderService {
         Order savedOrder = orderRepository.save(order);
 
         // 5. 주문 생성 이벤트 발행 - OrderCreatedEvent
-        eventPublisher.publish("order-created", new OrderCreatedEvent(savedOrder));
+        eventPublisher.publish(ORDER_EVENTS_TOPIC, new OrderCreatedEvent(savedOrder));
 
         return savedOrder;
     }
