@@ -10,17 +10,14 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter' 
 	implementation 'org.springframework.boot:spring-boot-starter-web'  // 웹 애플리케이션, REST API 개발
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-
-	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'  // MariaDB 드라이버
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'  //JPA로 DB 접근
 
 	// DB 마이그레이션 도구 Flyway
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-mysql'
 
-	// Spring Boot Starter Security
-	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
 	// JWT 라이브러리 (JJWT)
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
@@ -43,3 +40,11 @@ dependencies {
 	implementation 'com.bucket4j:bucket4j_jdk8-core:8.10.1'
 	implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
 }
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+} 
