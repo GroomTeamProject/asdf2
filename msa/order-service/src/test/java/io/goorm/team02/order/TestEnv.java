@@ -1,4 +1,4 @@
-package io.goorm.team02.demo;
+package io.goorm.team02.order;
 
 // import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -6,5 +6,5 @@ import org.springframework.test.context.ActiveProfiles;
 // @SpringBootTest
 @ActiveProfiles("test")
 public abstract class TestEnv {
-
+    
 }

@@ -33,19 +33,19 @@ public class OrderController implements OrderControllerDocs {
     @PostMapping
     public OrderResponse create(@Valid @RequestBody OrderRequest orderRequest, @RequestParam Long userId) {
         Order order = orderService.create(orderRequest, userId);
-        return order.toOrderResponse();
+        return order.toResponse();
     }
 
     @GetMapping
     public Page<OrderResponse> getAllByParams(OrderSearchRequest searchRequest, @RequestParam Long userId) {
         Page<Order> orders = orderService.getAllByParams(searchRequest, userId);
-        return orders.map(Order::toOrderResponse);
+        return orders.map(Order::toResponse);
     }
 
     @GetMapping("/{orderId}")
     public OrderResponse getOrderDetail(@PathVariable Long orderId, @RequestParam Long userId) {
         Order order = orderService.getOrderDetail(orderId, userId);
-        return order.toOrderResponse();
+        return order.toResponse();
     }
 
     /**
