@@ -1,4 +1,4 @@
-package io.goorm.team02.order.controller.dto;
+package io.goorm.team02.dto.orders;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

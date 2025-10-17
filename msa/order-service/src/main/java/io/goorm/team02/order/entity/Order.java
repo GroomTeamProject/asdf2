@@ -1,7 +1,8 @@
 package io.goorm.team02.order.entity;
 
 import io.goorm.team02.common.config.BaseEntity;
-import io.goorm.team02.order.controller.dto.OrderRequest;
+import io.goorm.team02.dto.orders.OrderRequest;
+import io.goorm.team02.dto.orders.OrderResponse;
 import io.goorm.team02.order.entity.enums.OrderStatus;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -273,6 +274,42 @@ public class Order extends BaseEntity {
 
 		order.calculateTotalAmount();
 		return order;
+	}
+
+	/**
+	 * OrderResponse로 변환
+	 */
+	public OrderResponse toOrderResponse() {
+		return new OrderResponse(
+				this.id,
+				this.orderNumber,
+				this.userId,
+				this.storeId,
+				this.deliveryAddress,
+				this.deliveryDetailAddress,
+				this.storeAddress,
+				this.storeDetailAddress,
+				this.phone,
+				this.orderMemo,
+				this.menuTotalAmount,
+				this.deliveryFee,
+				this.discountAmount,
+				this.totalAmount,
+				this.status.name(),
+				this.orderedAt,
+				this.acceptedAt,
+				this.cookingStartedAt,
+				this.cookingCompletedAt,
+				this.pickedUpAt,
+				this.deliveredAt,
+				this.cancelledAt,
+				this.rejectReason,
+				this.cancelReason,
+				this.minCookingTime,
+				this.maxCookingTime,
+				this.orderItems != null ? this.orderItems.stream()
+						.map(OrderItem::toOrderItemResponse)
+						.toList() : List.of());
 	}
 
 }

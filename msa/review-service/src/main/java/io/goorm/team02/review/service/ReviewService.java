@@ -1,7 +1,7 @@
 package io.goorm.team02.review.service;
 
-import io.goorm.team02.review.controller.dto.ReviewRequest;
 import io.goorm.team02.review.repository.ReviewRepository;
+import io.goorm.team02.dto.reviews.ReviewRequest;
 import io.goorm.team02.review.entity.Review;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

@@ -1,8 +1,8 @@
 package io.goorm.team02.review.controller;
 
-import io.goorm.team02.review.controller.dto.OwnerReplyRequest;
-import io.goorm.team02.review.controller.dto.ReviewRequest;
-import io.goorm.team02.review.controller.dto.ReviewResponse;
+import io.goorm.team02.dto.reviews.OwnerReplyRequest;
+import io.goorm.team02.dto.reviews.ReviewRequest;
+import io.goorm.team02.dto.reviews.ReviewResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

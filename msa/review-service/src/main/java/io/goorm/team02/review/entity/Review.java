@@ -1,6 +1,7 @@
 package io.goorm.team02.review.entity;
 
 import io.goorm.team02.common.config.BaseEntity;
+import io.goorm.team02.dto.reviews.ReviewResponse;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -102,5 +103,22 @@ public class Review extends BaseEntity {
 		review.validate();
 
 		return review;
+	}
+
+	/**
+	 * ReviewResponse로 변환
+	 */
+	public ReviewResponse toReviewResponse() {
+		return new ReviewResponse(
+				this.id,
+				this.orderId,
+				this.userId,
+				this.storeId,
+				this.rating,
+				this.content,
+				this.ownerReply,
+				this.ownerRepliedAt,
+				this.createdAt,
+				this.updatedAt);
 	}
 }

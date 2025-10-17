@@ -2,9 +2,9 @@ package io.goorm.team02.order.service;
 
 import static io.goorm.team02.order.service.OrderStatusService.ORDER_EVENTS_TOPIC;
 
-import io.goorm.team02.order.controller.dto.OrderRequest;
-import io.goorm.team02.order.controller.dto.OrderResponse;
-import io.goorm.team02.order.controller.dto.OrderSearchRequest;
+import io.goorm.team02.dto.orders.OrderRequest;
+import io.goorm.team02.dto.orders.OrderResponse;
+import io.goorm.team02.dto.orders.OrderSearchRequest;
 import io.goorm.team02.order.entity.Order;
 import io.goorm.team02.order.entity.enums.OrderStatus;
 import io.goorm.team02.order.repository.OrderRepository;
@@ -134,7 +134,7 @@ public class OrderService {
         orders.forEach(this::loadOrderDetails);
 
         return orders.stream()
-                .map(OrderResponse::from)
+                .map(Order::toOrderResponse)
                 .toList();
     }
 

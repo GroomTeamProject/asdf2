@@ -1,4 +1,4 @@
-package io.goorm.team02.review.controller.dto;
+package io.goorm.team02.dto.reviews;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;

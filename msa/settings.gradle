@@ -3,6 +3,7 @@ rootProject.name = 'team02backend'
 include 'libs:common'
 include 'libs:security'
 include 'libs:kafka-client'
+include 'libs:dto'
 
 include 'gateway'
 include 'msa-demo'

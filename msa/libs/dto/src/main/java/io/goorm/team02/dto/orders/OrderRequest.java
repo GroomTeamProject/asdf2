@@ -1,6 +1,5 @@
-package io.goorm.team02.order.controller.dto;
+package io.goorm.team02.dto.orders;
 
-import io.goorm.team02.order.entity.Order;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
@@ -21,16 +20,6 @@ public record OrderRequest(
 		@Schema(description = "주문 메모", example = "문 앞에 놓아주세요") String orderMemo,
 
 		@Schema(description = "주문 아이템 목록") List<OrderItemRequest> orderItems) {
-
-	public Order toEntity() {
-		Order order = new Order();
-		order.setDeliveryAddress(this.deliveryAddress);
-		order.setDeliveryDetailAddress(this.deliveryDetailAddress);
-		order.setPhone(this.phone);
-		order.setOrderMemo(this.orderMemo);
-
-		return order;
-	}
 
 	@Schema(description = "주문 아이템 요청")
 	public record OrderItemRequest(

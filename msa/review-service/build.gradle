@@ -32,6 +32,7 @@ dependencies {
 	implementation project(':libs:common')
 	implementation project(':libs:security')
 	implementation project(':libs:kafka-client')
+	implementation project(':libs:dto')
 	
 	// Spring Kafka
 	implementation 'org.springframework.kafka:spring-kafka:3.2.0'

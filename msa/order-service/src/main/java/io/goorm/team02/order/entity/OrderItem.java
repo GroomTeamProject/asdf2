@@ -1,6 +1,7 @@
 package io.goorm.team02.order.entity;
 
-import io.goorm.team02.order.controller.dto.OrderRequest;
+import io.goorm.team02.dto.orders.OrderRequest;
+import io.goorm.team02.dto.orders.OrderResponse;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -102,5 +103,21 @@ public class OrderItem {
 
         orderItem.calculateTotalPrice();
         return orderItem;
+    }
+
+    /**
+     * OrderItemResponse로 변환
+     */
+    public OrderResponse.OrderItemResponse toOrderItemResponse() {
+        return new OrderResponse.OrderItemResponse(
+                this.id,
+                this.menuId,
+                this.menuName,
+                this.menuPrice,
+                this.quantity,
+                this.totalPrice,
+                this.options != null ? this.options.stream()
+                        .map(OrderItemOption::toOrderItemOptionResponse)
+                        .toList() : List.of());
     }
 }
