@@ -25,6 +25,16 @@ spring:
               predicates:
                 - Path=/api/orders/**
 
+            - id: owner-service
+              uri: ${DEMO_SERVICE_URL:http://localhost:8090}
+              predicates:
+                - Path=/api/owner/**
+
+            - id: owner-swagger
+              uri: ${DEMO_SERVICE_URL:http://localhost:8090}
+              predicates:
+                - Path=/owner/swagger-ui.html
+
 # Logging
 logging:
   level:
