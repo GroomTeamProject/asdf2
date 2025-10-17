@@ -7,6 +7,7 @@ include 'libs:dto'
 
 include 'gateway'
 include 'msa-demo'
+include 'owner-service'
 include 'order-service'
 include 'review-service'
 include 'notification-service'
