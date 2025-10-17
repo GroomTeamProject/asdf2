@@ -1,6 +1,5 @@
-package io.goorm.team02.order.controller.dto;
+package io.goorm.team02.dto.orders;
 
-import io.goorm.team02.order.entity.enums.OrderStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import lombok.Data;
@@ -18,7 +17,7 @@ public class OrderSearchRequest {
     private Long userId;
     
     @Schema(description = "주문 상태", example = "PENDING")
-    private OrderStatus status;
+    private String status;
     
     // 페이지네이션 파라미터
     @Schema(description = "페이지 번호 (0부터 시작)", example = "0", minimum = "0")

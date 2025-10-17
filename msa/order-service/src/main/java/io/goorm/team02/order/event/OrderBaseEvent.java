@@ -8,13 +8,15 @@ import lombok.Getter;
 public abstract class OrderBaseEvent extends BaseEvent {
 
     private final Order order;
-    private final Long customerId;
+    private final Long orderId;
+    private final Long userId;
     private final Long storeId;
 
     public OrderBaseEvent(String eventType, String source, Order order) {
         super(eventType, source);
         this.order = order;
-        this.customerId = order.getUserId();
+        this.orderId = order.getId();
+        this.userId = order.getUserId();
         this.storeId = order.getStoreId();
     }
 }

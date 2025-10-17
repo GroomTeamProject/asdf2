@@ -1,6 +1,7 @@
 package io.goorm.team02.order.entity;
 
-import io.goorm.team02.order.controller.dto.OrderRequest;
+import io.goorm.team02.dto.orders.OrderRequest;
+import io.goorm.team02.dto.orders.OrderResponse;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -69,6 +70,17 @@ public class OrderItemOption{
 		}
 		
 		return options;
+	}
+
+	/**
+	 * OrderItemOptionResponse로 변환
+	 */
+	public OrderResponse.OrderItemOptionResponse toOrderItemOptionResponse() {
+		return new OrderResponse.OrderItemOptionResponse(
+				this.id,
+				this.optionName,
+				this.optionItemName,
+				this.additionalPrice);
 	}
 
 }

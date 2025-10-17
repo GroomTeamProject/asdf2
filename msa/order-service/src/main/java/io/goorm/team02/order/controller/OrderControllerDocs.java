@@ -1,11 +1,11 @@
 package io.goorm.team02.order.controller;
 
-import io.goorm.team02.order.controller.dto.OrderRequest;
-import io.goorm.team02.order.controller.dto.OrderResponse;
-import io.goorm.team02.order.controller.dto.OrderRejectRequest;
-import io.goorm.team02.order.controller.dto.OrderAcceptRequest;
-import io.goorm.team02.order.controller.dto.OrderCancelRequest;
-import io.goorm.team02.order.controller.dto.OrderSearchRequest;
+import io.goorm.team02.dto.orders.OrderRequest;
+import io.goorm.team02.dto.orders.OrderResponse;
+import io.goorm.team02.dto.orders.OrderRejectRequest;
+import io.goorm.team02.dto.orders.OrderAcceptRequest;
+import io.goorm.team02.dto.orders.OrderCancelRequest;
+import io.goorm.team02.dto.orders.OrderSearchRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

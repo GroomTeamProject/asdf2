@@ -1,10 +1,10 @@
-package io.goorm.team02.order.controller.dto;
+package io.goorm.team02.dto.orders;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
-
+    
 /**
  * 주문 수락 요청 DTO (예상 조리 시간 포함)
  */
