@@ -129,6 +129,31 @@ services:
       - kafka
       - notification-mariadb
 
+  # ✅ User Service MariaDB
+  user-mariadb:
+    image: mariadb:12.0
+    container_name: msa-user-mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: team02user
+    volumes:
+      - user_mariadb_data:/var/lib/mysql
+  
+  # ✅ User Service
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: msa-user
+    ports:
+      - "8082:8082"
+    env_file:
+      - .env.dev
+    depends_on:
+      - kafka
+      - user-mariadb
+
+
   # API Gateway
   api-gateway:
     build:
