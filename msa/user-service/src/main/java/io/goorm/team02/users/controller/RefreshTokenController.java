@@ -5,8 +5,8 @@ import io.goorm.team02.users.domain.RefreshToken;
 import io.goorm.team02.users.service.RefreshTokenService;
 import io.goorm.team02.common.exception.errors.UnauthorizedException;
 import io.goorm.team02.users.security.JwtTokenProvider;
-import io.goorm.team02.users.controller.dto.RefreshRequest;
-import io.goorm.team02.users.controller.dto.RefreshResponse;
+import io.goorm.team02.dto.user.RefreshRequest;
+import io.goorm.team02.dto.user.RefreshResponse;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
