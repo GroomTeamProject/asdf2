@@ -31,11 +31,8 @@ cloud:
 jwt:
   secret: ${JWT_SECRET}
   expiration: 3600000
-<<<<<<< HEAD
-=======
 
 msa:
   gateway:
     url: ${MSA_GATEWAY_URL}
 
->>>>>>> 1459f24 (fix:application.yml 수정)
