@@ -1,8 +1,8 @@
 server:
-  port: 8086
+  port: 8087
 spring:
   application:
-    name: team02review
+    name: team02delivery
   kafka:
     consumer:
       group-id: team02-backend-group
