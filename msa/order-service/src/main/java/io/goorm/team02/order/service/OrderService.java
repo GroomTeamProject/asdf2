@@ -1,15 +1,14 @@
 package io.goorm.team02.order.service;
 
-import io.goorm.team02.order.client.dto.MenuDTO;
-import io.goorm.team02.order.controller.dto.OrderRequest;
-import io.goorm.team02.order.controller.dto.OrderResponse;
-import io.goorm.team02.order.controller.dto.OrderSearchRequest;
+import static io.goorm.team02.order.service.OrderStatusService.ORDER_EVENTS_TOPIC;
+
+import io.goorm.team02.dto.orders.OrderRequest;
+import io.goorm.team02.dto.orders.OrderResponse;
+import io.goorm.team02.dto.orders.OrderSearchRequest;
 import io.goorm.team02.order.entity.Order;
 import io.goorm.team02.order.entity.enums.OrderStatus;
 import io.goorm.team02.order.repository.OrderRepository;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,8 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import io.goorm.team02.kafka.client.EventPublisher;
 import io.goorm.team02.order.client.StoreServiceClient;
 import io.goorm.team02.order.event.OrderCreatedEvent;
-
-import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
@@ -60,13 +57,13 @@ public class OrderService {
 
         // 3. Order 도메인에 생성 요청
         // TODO: 실제 배달비 사용
-        Order order = Order.create(orderRequest, userId, orderRequest.storeId(), BigDecimal.ZERO);
+        Order order = Order.create(orderRequest, userId, orderRequest.storeId(), 0);
 
         // 4. 저장
         Order savedOrder = orderRepository.save(order);
 
         // 5. 주문 생성 이벤트 발행 - OrderCreatedEvent
-        eventPublisher.publish("order-created", new OrderCreatedEvent(savedOrder));
+        eventPublisher.publish(ORDER_EVENTS_TOPIC, new OrderCreatedEvent(savedOrder));
 
         return savedOrder;
     }
@@ -135,7 +132,7 @@ public class OrderService {
         orders.forEach(this::loadOrderDetails);
 
         return orders.stream()
-                .map(OrderResponse::from)
+                .map(Order::toResponse)
                 .toList();
     }
 

@@ -1,15 +1,14 @@
 package io.goorm.team02.order.controller;
 
-import io.goorm.team02.order.controller.dto.OrderRequest;
-import io.goorm.team02.order.controller.dto.OrderResponse;
-import io.goorm.team02.order.controller.dto.OrderRejectRequest;
-import io.goorm.team02.order.controller.dto.OrderAcceptRequest;
-import io.goorm.team02.order.controller.dto.OrderCancelRequest;
-import io.goorm.team02.order.controller.dto.OrderSearchRequest;
+import io.goorm.team02.dto.orders.OrderRequest;
+import io.goorm.team02.dto.orders.OrderResponse;
+import io.goorm.team02.dto.orders.OrderRejectRequest;
+import io.goorm.team02.dto.orders.OrderAcceptRequest;
+import io.goorm.team02.dto.orders.OrderCancelRequest;
+import io.goorm.team02.dto.orders.OrderSearchRequest;
 import io.goorm.team02.order.entity.Order;
 import io.goorm.team02.order.service.OrderStatusService;
 import io.goorm.team02.order.service.OrderService;
-import io.goorm.team02.security.annotation.CurrentUser;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -34,19 +33,19 @@ public class OrderController implements OrderControllerDocs {
     @PostMapping
     public OrderResponse create(@Valid @RequestBody OrderRequest orderRequest, @RequestParam Long userId) {
         Order order = orderService.create(orderRequest, userId);
-        return OrderResponse.from(order);
+        return order.toResponse();
     }
 
     @GetMapping
     public Page<OrderResponse> getAllByParams(OrderSearchRequest searchRequest, @RequestParam Long userId) {
         Page<Order> orders = orderService.getAllByParams(searchRequest, userId);
-        return orders.map(OrderResponse::from);
+        return orders.map(Order::toResponse);
     }
 
     @GetMapping("/{orderId}")
     public OrderResponse getOrderDetail(@PathVariable Long orderId, @RequestParam Long userId) {
         Order order = orderService.getOrderDetail(orderId, userId);
-        return OrderResponse.from(order);
+        return order.toResponse();
     }
 
     /**

@@ -1,6 +1,7 @@
 package io.goorm.team02.order.entity;
 
-import io.goorm.team02.order.controller.dto.OrderRequest;
+import io.goorm.team02.dto.orders.OrderRequest;
+import io.goorm.team02.dto.orders.OrderResponse;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,7 +15,6 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
@@ -31,76 +31,87 @@ public class OrderItem {
     @JsonIgnore
     private Order order;
 
-    @Column(name = "menu_id", nullable = false)
+    @Column(nullable = false)
     private Long menuId;
 
-    @Column(name = "menu_name", nullable = false, length = 100)
-    private String menuName; // 주문 당시 스냅샷
-
-    @Column(name = "menu_price", nullable = false, precision = 10, scale = 2)
-    private BigDecimal menuPrice;
+    @Column(nullable = false, length = 100)
+    private String menuName; // 주문 당시 메뉴명 스냅샷
 
     @Column(nullable = false)
-    private Integer quantity;
+    private int menuPrice;
 
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal totalPrice;
+    @Column(nullable = false)
+    private int quantity;
+
+    @Column(nullable = false)
+    private int totalPrice;
 
     @OneToMany(mappedBy = "orderItem", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItemOption> options;
 
-    // 도메인 비즈니스 로직
     /**
      * 주문 아이템 총액 계산 (메뉴 가격 × 수량 + 옵션 추가 가격)
      */
     public void calculateTotalPrice() {
-        BigDecimal menuPrice = this.menuPrice != null ? this.menuPrice : BigDecimal.ZERO;
-        Integer quantity = this.quantity != null ? this.quantity : 0;
+        int basePrice = menuPrice * quantity;
+        int optionPrice = calculateOptionPrice();
 
-        BigDecimal basePrice = menuPrice.multiply(BigDecimal.valueOf(quantity));
-        BigDecimal optionPrice = calculateOptionPrice();
-
-        // null 체크 추가
-        if (basePrice == null)
-            basePrice = BigDecimal.ZERO;
-        if (optionPrice == null)
-            optionPrice = BigDecimal.ZERO;
-
-        this.totalPrice = basePrice.add(optionPrice);
+        this.totalPrice = basePrice + optionPrice;
     }
 
     /**
      * 옵션 추가 가격 계산 (수량 반영)
      */
-    private BigDecimal calculateOptionPrice() {
+    private int calculateOptionPrice() {
         if (options == null || options.isEmpty()) {
-            return BigDecimal.ZERO;
+            return 0;
         }
 
         // 옵션 가격의 합계에 수량을 곱함
-        BigDecimal totalOptionPrice = options.stream()
+        int totalOptionPrice = options.stream()
                 .map(OrderItemOption::getAdditionalPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(0, Integer::sum);
 
-        Integer quantity = this.quantity != null ? this.quantity : 0;
-        return totalOptionPrice.multiply(BigDecimal.valueOf(quantity));
+        return totalOptionPrice * quantity;
     }
 
     /**
      * 주문 요청 기반 주문 아이템 생성 (임시 스냅샷)
      */
-    public static OrderItem fromRequest(Order order, OrderRequest.OrderItemRequest itemRequest) {
+    public static OrderItem create(Order order, OrderRequest.OrderItemRequest itemRequest) {
         OrderItem orderItem = new OrderItem();
         orderItem.setOrder(order);
         orderItem.setMenuId(itemRequest.menuId());
+        // TODO: 메뉴 이름 추가
         orderItem.setMenuName("");
-        orderItem.setMenuPrice(BigDecimal.ZERO);
+        // TODO: 메뉴 가격 추가
+        orderItem.setMenuPrice(0);
         orderItem.setQuantity(itemRequest.quantity());
 
-        List<OrderItemOption> options = OrderItemOption.create(orderItem, itemRequest.options());
-        orderItem.setOptions(options);
+        if (itemRequest.options() != null) {
+            List<OrderItemOption> options = itemRequest.options().stream()
+                    .map(optionRequest -> OrderItemOption.create(orderItem, optionRequest))
+                    .toList();
+            orderItem.setOptions(options);
+        }
 
         orderItem.calculateTotalPrice();
         return orderItem;
+    }
+
+    /**
+     * OrderItemResponse로 변환
+     */
+    public OrderResponse.OrderItemResponse toResponse() {
+        return new OrderResponse.OrderItemResponse(
+                this.id,
+                this.menuId,
+                this.menuName,
+                this.menuPrice,
+                this.quantity,
+                this.totalPrice,
+                this.options != null ? this.options.stream()
+                        .map(OrderItemOption::toResponse)
+                        .toList() : List.of());
     }
 }
