@@ -34,7 +34,7 @@ jobs:
             | grep -oE 'msa/[^/]+/' \
             | cut -d'/' -f2 \
             | sort -u \
-            | jq -R . | jq -s .)
+            | jq -R . | jq -cs .
 
           echo "Detected services: $SERVICES"
           echo "services=$SERVICES" >> $GITHUB_OUTPUT
