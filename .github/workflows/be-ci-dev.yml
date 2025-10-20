@@ -2,7 +2,10 @@ name: (develop) Springboot MSA CI - Build & Test
 
 on:
   pull_request:
-    branches: [init/msa-ci]
+    branches: [develop]
+    paths:
+      - "msa/**"
+      - ".github/workflows/**"
 
 env:
   REGISTRY: docker.io
