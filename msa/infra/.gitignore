@@ -1,3 +1,7 @@
+# SSH Keys
+*.pem
+*.key
+
 # Terraform
 **/.terraform/*
 *.tfstate
