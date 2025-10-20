@@ -1,6 +1,9 @@
 # VPC
 resource "aws_vpc" "team02_vpc" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+  
   tags = {
     Name = "team02-vpc"
   }

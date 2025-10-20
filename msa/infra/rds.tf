@@ -31,8 +31,8 @@ resource "aws_db_instance" "team02_mariadb" {
   db_subnet_group_name   = aws_db_subnet_group.team02_db_subnet_group.name
   vpc_security_group_ids = [aws_security_group.team02_rds_security_group.id]
   
-  # RDS 공개 접근
-  publicly_accessible = false
+  # RDS 공개 접근 (개발용)
+  publicly_accessible = true
 
   # 백업 설정
   backup_retention_period = 7

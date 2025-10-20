@@ -35,6 +35,15 @@ resource "aws_security_group" "team02_rds_security_group" {
     description = "Allow from ECS services"
   }
 
+  # 로컬/외부에서 접근 허용 (개발용)
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow from anywhere (dev only)"
+  }
+
   egress {
     from_port   = 0
     to_port     = 0

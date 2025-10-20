@@ -4,6 +4,11 @@ output "rds_endpoint" {
   value       = aws_db_instance.team02_mariadb.endpoint
 }
 
+output "mysql_connect_command" {
+  description = "MySQL command to connect to RDS"
+  value       = "mysql -h ${split(":", aws_db_instance.team02_mariadb.endpoint)[0]} -u ${var.db_username} -p"
+}
+
 output "rds_connection_string" {
   description = "JDBC connection string for Spring Boot"
   value       = "jdbc:mariadb://${aws_db_instance.team02_mariadb.endpoint}/{DB_NAME}?characterEncoding=UTF-8&useUnicode=true&serverTimezone=Asia/Seoul"
