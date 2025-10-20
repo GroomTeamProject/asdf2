@@ -65,13 +65,19 @@ dependencies {
 	implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
 
 	implementation project(':libs:common')
+	implementation project(':libs:dto')
 }
 
 tasks.register("prepareKotlinBuildScriptModel"){}
 
+
 tasks.named('test') {
 	useJUnitPlatform()
 	finalizedBy jacocoTestReport
+}
+
+task wrapper(type: Wrapper) {
+	gradleVersion = '7.0'
 }
 
 jacocoTestReport {
