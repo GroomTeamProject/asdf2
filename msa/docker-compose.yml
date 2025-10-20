@@ -187,6 +187,35 @@ services:
       - kafka
       - user-mariadb
 
+  # Owner Service
+  owner-mariadb:
+    image: mariadb:12.0
+    container_name: msa-owner-mariadb
+    ports:
+      - "33081:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: team02owner
+    volumes:
+      - owner_mariadb_data:/var/lib/mysql
+
+    # Owner Service
+  owner-service:
+    build:
+      context: ./owner-service
+      dockerfile: Dockerfile
+    container_name: msa-owner
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    env_file:
+      - .env.dev
+    depends_on:
+      - kafka
+      - owner-mariadb
+    restart: unless-stopped
+
   # API Gateway
   api-gateway:
     build:
