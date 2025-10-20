@@ -37,6 +37,8 @@ services:
   demo-mariadb:
     image: mariadb:12.0
     container_name: msa-demo-mariadb
+    ports:
+      - "33090:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: team02demo
@@ -61,6 +63,8 @@ services:
   order-mariadb:
     image: mariadb:12.0
     container_name: msa-order-mariadb
+    ports:
+      - "33085:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: team02order
@@ -85,6 +89,8 @@ services:
   review-mariadb:
     image: mariadb:12.0
     container_name: msa-review-mariadb
+    ports:
+      - "33086:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: team02review
@@ -109,6 +115,8 @@ services:
   notification-mariadb:
     image: mariadb:12.0
     container_name: msa-notification-mariadb
+    ports:
+      - "33088:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: team02notification
@@ -133,12 +141,14 @@ services:
   user-mariadb:
     image: mariadb:12.0
     container_name: msa-user-mariadb
+    ports:
+      - "33082:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: team02user
     volumes:
       - user_mariadb_data:/var/lib/mysql
-  
+
   # ✅ User Service
   user-service:
     build:
@@ -152,7 +162,6 @@ services:
     depends_on:
       - kafka
       - user-mariadb
-
 
   # API Gateway
   api-gateway:
@@ -176,6 +185,7 @@ services:
       - notification-service
       - review-service
       - user-service
+
 volumes:
   demo_mariadb_data:
   order_mariadb_data:
