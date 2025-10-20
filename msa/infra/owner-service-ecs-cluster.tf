@@ -31,6 +31,26 @@ resource "aws_ecs_task_definition" "owner_service_task" {
         {
           name  = "SPRING_PROFILES_ACTIVE"
           value = "dev"
+        },
+        {
+          name  = "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE"
+          value = "10"
+        },
+        {
+          name  = "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE"
+          value = "2"
+        },
+        {
+          name  = "SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT"
+          value = "10000"
+        },
+        {
+          name  = "SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT"
+          value = "60000"
+        },
+        {
+          name  = "SPRING_DATASOURCE_HIKARI_MAX_LIFETIME"
+          value = "300000"
         }
       ]
       secrets = [
