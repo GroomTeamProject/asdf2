@@ -1,12 +1,12 @@
-# Order Service Security Group
-resource "aws_security_group" "team02_order_service_security_group" {
-  name        = "team02-order-service-security-group"
-  description = "Allow HTTP to Order Service"
+# Services Security Group
+resource "aws_security_group" "team02_services_security_group" {
+  name        = "team02-services-security-group"
+  description = "Allow HTTP to Services"
   vpc_id      = aws_vpc.team02_vpc.id
 
   ingress {
-    from_port   = 8085
-    to_port     = 8085
+    from_port   = 8080
+    to_port     = 8089
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -19,7 +19,7 @@ resource "aws_security_group" "team02_order_service_security_group" {
   }
 
   tags = {
-    Name = "team02-order-service-security-group"
+    Name = "team02-services-security-group"
   }
 }
 
@@ -62,7 +62,7 @@ resource "aws_security_group" "team02_rds_security_group" {
     to_port   = 3306
     protocol  = "tcp"
     security_groups = [
-      aws_security_group.team02_order_service_security_group.id
+      aws_security_group.team02_services_security_group.id
     ]
     description = "Allow from ECS services"
   }

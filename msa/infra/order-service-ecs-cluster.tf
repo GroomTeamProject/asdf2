@@ -91,7 +91,7 @@ resource "aws_ecs_service" "order_service" {
 
   network_configuration {
     subnets          = [aws_subnet.team02_public_subnet_a.id]
-    security_groups  = [aws_security_group.team02_order_service_security_group.id]
+    security_groups  = [aws_security_group.team02_services_security_group.id]
     assign_public_ip = true
   }
 
