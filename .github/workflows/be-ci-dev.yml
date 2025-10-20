@@ -34,7 +34,7 @@ jobs:
             | grep -oE 'msa/[^/]+/' \
             | cut -d'/' -f2 \
             | sort -u \
-            | jq -R . | jq -s .)
+            | jq -R . | jq -cs .)
 
           echo "Detected services: $SERVICES"
           echo "services=$SERVICES" >> $GITHUB_OUTPUT
@@ -72,7 +72,7 @@ jobs:
       - name: Build & Test ${{ matrix.service }}
         run: |
           cd msa/${{ matrix.service }}
-          ../../gradlew :${{ matrix.service }}:build
+          ../gradlew :${{ matrix.service }}:build
 
       - name: Upload test report
         if: always()
