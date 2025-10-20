@@ -1,19 +1,22 @@
 package io.goorm.team02.core.owner.menus.service;
 
 import io.goorm.team02.core.owner.common.validation.SecureInputValidator;
-import io.goorm.team02.core.owner.menus.controller.dto.menucreate.*;
 import io.goorm.team02.core.owner.menus.domain.Menu;
 import io.goorm.team02.core.owner.menus.domain.MenuCategory;
 import io.goorm.team02.core.owner.menus.domain.MenuOption;
 import io.goorm.team02.core.owner.menus.domain.MenuOptionItem;
 import io.goorm.team02.core.owner.menus.domain.enums.MenuStatus;
+import io.goorm.team02.core.owner.menus.domain.enums.OptionType;
 import io.goorm.team02.core.owner.menus.logging.SecureLogger;
+import io.goorm.team02.core.owner.menus.mapper.MenuMapper;
+import io.goorm.team02.core.owner.menus.mapper.MenuOptionMapper;
 import io.goorm.team02.core.owner.menus.repository.MenuCategoryRepository;
 import io.goorm.team02.core.owner.menus.repository.MenuOptionItemRepository;
 import io.goorm.team02.core.owner.menus.repository.MenuOptionRepository;
 import io.goorm.team02.core.owner.menus.repository.MenuRepository;
 import io.goorm.team02.core.owner.stores.domain.Store;
 import io.goorm.team02.core.owner.stores.domain.TempUser;
+import io.goorm.team02.dto.owner.menus.menucreate.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -39,6 +42,8 @@ public class MenuCrudService {
     private final MenuOptionItemRepository menuOptionItemRepository;
     private final MenuValidationService menuValidationService;
     private final SecureInputValidator inputValidator;
+    private final MenuMapper menuMapper;
+    private final MenuOptionMapper menuOptionMapper;
 
     /**
      * 메뉴 목록 조회
@@ -130,6 +135,9 @@ public class MenuCrudService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 존재하는 메뉴명입니다");
         }
 
+        // String status를 MenuStatus enum으로 변환
+        MenuStatus menuStatus = menuMapper.convertStringToMenuStatus(request.getStatus());
+
         Menu menu = Menu.builder()
                 .store(store)
                 .category(category)
@@ -139,7 +147,7 @@ public class MenuCrudService {
                 .imageUrl(request.getImageUrl())
                 .isPopular(request.getIsPopular() != null ? request.getIsPopular() : false)
                 .isRecommended(request.getIsRecommended() != null ? request.getIsRecommended() : false)
-                .status(request.getStatus())
+                .status(menuStatus) // 변환된 enum 사용
                 .displayOrder(request.getDisplayOrder() != null ? request.getDisplayOrder() : 0)
                 .build();
 
@@ -246,10 +254,14 @@ public class MenuCrudService {
             hasChanges = true;
         }
 
-        if (request.getStatus() != null && !request.getStatus().equals(menu.getStatus())) {
-            changes.add("상태: " + menu.getStatus() + " -> " + request.getStatus());
-            menu.updateStatus(request.getStatus());
-            hasChanges = true;
+        // String status를 MenuStatus enum으로 변환
+        if (request.getStatus() != null) {
+            MenuStatus newStatus = menuMapper.convertStringToMenuStatus(request.getStatus());
+            if (!newStatus.equals(menu.getStatus())) {
+                changes.add("상태: " + menu.getStatus() + " -> " + newStatus);
+                menu.updateStatus(newStatus);
+                hasChanges = true;
+            }
         }
 
         if (request.getDisplayOrder() != null && !request.getDisplayOrder().equals(menu.getDisplayOrder())) {
@@ -321,8 +333,11 @@ public class MenuCrudService {
      */
     @Transactional
     public Menu updateMenuStatus(TempUser currentUser, Long menuId, MenuStatusRequest request) {
+        // String status를 MenuStatus enum으로 변환
+        MenuStatus newStatus = menuMapper.convertStringToMenuStatus(request.getStatus());
+
         SecureLogger.logSecurely(log, "info", "=== 메뉴 상태 변경 시작 - 사용자 ID: {}, 메뉴 ID: {}, 새 상태: {} ===",
-                currentUser.getId(), menuId, request.getStatus());
+                currentUser.getId(), menuId, newStatus);
 
         Store store = menuValidationService.getMyStore(currentUser);
 
@@ -337,17 +352,17 @@ public class MenuCrudService {
         validateMenuStatusRequest(request, menu);
 
         // 현재 상태와 동일한지 확인
-        if (menu.getStatus() == request.getStatus()) {
+        if (menu.getStatus() == newStatus) {
             SecureLogger.logSecurely(log, "info", "메뉴 상태 변경 - 동일한 상태 - 사용자 ID: {}, 메뉴 ID: {}, 상태: {}",
-                    currentUser.getId(), menuId, request.getStatus());
+                    currentUser.getId(), menuId, newStatus);
             return menu;
         }
 
         // 상태 변경 전 검증
-        validateStatusTransition(menu.getStatus(), request.getStatus(), menu);
+        validateStatusTransition(menu.getStatus(), newStatus, menu);
 
         MenuStatus previousStatus = menu.getStatus();
-        menu.updateStatus(request.getStatus());
+        menu.updateStatus(newStatus);
 
         // 상태 변경 로그 기록 (보안 로깅 적용)
         logStatusChangeSecurely(currentUser, menu, previousStatus, request);
@@ -359,6 +374,7 @@ public class MenuCrudService {
 
         return savedMenu;
     }
+
 
     /**
      * 메뉴 순서 변경
@@ -575,10 +591,13 @@ public class MenuCrudService {
             MenuOptionCreateRequest optionRequest = optionRequests.get(i);
 
             try {
+                // String type을 OptionType enum으로 변환
+                OptionType optionType = menuOptionMapper.convertStringToOptionType(optionRequest.getType());
+
                 MenuOption menuOption = MenuOption.builder()
                         .menu(menu)
                         .name(optionRequest.getName())
-                        .type(optionRequest.getType())
+                        .type(optionType) // 변환된 enum 사용
                         .isRequired(optionRequest.getIsRequired() != null ? optionRequest.getIsRequired() : false)
                         .displayOrder(optionRequest.getDisplayOrder() != null ? optionRequest.getDisplayOrder() : i)
                         .build();
@@ -660,6 +679,7 @@ public class MenuCrudService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "옵션 아이템 생성 중 오류가 발생했습니다");
         }
     }
+
 
     /**
      * 보안 감사를 위한 중요 작업 로깅

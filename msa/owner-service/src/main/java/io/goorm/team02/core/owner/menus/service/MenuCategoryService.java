@@ -1,15 +1,18 @@
 package io.goorm.team02.core.owner.menus.service;
 
-import io.goorm.team02.core.owner.menus.controller.dto.categorycreate.CategoryMoveRequest;
-import io.goorm.team02.core.owner.menus.controller.dto.categorycreate.MenuCategoryCreateRequest;
-import io.goorm.team02.core.owner.menus.controller.dto.categorycreate.MenuCategoryUpdateRequest;
+
 import io.goorm.team02.core.owner.menus.domain.Menu;
 import io.goorm.team02.core.owner.menus.domain.MenuCategory;
 import io.goorm.team02.core.owner.menus.domain.enums.MenuStatus;
+import io.goorm.team02.core.owner.menus.mapper.MenuCategoryMapper;
 import io.goorm.team02.core.owner.menus.repository.MenuCategoryRepository;
 import io.goorm.team02.core.owner.menus.repository.MenuRepository;
 import io.goorm.team02.core.owner.stores.domain.Store;
 import io.goorm.team02.core.owner.stores.domain.TempUser;
+import io.goorm.team02.dto.owner.menus.categorycreate.CategoryMoveRequest;
+import io.goorm.team02.dto.owner.menus.categorycreate.MenuCategoryCreateRequest;
+import io.goorm.team02.dto.owner.menus.categorycreate.MenuCategoryResponse;
+import io.goorm.team02.dto.owner.menus.categorycreate.MenuCategoryUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -29,20 +32,43 @@ public class MenuCategoryService {
     private final MenuCategoryRepository menuCategoryRepository;
     private final MenuRepository menuRepository;
     private final MenuValidationService menuValidationService;
+    private final MenuCategoryMapper menuCategoryMapper;
 
     /**
-     * 메뉴 카테고리 목록 조회
+     * 메뉴 카테고리 목록 조회 - Response DTO 반환
+     */
+    public List<MenuCategoryResponse> getMenuCategoriesResponse(TempUser currentUser) {
+        log.info("=== 메뉴 카테고리 목록 조회 시작 ===");
+
+        Store store = menuValidationService.getMyStore(currentUser);
+        List<MenuCategory> categories = menuCategoryRepository.findByStoreIdOrderByDisplayOrderAsc(store.getId());
+
+        log.info("메뉴 카테고리 조회 완료 - 총 {}개 카테고리", categories.size());
+        return menuCategoryMapper.toResponseList(categories);
+    }
+
+    /**
+     * 기존 메뉴 카테고리 목록 조회 (Entity 반환) - 내부용
      */
     public List<MenuCategory> getMenuCategories(TempUser currentUser) {
         log.info("=== 메뉴 카테고리 목록 조회 시작 ===");
 
         Store store = menuValidationService.getMyStore(currentUser);
-
         List<MenuCategory> categories = menuCategoryRepository.findByStoreIdOrderByDisplayOrderAsc(store.getId());
 
         log.info("메뉴 카테고리 조회 완료 - 총 {}개 카테고리", categories.size());
         return categories;
     }
+
+    /**
+     * 메뉴 카테고리 등록 - Response DTO 반환
+     */
+    @Transactional
+    public MenuCategoryResponse createCategoryResponse(TempUser currentUser, MenuCategoryCreateRequest request) {
+        MenuCategory savedCategory = createCategory(currentUser, request);
+        return menuCategoryMapper.toResponse(savedCategory);
+    }
+
 
     /**
      * 메뉴 카테고리 등록

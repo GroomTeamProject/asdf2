@@ -2,12 +2,13 @@ package io.goorm.team02.core.owner.menus.controller;
 
 
 import io.goorm.team02.core.owner.auth.annotation.CurrentUser;
-import io.goorm.team02.core.owner.menus.controller.dto.categorycreate.CategoryMoveRequest;
-import io.goorm.team02.core.owner.menus.controller.dto.categorycreate.MenuCategoryCreateRequest;
-import io.goorm.team02.core.owner.menus.controller.dto.categorycreate.MenuCategoryResponse;
-import io.goorm.team02.core.owner.menus.controller.dto.categorycreate.MenuCategoryUpdateRequest;
-import io.goorm.team02.core.owner.menus.controller.dto.menucreate.*;
+
 import io.goorm.team02.core.owner.stores.domain.TempUser;
+import io.goorm.team02.dto.owner.menus.categorycreate.CategoryMoveRequest;
+import io.goorm.team02.dto.owner.menus.categorycreate.MenuCategoryCreateRequest;
+import io.goorm.team02.dto.owner.menus.categorycreate.MenuCategoryResponse;
+import io.goorm.team02.dto.owner.menus.categorycreate.MenuCategoryUpdateRequest;
+import io.goorm.team02.dto.owner.menus.menucreate.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
