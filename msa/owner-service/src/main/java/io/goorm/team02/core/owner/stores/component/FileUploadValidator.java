@@ -1,6 +1,6 @@
 package io.goorm.team02.core.owner.stores.component;
 
-import io.goorm.team02.core.owner.stores.controller.dto.FileValidationResult;
+import io.goorm.team02.core.owner.stores.controller.FileValidationResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;

@@ -1,10 +1,19 @@
 package io.goorm.team02.core.owner.stores.controller;
 
 import io.goorm.team02.core.owner.auth.annotation.CurrentUser;
-import io.goorm.team02.core.owner.stores.controller.dto.dashboard.StoreDashboardResponse;
-import io.goorm.team02.core.owner.stores.controller.dto.storemanagement.*;
-import io.goorm.team02.core.owner.stores.domain.Store;
-import io.goorm.team02.core.owner.stores.domain.StoreHour;
+import io.goorm.team02.dto.owner.stores.storemanagement.StoreCreateRequest;
+import io.goorm.team02.dto.owner.stores.storemanagement.StoreUpdateRequest;
+import io.goorm.team02.dto.owner.stores.storemanagement.StoreResponse;
+import io.goorm.team02.dto.owner.stores.storemanagement.StoreContactRequest;
+import io.goorm.team02.dto.owner.stores.storemanagement.StoreDeliveryRequest;
+import io.goorm.team02.dto.owner.stores.storemanagement.StoreLocationRequest;
+import io.goorm.team02.dto.owner.stores.storemanagement.StoreHourRequest;
+import io.goorm.team02.dto.owner.stores.storemanagement.StoreHourResponse;
+import io.goorm.team02.dto.owner.stores.storemanagement.StoreHolidayRequest;
+import io.goorm.team02.dto.owner.stores.storemanagement.StoreHolidayResponse;
+import io.goorm.team02.dto.owner.stores.storemanagement.StoreStatusRequest;
+import io.goorm.team02.dto.owner.stores.storemanagement.StoreStatusResponse;
+import io.goorm.team02.dto.owner.stores.storemanagement.StoreStatusModifyResponse;
 import io.goorm.team02.core.owner.stores.domain.TempUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -41,10 +50,10 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "409", description = "이미 등록된 가게가 있음")
     })
-    Store createStore(
-            @Parameter(hidden = true) @CurrentUser TempUser currentUser,
-            @Parameter(description = "가게 생성 요청 정보", required = true)
-            @RequestBody StoreCreateRequest request
+    ResponseEntity<StoreResponse> createStore( // Store -> ResponseEntity<StoreResponse>로 변경
+                                               @Parameter(hidden = true) @CurrentUser TempUser currentUser,
+                                               @Parameter(description = "가게 생성 요청 정보", required = true)
+                                               @RequestBody StoreCreateRequest request
     );
 
     @Operation(summary = "내 가게 정보 조회", description = "현재 사용자의 가게 정보를 조회합니다")
@@ -181,10 +190,10 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
-    List<StoreHourResponse> updateStoreHours(
-            @Parameter(hidden = true) @CurrentUser TempUser currentUser,
-            @Parameter(description = "요일 (0:일요일, 1:월요일, ..., 6:토요일, 7:일괄)", required = true)
-            @RequestBody List<StoreHourRequest> requests
+    ResponseEntity<List<StoreHourResponse>> updateStoreHours( // List<StoreHourResponse> -> ResponseEntity<List<StoreHourResponse>>로 변경
+                                                              @Parameter(hidden = true) @CurrentUser TempUser currentUser,
+                                                              @Parameter(description = "요일 (0:일요일, 1:월요일, ..., 6:토요일, 7:일괄)", required = true)
+                                                              @RequestBody List<StoreHourRequest> requests
     );
 
     // ================================
@@ -213,8 +222,8 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
-    List<StoreHolidayResponse> getHolidays(
-            @Parameter(hidden = true) @CurrentUser TempUser currentUser
+    ResponseEntity<List<StoreHolidayResponse>> getHolidays( // List<StoreHolidayResponse> -> ResponseEntity<List<StoreHolidayResponse>>로 변경
+                                                            @Parameter(hidden = true) @CurrentUser TempUser currentUser
     );
 
     @Operation(summary = "휴무일 삭제", description = "등록된 휴무일을 삭제합니다")
