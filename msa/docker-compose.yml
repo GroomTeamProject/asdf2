@@ -169,16 +169,19 @@ services:
       ORDER_SERVICE_URL: http://order-service:8085
       REVIEW_SERVICE_URL: http://review-service:8086
       NOTIFICATION_SERVICE_URL: http://notification-service:8088
+      USER_SERVICE_URL: http://user-service:8082
     depends_on:
       - demo-service
       - order-service
       - notification-service
       - review-service
+      - user-service
 volumes:
   demo_mariadb_data:
   order_mariadb_data:
   review_mariadb_data:
   notification_mariadb_data:
+  user_mariadb_data:
 
 networks:
   default:

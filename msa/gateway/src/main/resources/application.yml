@@ -47,10 +47,11 @@ spring:
               predicates:
                 - Path=/owner/swagger-ui.html
 
-            - id: user-service                
-              uri: ${USER_SERVICE_URL:http://localhost:8082}
+            - id: user-service
+              uri: ${USER_SERVICE_URL:http://msa-user:8082}
               predicates:
-                - Path=/api/users/** , /api/auth/**,
+                - Path=/api/users/**
+                - Path=/api/auth/**
 
 # Logging
 logging:
