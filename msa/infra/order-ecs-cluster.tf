@@ -28,6 +28,32 @@ resource "aws_ecs_task_definition" "order_service_task" {
           value = "dev"
         }
       ]
+      secrets = [
+        {
+          name      = "ORDER_SERVICE_DB_URL"
+          valueFrom = "${data.aws_secretsmanager_secret.team02_secret.arn}:ORDER_SERVICE_DB_URL::"
+        },
+        {
+          name      = "ORDER_SERVICE_DB_USERNAME"
+          valueFrom = "${data.aws_secretsmanager_secret.team02_secret.arn}:ORDER_SERVICE_DB_USERNAME::"
+        },
+        {
+          name      = "ORDER_SERVICE_DB_PASSWORD"
+          valueFrom = "${data.aws_secretsmanager_secret.team02_secret.arn}:ORDER_SERVICE_DB_PASSWORD::"
+        },
+        {
+          name      = "KAFKA_BOOTSTRAP_SERVERS"
+          valueFrom = "${data.aws_secretsmanager_secret.team02_secret.arn}:KAFKA_BOOTSTRAP_SERVERS::"
+        },
+        {
+          name      = "MSA_GATEWAY_URL"
+          valueFrom = "${data.aws_secretsmanager_secret.team02_secret.arn}:MSA_GATEWAY_URL::"
+        },
+        {
+          name      = "JWT_SECRET"
+          valueFrom = "${data.aws_secretsmanager_secret.team02_secret.arn}:JWT_SECRET::"
+        }
+      ]
     }
   ])
 }
@@ -45,31 +71,4 @@ resource "aws_ecs_service" "order_service" {
     assign_public_ip = true
   }
 
-  service_registries {
-    registry_arn = aws_service_discovery_service.order_service.arn
-  }
-}
-
-resource "aws_service_discovery_private_dns_namespace" "team02_namespace" {
-  name = "team02.local"
-  vpc  = aws_vpc.team02_vpc.id
-}
-
-resource "aws_service_discovery_service" "order_service" {
-  name = "order-service"
-
-  dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.team02_namespace.id
-
-    dns_records {
-      ttl  = 10
-      type = "A"
-    }
-
-    routing_policy = "MULTIVALUE"
-  }
-
-  health_check_custom_config {
-    failure_threshold = 1
-  }
 }
