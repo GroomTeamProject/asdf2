@@ -6,8 +6,8 @@ resource "aws_ecs_task_definition" "order_service_task" {
   family                   = "order-service"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = "256"
-  memory                   = "512"
+  cpu                      = "512"
+  memory                   = "1024"
   execution_role_arn       = aws_iam_role.ecs_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_execution_role.arn
 
@@ -67,6 +67,25 @@ resource "aws_ecs_task_definition" "order_service_task" {
   ])
 }
 
+resource "aws_service_discovery_service" "order_service" {
+  name = "order-service"
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.team02_namespace.id
+
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+
+    routing_policy = "MULTIVALUE"
+  }
+
+  health_check_custom_config {
+    failure_threshold = 1
+  }
+}
+
 resource "aws_ecs_service" "order_service" {
   name            = "order-service"
   cluster         = aws_ecs_cluster.team02_cluster.id
@@ -80,4 +99,7 @@ resource "aws_ecs_service" "order_service" {
     assign_public_ip = true
   }
 
+  service_registries {
+    registry_arn = aws_service_discovery_service.order_service.arn
+  }
 }
