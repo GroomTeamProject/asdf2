@@ -72,7 +72,7 @@ jobs:
       - name: Build & Test ${{ matrix.service }}
         run: |
           cd msa/${{ matrix.service }}
-          ../../gradlew :${{ matrix.service }}:build
+          ../gradlew :${{ matrix.service }}:build
 
       - name: Upload test report
         if: always()
