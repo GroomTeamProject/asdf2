@@ -1,4 +1,4 @@
-package io.goorm.team02.core;
+package io.goorm.team02.users;
 
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
