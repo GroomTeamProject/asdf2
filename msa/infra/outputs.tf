@@ -50,3 +50,23 @@ output "order_service_discovery" {
   description = "Order Service Discovery DNS"
   value       = "order-service.team02.local:8085"
 }
+
+output "user_service_discovery" {
+  description = "User Service Discovery DNS"
+  value       = "user-service.team02.local:8082"
+}
+
+output "owner_service_discovery" {
+  description = "Owner Service Discovery DNS"
+  value       = "owner-service.team02.local:8081"
+}
+
+output "review_service_discovery" {
+  description = "Review Service Discovery DNS"
+  value       = "review-service.team02.local:8086"
+}
+
+output "notification_service_discovery" {
+  description = "Notification Service Discovery DNS"
+  value       = "notification-service.team02.local:8088"
+}
