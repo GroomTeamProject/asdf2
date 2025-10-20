@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8082
 spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
@@ -13,6 +13,8 @@ spring:
       dialect: org.hibernate.dialect.MariaDBDialect
   flyway:
     enabled: false # 수동으로 Bean을 등록하기 위해 비활성화
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
 
 cloud:
   aws:
@@ -29,3 +31,11 @@ cloud:
 jwt:
   secret: ${JWT_SECRET}
   expiration: 3600000
+<<<<<<< HEAD
+=======
+
+msa:
+  gateway:
+    url: ${MSA_GATEWAY_URL}
+
+>>>>>>> 1459f24 (fix:application.yml 수정)
