@@ -11,10 +11,17 @@ spring:
           globalcors:
             cors-configurations:
               "[/**]":
-                allowedOrigins: "*"
-                allowedMethods: "*"
+                allowedOrigins: 
+                  - "http://localhost:5173"
+                allowedMethods: 
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - PATCH
+                  - OPTIONS
                 allowedHeaders: "*"
-                allowCredentials: false
+                allowCredentials: true
           routes:
             - id: demo-service
               uri: ${DEMO_SERVICE_URL:http://demo-service:8090}
@@ -47,10 +54,11 @@ spring:
               predicates:
                 - Path=/owner/swagger-ui.html
 
-            - id: user-service                
-              uri: ${USER_SERVICE_URL:http://localhost:8082}
+            - id: user-service
+              uri: ${USER_SERVICE_URL:http://msa-user:8082}
               predicates:
-                - Path=/api/users/** , /api/auth/**,
+                - Path=/api/users/**
+                - Path=/api/auth/**
 
 # Logging
 logging:
