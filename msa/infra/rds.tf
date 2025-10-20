@@ -1,42 +1,3 @@
-resource "aws_db_parameter_group" "team02_mariadb_params" {
-  name   = "team02-mariadb-params"
-  family = "mariadb11.4"
-
-  parameter {
-    name  = "collation_server"
-    value = "utf8mb4_general_ci"
-  }
-
-  parameter {
-    name  = "character_set_server"
-    value = "utf8mb4"
-  }
-
-  parameter {
-    name  = "character_set_client"
-    value = "utf8mb4"
-  }
-
-  parameter {
-    name  = "character_set_connection"
-    value = "utf8mb4"
-  }
-
-  parameter {
-    name  = "character_set_database"
-    value = "utf8mb4"
-  }
-
-  parameter {
-    name  = "character_set_results"
-    value = "utf8mb4"
-  }
-
-  tags = {
-    Name = "team02-mariadb-params"
-  }
-}
-
 # RDS Subnet Group
 resource "aws_db_subnet_group" "team02_db_subnet_group" {
   name = "team02-db-subnet-group"
@@ -47,35 +8,6 @@ resource "aws_db_subnet_group" "team02_db_subnet_group" {
 
   tags = {
     Name = "team02-db-subnet-group"
-  }
-}
-
-# RDS Security Group
-resource "aws_security_group" "team02_rds_security_group" {
-  name        = "team02-rds-security-group"
-  description = "Security group for RDS MariaDB"
-  vpc_id      = aws_vpc.team02_vpc.id
-
-  # ECS 서비스들로부터의 접근 허용
-  ingress {
-    from_port = 3306
-    to_port   = 3306
-    protocol  = "tcp"
-    security_groups = [
-      aws_security_group.team02_security_group.id
-    ]
-    description = "Allow from ECS services"
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "team02-rds-security-group"
   }
 }
 
@@ -98,6 +30,9 @@ resource "aws_db_instance" "team02_mariadb" {
   # 네트워크 설정
   db_subnet_group_name   = aws_db_subnet_group.team02_db_subnet_group.name
   vpc_security_group_ids = [aws_security_group.team02_rds_security_group.id]
+  
+  # RDS 공개 접근
+  publicly_accessible = false
 
   # 백업 설정
   backup_retention_period = 7
@@ -112,16 +47,4 @@ resource "aws_db_instance" "team02_mariadb" {
     Name        = "team02-mariadb"
     Environment = "dev"
   }
-}
-
-# outputs 
-output "rds_endpoint" {
-  description = "RDS instance endpoint"
-  value       = aws_db_instance.team02_mariadb.endpoint
-}
-
-output "rds_connection_string" {
-  description = "JDBC connection string for Spring Boot"
-  value       = "jdbc:mariadb://${aws_db_instance.team02_mariadb.endpoint}/{DB_NAME}?characterEncoding=UTF-8&useUnicode=true&serverTimezone=Asia/Seoul"
-  sensitive   = false
 }

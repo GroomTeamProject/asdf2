@@ -1,0 +1,36 @@
+# RDS Outputs
+output "rds_endpoint" {
+  description = "RDS instance endpoint"
+  value       = aws_db_instance.team02_mariadb.endpoint
+}
+
+output "rds_connection_string" {
+  description = "JDBC connection string for Spring Boot"
+  value       = "jdbc:mariadb://${aws_db_instance.team02_mariadb.endpoint}/{DB_NAME}?characterEncoding=UTF-8&useUnicode=true&serverTimezone=Asia/Seoul"
+}
+
+# Kafka Outputs  
+output "kafka_public_ip" {
+  description = "Kafka EC2 Public IP"
+  value       = aws_instance.kafka.public_ip
+}
+
+output "kafka_private_ip" {
+  description = "Kafka EC2 Private IP"
+  value       = aws_instance.kafka.private_ip
+}
+
+output "kafka_ui_url" {
+  description = "Kafka UI URL"
+  value       = "http://${aws_instance.kafka.public_ip}:9001"
+}
+
+output "kafka_bootstrap_servers" {
+  description = "Kafka Bootstrap Servers (for ECS services)"
+  value       = "kafka.team02.local:9092"
+}
+
+output "kafka_ssh_command" {
+  description = "SSH command to connect to Kafka EC2"
+  value       = "ssh -i ~/.ssh/ec2_key_kafka.pem ubuntu@${aws_instance.kafka.public_ip}"
+}

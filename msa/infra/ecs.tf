@@ -56,21 +56,3 @@ resource "aws_iam_role_policy" "ecs_secrets_policy" {
   })
 }
 
-# Secrets Manager Secret Data Source
-data "aws_secretsmanager_secret" "team02_secret" {
-  name = "team02-secret"
-}
-
-data "aws_secretsmanager_secret_version" "team02_secret" {
-  secret_id = data.aws_secretsmanager_secret.team02_secret.id
-}
-
-# Service Discovery Namespace (VPC 내부 DNS)
-resource "aws_service_discovery_private_dns_namespace" "team02_namespace" {
-  name = "team02.local"
-  vpc  = aws_vpc.team02_vpc.id
-
-  tags = {
-    Name = "team02-namespace"
-  }
-}

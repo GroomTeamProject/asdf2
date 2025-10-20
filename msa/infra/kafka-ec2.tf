@@ -56,15 +56,27 @@ resource "aws_security_group" "kafka_security_group" {
   }
 }
 
+# Kafka 고정 Private IP를 위한 ENI
+resource "aws_network_interface" "kafka_eni" {
+  subnet_id       = aws_subnet.team02_public_subnet_a.id
+  private_ips     = ["10.0.1.100"]  # 고정 IP
+  security_groups = [aws_security_group.kafka_security_group.id]
+
+  tags = {
+    Name = "team02-kafka-eni"
+  }
+}
+
 # Kafka EC2 Instance
 resource "aws_instance" "kafka" {
   ami           = "ami-0c9c942bd7bf113a2"  # Ubuntu 22.04 LTS (ap-northeast-2)
   instance_type = "t3.small"  # 1 vCPU, 2GB RAM (트래픽 적음)
   key_name      = "ec2_key_kafka"  # AWS 콘솔에서 수동으로 생성 (필수!)
-  
-  subnet_id                   = aws_subnet.team02_public_subnet_a.id
-  vpc_security_group_ids      = [aws_security_group.kafka_security_group.id]
-  associate_public_ip_address = true
+
+  network_interface {
+    network_interface_id = aws_network_interface.kafka_eni.id
+    device_index         = 0
+  }
 
   # 스토리지 (Kafka 데이터용)
   root_block_device {
@@ -132,33 +144,7 @@ resource "aws_service_discovery_instance" "kafka_instance" {
   service_id  = aws_service_discovery_service.kafka_service.id
 
   attributes = {
-    AWS_INSTANCE_IPV4 = aws_instance.kafka.private_ip
+    AWS_INSTANCE_IPV4 = "10.0.1.100"  # 고정 IP
   }
-}
-
-# Outputs
-output "kafka_public_ip" {
-  description = "Kafka EC2 Public IP"
-  value       = aws_instance.kafka.public_ip
-}
-
-output "kafka_private_ip" {
-  description = "Kafka EC2 Private IP"
-  value       = aws_instance.kafka.private_ip
-}
-
-output "kafka_ui_url" {
-  description = "Kafka UI URL"
-  value       = "http://${aws_instance.kafka.public_ip}:9001"
-}
-
-output "kafka_bootstrap_servers" {
-  description = "Kafka Bootstrap Servers (for ECS services)"
-  value       = "kafka:9092"
-}
-
-output "kafka_ssh_command" {
-  description = "SSH command to connect to Kafka EC2"
-  value       = "ssh -i ~/.ssh/ec2_key_kafka.pem ubuntu@${aws_instance.kafka.public_ip}"
 }
 
