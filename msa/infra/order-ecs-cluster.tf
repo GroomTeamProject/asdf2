@@ -44,4 +44,32 @@ resource "aws_ecs_service" "order_service" {
     security_groups  = [aws_security_group.team02_security_group.id]
     assign_public_ip = true
   }
+
+  service_registries {
+    registry_arn = aws_service_discovery_service.order_service.arn
+  }
+}
+
+resource "aws_service_discovery_private_dns_namespace" "team02_namespace" {
+  name = "team02.local"
+  vpc  = aws_vpc.team02_vpc.id
+}
+
+resource "aws_service_discovery_service" "order_service" {
+  name = "order-service"
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.team02_namespace.id
+
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+
+    routing_policy = "MULTIVALUE"
+  }
+
+  health_check_custom_config {
+    failure_threshold = 1
+  }
 }
