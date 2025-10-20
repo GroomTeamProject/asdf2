@@ -1,4 +1,4 @@
-package io.goorm.team02.core.owner.stores.controller.dto;
+package io.goorm.team02.core.owner.stores.controller;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

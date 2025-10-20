@@ -1,6 +1,6 @@
 package io.goorm.team02.core.owner.stores.controller;
 
-import io.goorm.team02.core.owner.stores.controller.dto.storemanagement.StoreResponse;
+import io.goorm.team02.dto.owner.stores.storemanagement.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
