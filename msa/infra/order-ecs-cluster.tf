@@ -22,6 +22,15 @@ resource "aws_ecs_task_definition" "order_service_task" {
           hostPort      = 8085
         }
       ]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = "/ecs/order-service"
+          "awslogs-region"        = "ap-northeast-2"
+          "awslogs-stream-prefix" = "ecs"
+          "awslogs-create-group"  = "true"
+        }
+      }
       environment = [
         {
           name  = "SPRING_PROFILES_ACTIVE"
