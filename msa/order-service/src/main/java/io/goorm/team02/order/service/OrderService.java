@@ -19,8 +19,6 @@ import io.goorm.team02.kafka.client.EventPublisher;
 import io.goorm.team02.order.client.StoreServiceClient;
 import io.goorm.team02.order.event.OrderCreatedEvent;
 
-import java.math.BigDecimal;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -59,7 +57,7 @@ public class OrderService {
 
         // 3. Order 도메인에 생성 요청
         // TODO: 실제 배달비 사용
-        Order order = Order.create(orderRequest, userId, orderRequest.storeId(), BigDecimal.ZERO);
+        Order order = Order.create(orderRequest, userId, orderRequest.storeId(), 0);
 
         // 4. 저장
         Order savedOrder = orderRepository.save(order);
@@ -134,7 +132,7 @@ public class OrderService {
         orders.forEach(this::loadOrderDetails);
 
         return orders.stream()
-                .map(Order::toOrderResponse)
+                .map(Order::toResponse)
                 .toList();
     }
 

@@ -1,4 +1,4 @@
-package io.goorm.team02.demo;
+package io.goorm.team02.review;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ActiveProfiles;

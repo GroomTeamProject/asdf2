@@ -14,12 +14,12 @@ public record OrderAcceptRequest(
     @NotNull(message = "최소 조리 시간은 필수입니다")
     @Min(value = 1, message = "최소 조리 시간은 1분 이상이어야 합니다")
     @Max(value = 180, message = "최소 조리 시간은 180분 이하여야 합니다")
-    Integer minCookingTime,
+    int minCookingTime,
     
     @Schema(description = "최대 조리 시간 (분)", example = "40")
     @NotNull(message = "최대 조리 시간은 필수입니다")
     @Min(value = 1, message = "최대 조리 시간은 1분 이상이어야 합니다")
     @Max(value = 180, message = "최대 조리 시간은 180분 이하여야 합니다")
-    Integer maxCookingTime
+    int maxCookingTime
 ) {
 }
