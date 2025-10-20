@@ -54,6 +54,10 @@ resource "aws_ecs_task_definition" "gateway_task" {
           name  = "NOTIFICATION_SERVICE_URL"
           valueFrom = "${data.aws_secretsmanager_secret.team02_secret.arn}:NOTIFICATION_SERVICE_URL::"
         },
+        {
+          name  = "DELIVERY_SERVICE_URL"
+          valueFrom = "${data.aws_secretsmanager_secret.team02_secret.arn}:DELIVERY_SERVICE_URL::"
+        },
       ]
     }
   ])
