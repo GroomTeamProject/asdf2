@@ -5,11 +5,8 @@ import io.goorm.team02.payment.dto.PaymentConfirmRequest;
 import io.goorm.team02.payment.dto.PaymentResponse;
 import io.goorm.team02.payment.service.PaymentService;
 import io.goorm.team02.payment.event.PaymentEventPublisher;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import io.goorm.team02.common.dto.ApiResponse;  // 공용 DTO import
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -28,7 +25,7 @@ public class PaymentController {
     }
 
     @PostMapping("/callback")
-    public ResponseEntity<?> confirmPayment(@RequestBody PaymentConfirmRequest request) {
+    public ApiResponse<PaymentResponse> confirmPayment(@RequestBody PaymentConfirmRequest request) {
         System.out.println("==== 결제 콜백 요청 데이터 확인 ====");
         System.out.println("paymentKey: " + request.getPaymentKey());
         System.out.println("orderId: " + request.getOrderId());
@@ -39,14 +36,13 @@ public class PaymentController {
             // 1. 주문 상태 조회
             var order = orderServiceClient.getOrderById(request.getOrderId());
             if (!"CREATED".equals(order.getStatus())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of("error", "결제를 진행할 수 없는 주문 상태", "orderStatus", order.getStatus()));
+                return ApiResponse.fail("결제를 진행할 수 없는 주문 상태: " + order.getStatus());
             }
 
             // 2. 결제 승인 처리
             PaymentResponse response = paymentService.confirmPayment(request);
 
-            // 3. 결제 성공 이벤트 발행
+            // 3. 결제 성공/실패 이벤트 발행
             if ("COMPLETED".equals(response.getStatus())) {
                 eventPublisher.publishPaymentCompleted(response);
             } else if ("FAILED".equals(response.getStatus())) {
@@ -57,7 +53,7 @@ public class PaymentController {
             System.out.println(response);
             System.out.println("=========================");
 
-            return ResponseEntity.ok(response);
+            return ApiResponse.ok(response);
 
         } catch (Exception e) {
             System.out.println("==== 결제 승인 실패 ====");
@@ -76,11 +72,7 @@ public class PaymentController {
                     "TOSS"
             ));
 
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of(
-                            "error", "결제 승인 실패",
-                            "detail", e.getMessage()
-                    ));
+            return ApiResponse.fail("결제 승인 실패: " + e.getMessage());
         }
     }
 }

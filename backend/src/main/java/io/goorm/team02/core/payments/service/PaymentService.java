@@ -81,7 +81,7 @@ public class PaymentService {
                 .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다"));
 
 
-        // Payment 생성
+        // Payment.java 생성
         Payment payment = new Payment();
         payment.setOrder(latestOrder); // Order 연결
         payment.setAmount(BigDecimal.valueOf(request.getAmount())); // int → BigDecimal 변환
