@@ -1,3 +1,7 @@
+resource "aws_ecs_cluster" "team02_cluster" {
+  name = "team02-cluster"
+}
+
 resource "aws_iam_role" "ecs_execution_role" {
   name = "ecsTaskExecutionRole"
 

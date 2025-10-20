@@ -1,3 +1,4 @@
+# RDS Parameter Group
 resource "aws_db_parameter_group" "team02_mariadb_params" {
   name   = "team02-mariadb-params"
   family = "mariadb11.4"

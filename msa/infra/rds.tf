@@ -1,16 +1,3 @@
-# RDS Subnet Group
-resource "aws_db_subnet_group" "team02_db_subnet_group" {
-  name = "team02-db-subnet-group"
-  subnet_ids = [
-    aws_subnet.team02_public_subnet_a.id,
-    aws_subnet.team02_public_subnet_b.id
-  ]
-
-  tags = {
-    Name = "team02-db-subnet-group"
-  }
-}
-
 # RDS Instance - MariaDB
 resource "aws_db_instance" "team02_mariadb" {
   identifier     = "team02-mariadb"
@@ -48,3 +35,17 @@ resource "aws_db_instance" "team02_mariadb" {
     Environment = "dev"
   }
 }
+
+# RDS Subnet Group
+resource "aws_db_subnet_group" "team02_db_subnet_group" {
+  name = "team02-db-subnet-group"
+  subnet_ids = [
+    aws_subnet.team02_public_subnet_a.id,
+    aws_subnet.team02_public_subnet_b.id
+  ]
+
+  tags = {
+    Name = "team02-db-subnet-group"
+  }
+}
+

@@ -10,7 +10,7 @@ resource "aws_security_group" "kafka_security_group" {
     to_port     = 9092
     protocol    = "tcp"
     security_groups = [
-      aws_security_group.team02_security_group.id
+      aws_security_group.team02_order_service_security_group.id
     ]
     description = "Kafka from ECS services"
   }
@@ -21,7 +21,7 @@ resource "aws_security_group" "kafka_security_group" {
     to_port     = 2181
     protocol    = "tcp"
     security_groups = [
-      aws_security_group.team02_security_group.id
+      aws_security_group.team02_order_service_security_group.id
     ]
     description = "Zookeeper from ECS services"
   }
