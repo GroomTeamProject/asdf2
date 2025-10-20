@@ -18,6 +18,36 @@ resource "aws_security_group" "team02_order_service_security_group" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  tags = {
+    Name = "team02-order-service-security-group"
+  }
+}
+
+# Gateway Security Group
+resource "aws_security_group" "team02_gateway_security_group" {
+  name        = "team02-gateway-security-group"
+  description = "Security group for Gateway service"
+  vpc_id      = aws_vpc.team02_vpc.id
+
+  # 외부에서 게이트웨이 접근 허용
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow HTTP traffic to Gateway"
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "team02-gateway-security-group"
+  }
 }
 
 # RDS Security Group

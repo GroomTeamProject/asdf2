@@ -39,3 +39,14 @@ output "kafka_ssh_command" {
   description = "SSH command to connect to Kafka EC2"
   value       = "ssh -i ~/.ssh/ec2_key_kafka.pem ubuntu@${aws_instance.kafka.public_ip}"
 }
+
+# ECS Services Outputs
+output "gateway_service_discovery" {
+  description = "Gateway Service Discovery DNS"
+  value       = "gateway.team02.local:8080"
+}
+
+output "order_service_discovery" {
+  description = "Order Service Discovery DNS"
+  value       = "order-service.team02.local:8085"
+}
