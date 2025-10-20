@@ -45,14 +45,9 @@ spring:
                 - Path=/api/sse/**
 
             - id: owner-service
-              uri: ${DEMO_SERVICE_URL:http://localhost:8090}
+              uri: ${OWNER_SERVICE_URL:http://owner-service:8081}
               predicates:
                 - Path=/api/owner/**
-
-            - id: owner-swagger
-              uri: ${DEMO_SERVICE_URL:http://localhost:8090}
-              predicates:
-                - Path=/owner/swagger-ui.html
 
             - id: user-service
               uri: ${USER_SERVICE_URL:http://msa-user:8082}
