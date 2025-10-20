@@ -11,7 +11,7 @@ spring:
       ddl-auto: none
       dialect: org.hibernate.dialect.MariaDBDialect
   flyway:
-    enabled: false # 수동으로 Bean을 등록하기 위해 비활성화
+    enabled: true # 수동으로 Bean을 등록하기 위해 비활성화
 
 cloud:
   aws:
