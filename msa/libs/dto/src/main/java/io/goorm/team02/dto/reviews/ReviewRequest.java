@@ -19,11 +19,11 @@ public record ReviewRequest(
     @NotNull(message = "가게 ID는 필수입니다")
     Long storeId,
 
-    @Schema(description = "평점 (1~5)", example = "5")
+    @Schema(description = "평점 (1~5)", example = "5", minimum = "1", maximum = "5")
     @NotNull(message = "평점은 필수입니다")
     @Min(value = 1, message = "평점은 1점 이상이어야 합니다")
     @Max(value = 5, message = "평점은 5점 이하여야 합니다")
-    Integer rating,
+    int rating,
 
     @Schema(description = "리뷰 내용", example = "맛있고 배달도 빨랐어요!")
     @Size(max = 1000, message = "리뷰 내용은 1000자를 초과할 수 없습니다")

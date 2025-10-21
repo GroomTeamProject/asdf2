@@ -1,8 +1,9 @@
 package io.goorm.team02.core.owner.menus.controller;
 
-import io.goorm.team02.core.owner.menus.controller.dto.categorycreate.MenuCategoryResponse;
-import io.goorm.team02.core.owner.menus.controller.dto.menucreate.MenuDetailResponse;
-import io.goorm.team02.core.owner.menus.controller.dto.menucreate.MenuResponse;
+
+import io.goorm.team02.dto.owner.menus.categorycreate.MenuCategoryResponse;
+import io.goorm.team02.dto.owner.menus.menucreate.MenuDetailResponse;
+import io.goorm.team02.dto.owner.menus.menucreate.MenuResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

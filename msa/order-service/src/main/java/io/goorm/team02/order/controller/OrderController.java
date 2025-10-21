@@ -6,6 +6,7 @@ import io.goorm.team02.dto.orders.OrderRejectRequest;
 import io.goorm.team02.dto.orders.OrderAcceptRequest;
 import io.goorm.team02.dto.orders.OrderCancelRequest;
 import io.goorm.team02.dto.orders.OrderSearchRequest;
+import io.goorm.team02.dto.orders.OrderResponseForDelivery;
 import io.goorm.team02.order.entity.Order;
 import io.goorm.team02.order.service.OrderStatusService;
 import io.goorm.team02.order.service.OrderService;
@@ -33,19 +34,19 @@ public class OrderController implements OrderControllerDocs {
     @PostMapping
     public OrderResponse create(@Valid @RequestBody OrderRequest orderRequest, @RequestParam Long userId) {
         Order order = orderService.create(orderRequest, userId);
-        return order.toOrderResponse();
+        return order.toResponse();
     }
 
     @GetMapping
     public Page<OrderResponse> getAllByParams(OrderSearchRequest searchRequest, @RequestParam Long userId) {
         Page<Order> orders = orderService.getAllByParams(searchRequest, userId);
-        return orders.map(Order::toOrderResponse);
+        return orders.map(Order::toResponse);
     }
 
     @GetMapping("/{orderId}")
     public OrderResponse getOrderDetail(@PathVariable Long orderId, @RequestParam Long userId) {
         Order order = orderService.getOrderDetail(orderId, userId);
-        return order.toOrderResponse();
+        return order.toResponse();
     }
 
     /**
@@ -102,6 +103,14 @@ public class OrderController implements OrderControllerDocs {
     @PutMapping("/{orderId}/cancel")
     public OrderResponse cancelOrder(@PathVariable Long orderId, @RequestBody OrderCancelRequest request) {
         return orderStatusService.cancelOrder(orderId, request);
+    }
+
+    /**
+     * 라이더 - 주문 상세 조회
+     */
+    @GetMapping("/delivery/{orderId}")
+    public OrderResponseForDelivery getOrderDetailForDelivery(@PathVariable Long orderId) {
+        return orderService.getOrderDetailForDelivery(orderId);
     }
 
     /**

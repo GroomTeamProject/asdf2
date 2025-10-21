@@ -33,34 +33,38 @@ services:
     depends_on:
       - kafka
 
-  # Demo Service MariaDB
-  demo-mariadb:
+  # Delivery Service MariaDB
+  delivery-mariadb:
     image: mariadb:12.0
-    container_name: msa-demo-mariadb
+    container_name: msa-delivery-mariadb
+    ports:
+      - "33087:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: team02demo
+      MYSQL_DATABASE: team02delivery
     volumes:
-      - demo_mariadb_data:/var/lib/mysql
+      - delivery_mariadb_data:/var/lib/mysql
 
-  # Demo Service
-  demo-service:
+  # Delivery Service
+  delivery-service:
     build:
-      context: ./msa-demo
+      context: ./delivery-service
       dockerfile: Dockerfile
-    container_name: msa-demo
+    container_name: msa-delivery
     ports:
-      - "8090:8090"
+      - "8087:8087"
     env_file:
       - .env.dev
     depends_on:
       - kafka
-      - demo-mariadb
+      - delivery-mariadb
 
   # Order Service MariaDB
   order-mariadb:
     image: mariadb:12.0
     container_name: msa-order-mariadb
+    ports:
+      - "33085:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: team02order
@@ -85,6 +89,8 @@ services:
   review-mariadb:
     image: mariadb:12.0
     container_name: msa-review-mariadb
+    ports:
+      - "33086:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: team02review
@@ -109,6 +115,8 @@ services:
   notification-mariadb:
     image: mariadb:12.0
     container_name: msa-notification-mariadb
+    ports:
+      - "33088:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: team02notification
@@ -133,12 +141,14 @@ services:
   user-mariadb:
     image: mariadb:12.0
     container_name: msa-user-mariadb
+    ports:
+      - "33082:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: team02user
     volumes:
       - user_mariadb_data:/var/lib/mysql
-  
+
   # ✅ User Service
   user-service:
     build:
@@ -153,6 +163,31 @@ services:
       - kafka
       - user-mariadb
 
+  # Owner Service MariaDB
+  owner-mariadb:
+    image: mariadb:12.0
+    container_name: msa-owner-mariadb
+    ports:
+      - "33081:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: team02owner
+    volumes:
+      - owner_mariadb_data:/var/lib/mysql
+
+  # Owner Service
+  owner-service:
+    build:
+      context: ./owner-service
+      dockerfile: Dockerfile
+    container_name: msa-owner
+    ports:
+      - "8081:8081"
+    env_file:
+      - .env.dev
+    depends_on:
+      - kafka
+      - owner-mariadb
 
   # API Gateway
   api-gateway:
@@ -165,20 +200,27 @@ services:
     env_file:
       - .env.dev
     environment:
-      DEMO_SERVICE_URL: http://demo-service:8090
+      OWNER_SERVICE_URL: http://owner-service:8081
+      USER_SERVICE_URL: http://user-service:8082
       ORDER_SERVICE_URL: http://order-service:8085
       REVIEW_SERVICE_URL: http://review-service:8086
+      DELIVERY_SERVICE_URL: http://delivery-service:8087
       NOTIFICATION_SERVICE_URL: http://notification-service:8088
     depends_on:
-      - demo-service
+      - owner-service
       - order-service
-      - notification-service
       - review-service
+      - notification-service
+      - user-service
+      - delivery-service
+
 volumes:
-  demo_mariadb_data:
+  owner_mariadb_data:
   order_mariadb_data:
   review_mariadb_data:
   notification_mariadb_data:
+  user_mariadb_data:
+  delivery_mariadb_data:
 
 networks:
   default:

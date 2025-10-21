@@ -24,16 +24,26 @@ public class ReviewController implements ReviewControllerDocs {
         return review.toReviewResponse();
     }
 
-    @GetMapping("/store")
-    public List<ReviewResponse> getAllByStoreId(@RequestParam("storeId") Long storeId) {
+    @GetMapping("/store/{storeId}")
+    public List<ReviewResponse> getAllByStoreId(@PathVariable Long storeId) {
         List<Review> reviews = reviewService.getAllByStoreId(storeId);
         return reviews.stream()
                 .map(Review::toReviewResponse)
                 .toList();
     }
 
-    @GetMapping("/user")
-    public List<ReviewResponse> getAllByUserId(@RequestParam("userId") Long userId) {
+    @GetMapping("/store/{storeId}/count")
+    public Long getReviewCountByStoreId(@PathVariable Long storeId) {
+        return reviewService.getReviewCountByStoreId(storeId);
+    }
+
+    @GetMapping("/store/{storeId}/rating")
+    public Double getAverageRatingByStoreId(@PathVariable Long storeId) {
+        return reviewService.getAverageRatingByStoreId(storeId);
+    }
+
+    @GetMapping("/user/{userId}")
+    public List<ReviewResponse> getAllByUserId(@PathVariable Long userId) {
         List<Review> reviews = reviewService.getAllByUserId(userId);
         return reviews.stream()
                 .map(Review::toReviewResponse)
@@ -43,13 +53,6 @@ public class ReviewController implements ReviewControllerDocs {
     @GetMapping("/{reviewId}")
     public ReviewResponse getById(@PathVariable Long reviewId, @RequestParam Long userId) {
         Review review = reviewService.getById(reviewId, userId);
-        return review.toReviewResponse();
-    }
-
-    @PutMapping("/{reviewId}")
-    public ReviewResponse update(@PathVariable Long reviewId, @Valid @RequestBody ReviewRequest reviewRequest,
-            @RequestParam Long userId) {
-        Review review = reviewService.update(reviewId, reviewRequest, userId);
         return review.toReviewResponse();
     }
 
@@ -64,13 +67,4 @@ public class ReviewController implements ReviewControllerDocs {
         return review.toReviewResponse();
     }
 
-    @GetMapping("/store/rating")
-    public Double getAverageRatingByStoreId(@RequestParam("storeId") Long storeId) {
-        return reviewService.getAverageRatingByStoreId(storeId);
-    }
-
-    @GetMapping("/store/count")
-    public Long getReviewCountByStoreId(@RequestParam("storeId") Long storeId) {
-        return reviewService.getReviewCountByStoreId(storeId);
-    }
 }

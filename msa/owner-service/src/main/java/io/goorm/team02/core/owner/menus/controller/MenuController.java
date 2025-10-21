@@ -1,18 +1,21 @@
 package io.goorm.team02.core.owner.menus.controller;
 
-
 import io.goorm.team02.core.owner.auth.annotation.CurrentUser;
-import io.goorm.team02.core.owner.menus.controller.dto.categorycreate.CategoryMoveRequest;
-import io.goorm.team02.core.owner.menus.controller.dto.categorycreate.MenuCategoryCreateRequest;
-import io.goorm.team02.core.owner.menus.controller.dto.categorycreate.MenuCategoryResponse;
-import io.goorm.team02.core.owner.menus.controller.dto.categorycreate.MenuCategoryUpdateRequest;
-import io.goorm.team02.core.owner.menus.controller.dto.menucreate.*;
 import io.goorm.team02.core.owner.menus.domain.Menu;
 import io.goorm.team02.core.owner.menus.domain.MenuCategory;
 import io.goorm.team02.core.owner.menus.domain.MenuOption;
 import io.goorm.team02.core.owner.menus.domain.MenuOptionItem;
+import io.goorm.team02.core.owner.menus.mapper.MenuCategoryMapper;
+import io.goorm.team02.core.owner.menus.mapper.MenuMapper; // 추가 필요
+import io.goorm.team02.core.owner.menus.mapper.MenuOptionItemMapper;
+import io.goorm.team02.core.owner.menus.mapper.MenuOptionMapper; // 추가 필요
 import io.goorm.team02.core.owner.menus.service.MenuService;
 import io.goorm.team02.core.owner.stores.domain.TempUser;
+import io.goorm.team02.dto.owner.menus.categorycreate.CategoryMoveRequest;
+import io.goorm.team02.dto.owner.menus.categorycreate.MenuCategoryCreateRequest;
+import io.goorm.team02.dto.owner.menus.categorycreate.MenuCategoryResponse;
+import io.goorm.team02.dto.owner.menus.categorycreate.MenuCategoryUpdateRequest;
+import io.goorm.team02.dto.owner.menus.menucreate.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -29,6 +32,10 @@ import java.util.Map;
 public class MenuController implements MenuControllerDocs {
 
     private final MenuService menuService;
+    private final MenuCategoryMapper menuCategoryMapper;
+    private final MenuMapper menuMapper; // 추가 필요
+    private final MenuOptionMapper menuOptionMapper; // 추가 필요
+    private final MenuOptionItemMapper menuOptionItemMapper;
 
     // ================================
     // 카테고리 관리
@@ -38,9 +45,7 @@ public class MenuController implements MenuControllerDocs {
     @GetMapping("/categories")
     public ResponseEntity<List<MenuCategoryResponse>> getMenuCategories(@CurrentUser TempUser currentUser) {
         List<MenuCategory> categories = menuService.getMenuCategories(currentUser);
-        List<MenuCategoryResponse> response = categories.stream()
-                .map(MenuCategoryResponse::from)
-                .toList();
+        List<MenuCategoryResponse> response = menuCategoryMapper.toResponseList(categories);
         return ResponseEntity.ok(response);
     }
 
@@ -50,7 +55,8 @@ public class MenuController implements MenuControllerDocs {
             @CurrentUser TempUser currentUser,
             @Valid @RequestBody MenuCategoryCreateRequest request) {
         MenuCategory category = menuService.createCategory(currentUser, request);
-        return ResponseEntity.ok(MenuCategoryResponse.from(category));
+        MenuCategoryResponse response = menuCategoryMapper.toResponse(category);
+        return ResponseEntity.ok(response);
     }
 
     @Override
@@ -60,7 +66,8 @@ public class MenuController implements MenuControllerDocs {
             @PathVariable Long categoryId,
             @Valid @RequestBody MenuCategoryUpdateRequest request) {
         MenuCategory category = menuService.updateCategory(currentUser, categoryId, request);
-        return ResponseEntity.ok(MenuCategoryResponse.from(category));
+        MenuCategoryResponse response = menuCategoryMapper.toResponse(category);
+        return ResponseEntity.ok(response);
     }
 
     @Override
@@ -78,9 +85,7 @@ public class MenuController implements MenuControllerDocs {
             @CurrentUser TempUser currentUser,
             @Valid @RequestBody CategoryMoveRequest request) {
         List<MenuCategory> categories = menuService.updateCategoryOrder(currentUser, request);
-        List<MenuCategoryResponse> response = categories.stream()
-                .map(MenuCategoryResponse::from)
-                .toList();
+        List<MenuCategoryResponse> response = menuCategoryMapper.toResponseList(categories);
         return ResponseEntity.ok(response);
     }
 
@@ -94,9 +99,7 @@ public class MenuController implements MenuControllerDocs {
             @CurrentUser TempUser currentUser,
             @RequestParam(required = false) Long categoryId) {
         List<Menu> menus = menuService.getMenus(currentUser, categoryId);
-        List<MenuResponse> response = menus.stream()
-                .map(MenuResponse::from)
-                .toList();
+        List<MenuResponse> response = menuMapper.toResponseList(menus);
         return ResponseEntity.ok(response);
     }
 
@@ -106,7 +109,8 @@ public class MenuController implements MenuControllerDocs {
             @CurrentUser TempUser currentUser,
             @PathVariable Long menuId) {
         Menu menu = menuService.getMenu(currentUser, menuId);
-        return ResponseEntity.ok(MenuDetailResponse.from(menu));
+        MenuDetailResponse response = menuMapper.toDetailResponse(menu);
+        return ResponseEntity.ok(response);
     }
 
     @Override
@@ -115,7 +119,8 @@ public class MenuController implements MenuControllerDocs {
             @CurrentUser TempUser currentUser,
             @Valid @RequestBody MenuCreateRequest request) {
         Menu menu = menuService.createMenu(currentUser, request);
-        return ResponseEntity.ok(MenuResponse.from(menu));
+        MenuResponse response = menuMapper.toResponse(menu);
+        return ResponseEntity.ok(response);
     }
 
     @Override
@@ -125,7 +130,8 @@ public class MenuController implements MenuControllerDocs {
             @PathVariable Long menuId,
             @Valid @RequestBody MenuUpdateRequest request) {
         Menu menu = menuService.updateMenu(currentUser, menuId, request);
-        return ResponseEntity.ok(MenuResponse.from(menu));
+        MenuResponse response = menuMapper.toResponse(menu);
+        return ResponseEntity.ok(response);
     }
 
     @Override
@@ -144,7 +150,8 @@ public class MenuController implements MenuControllerDocs {
             @PathVariable Long menuId,
             @Valid @RequestBody MenuStatusRequest request) {
         Menu menu = menuService.updateMenuStatus(currentUser, menuId, request);
-        return ResponseEntity.ok(MenuResponse.from(menu));
+        MenuResponse response = menuMapper.toResponse(menu);
+        return ResponseEntity.ok(response);
     }
 
     @Override
@@ -153,9 +160,7 @@ public class MenuController implements MenuControllerDocs {
             @CurrentUser TempUser currentUser,
             @Valid @RequestBody MenuOrderUpdateRequest request) {
         List<Menu> menus = menuService.updateMenuOrder(currentUser, request);
-        List<MenuResponse> response = menus.stream()
-                .map(MenuResponse::from)
-                .toList();
+        List<MenuResponse> response = menuMapper.toResponseList(menus);
         return ResponseEntity.ok(response);
     }
 
@@ -207,9 +212,7 @@ public class MenuController implements MenuControllerDocs {
             @CurrentUser TempUser currentUser,
             @PathVariable Long menuId) {
         List<MenuOption> optionGroups = menuService.getMenuOptionGroups(currentUser, menuId);
-        List<MenuOptionGroupResponse> response = optionGroups.stream()
-                .map(MenuOptionGroupResponse::from)
-                .toList();
+        List<MenuOptionGroupResponse> response = menuOptionMapper.toGroupResponseList(optionGroups);
         return ResponseEntity.ok(response);
     }
 
@@ -220,7 +223,8 @@ public class MenuController implements MenuControllerDocs {
             @PathVariable Long menuId,
             @Valid @RequestBody MenuOptionGroupCreateRequest request) {
         MenuOption optionGroup = menuService.createOptionGroup(currentUser, menuId, request);
-        return ResponseEntity.ok(MenuOptionGroupResponse.from(optionGroup));
+        MenuOptionGroupResponse response = menuOptionMapper.toGroupResponse(optionGroup);
+        return ResponseEntity.ok(response);
     }
 
     @Override
@@ -231,7 +235,8 @@ public class MenuController implements MenuControllerDocs {
             @PathVariable Long groupId,
             @Valid @RequestBody MenuOptionGroupUpdateRequest request) {
         MenuOption optionGroup = menuService.updateOptionGroup(currentUser, menuId, groupId, request);
-        return ResponseEntity.ok(MenuOptionGroupResponse.from(optionGroup));
+        MenuOptionGroupResponse response = menuOptionMapper.toGroupResponse(optionGroup);
+        return ResponseEntity.ok(response);
     }
 
     @Override
@@ -255,9 +260,7 @@ public class MenuController implements MenuControllerDocs {
             @PathVariable Long menuId,
             @PathVariable Long groupId) {
         List<MenuOptionItem> options = menuService.getMenuOptions(currentUser, menuId, groupId);
-        List<MenuOptionItemResponse> response = options.stream()
-                .map(MenuOptionItemResponse::from)
-                .toList();
+        List<MenuOptionItemResponse> response = menuOptionItemMapper.toResponseList(options);
         return ResponseEntity.ok(response);
     }
 
@@ -269,7 +272,8 @@ public class MenuController implements MenuControllerDocs {
             @PathVariable Long groupId,
             @Valid @RequestBody MenuOptionItemCreateRequest request) {
         MenuOptionItem optionItem = menuService.createOption(currentUser, menuId, groupId, request);
-        return ResponseEntity.ok(MenuOptionItemResponse.from(optionItem));
+        MenuOptionItemResponse response = menuOptionItemMapper.toResponse(optionItem);
+        return ResponseEntity.ok(response);
     }
 
     @Override
@@ -281,7 +285,8 @@ public class MenuController implements MenuControllerDocs {
             @PathVariable Long optionId,
             @Valid @RequestBody MenuOptionItemUpdateRequest request) {
         MenuOptionItem optionItem = menuService.updateOption(currentUser, menuId, groupId, optionId, request);
-        return ResponseEntity.ok(MenuOptionItemResponse.from(optionItem));
+        MenuOptionItemResponse response = menuOptionItemMapper.toResponse(optionItem);
+        return ResponseEntity.ok(response);
     }
 
     @Override
