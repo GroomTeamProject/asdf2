@@ -1,6 +1,6 @@
-package io.goorm.team02.payment.domain;
+package io.goorm.team02.payment.entity;
 
-import io.goorm.team02.payment.domain.enums.PaymentStatus;
+import io.goorm.team02.payment.entity.enums.PaymentStatus;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

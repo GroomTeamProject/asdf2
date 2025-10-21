@@ -1,8 +1,8 @@
 package io.goorm.team02.payment.controller;
 
 import io.goorm.team02.payment.client.OrderServiceClient;
-import io.goorm.team02.payment.dto.PaymentConfirmRequest;
-import io.goorm.team02.payment.dto.PaymentResponse;
+import io.goorm.team02.dto.payment.PaymentConfirmRequest;
+import io.goorm.team02.dto.payment.PaymentResponse;
 import io.goorm.team02.payment.service.PaymentService;
 import io.goorm.team02.common.dto.ApiResponse;
 import org.slf4j.Logger;

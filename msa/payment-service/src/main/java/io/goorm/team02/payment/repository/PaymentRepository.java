@@ -1,6 +1,6 @@
-package io.goorm.team02.core.payments.repository;
+package io.goorm.team02.payment.repository;
 
-import io.goorm.team02.core.payments.domain.Payment;
+import io.goorm.team02.payment.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 

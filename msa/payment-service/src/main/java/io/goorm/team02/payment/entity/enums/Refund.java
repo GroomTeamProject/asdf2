@@ -1,12 +1,12 @@
-package io.goorm.team02.payment.domain;
+package io.goorm.team02.payment.entity.enums;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "payment_transactions")
-public class PaymentTransaction {
+@Table(name = "refunds", uniqueConstraints = @UniqueConstraint(columnNames = "refundKey"))
+public class Refund {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,10 +16,10 @@ public class PaymentTransaction {
     @JoinColumn(name = "payment_id", nullable = false)
     private Payment payment;
 
-    private String type;            // APPROVAL / CANCEL / FAIL
-    private String status;          // PENDING / COMPLETED / FAILED
+    private String refundKey;
     private BigDecimal amount;
-    private String pgTransactionId; // PG사 트랜잭션 ID
+    private String status;
+    private String reason;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

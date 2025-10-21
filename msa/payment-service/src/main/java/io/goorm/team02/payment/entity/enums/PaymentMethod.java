@@ -1,4 +1,4 @@
-package io.goorm.team02.core.payments.entity.enums;
+package io.goorm.team02.payment.entity.enums;
 
 public enum PaymentMethod {
     CARD,

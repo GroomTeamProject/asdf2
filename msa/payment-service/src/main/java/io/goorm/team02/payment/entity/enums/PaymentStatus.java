@@ -1,4 +1,4 @@
-package io.goorm.team02.core.payments.entitiy.enums;
+package io.goorm.team02.payment.entity.enums;
 
 public enum PaymentStatus {
     PENDING,

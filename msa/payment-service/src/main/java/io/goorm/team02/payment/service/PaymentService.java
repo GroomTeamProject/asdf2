@@ -1,15 +1,15 @@
 package io.goorm.team02.payment.service;
 
 import io.goorm.team02.payment.client.PaymentServiceClient;
-import io.goorm.team02.payment.domain.Payment;
-import io.goorm.team02.payment.domain.PaymentTransaction;
-import io.goorm.team02.payment.domain.enums.PaymentStatus;
-import io.goorm.team02.payment.dto.PaymentConfirmRequest;
-import io.goorm.team02.payment.dto.PaymentResponse;
-import io.goorm.team02.payment.dto.EventResponse;
+import io.goorm.team02.payment.entity.Payment;
+import io.goorm.team02.payment.entity.PaymentTransaction;
+import io.goorm.team02.payment.entity.enums.PaymentStatus;
+import io.goorm.team02.dto.payment.PaymentConfirmRequest;
+import io.goorm.team02.dto.payment.PaymentResponse;
+//import io.goorm.team02.payment.dto.EventResponse;
 import io.goorm.team02.payment.event.PaymentEventPublisher;
 import io.goorm.team02.payment.repository.PaymentRepository;
-import io.goorm.team02.payment.repository.PaymentTransactionRepository;
+//import io.goorm.team02.payment.repository.PaymentTransactionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;

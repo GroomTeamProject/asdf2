@@ -4,7 +4,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
-public class EventResponse {
+public class PaymentEventResponse {
     private String paymentKey;
     private String orderId;
     private BigDecimal amount;
