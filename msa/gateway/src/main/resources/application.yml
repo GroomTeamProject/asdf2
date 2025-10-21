@@ -29,16 +29,17 @@ spring:
               uri: ${NOTIFICATION_SERVICE_URL:http://notification-service:8088}
               predicates:
                 - Path=/api/sse/**
-
             - id: owner-service
               uri: ${OWNER_SERVICE_URL:http://owner-service:8081}
               predicates:
                 - Path=/api/owner/**
-
             - id: user-service
-              uri: ${USER_SERVICE_URL:http://msa-user:8082}
+              uri: ${USER_SERVICE_URL:http://user-service:8082}
               predicates:
                 - Path=/api/users/**
+            - id: user-service-auth
+              uri: ${USER_SERVICE_URL:http://user-service:8082}
+              predicates:
                 - Path=/api/auth/**
 
 # Logging
