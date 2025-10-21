@@ -11,10 +11,12 @@ spring:
           globalcors:
             cors-configurations:
               "[/**]":
-                allowedOrigins: "*"
+                #allowedOrigins: "*"
+                allowedOrigins: "http://localhost:5173"
                 allowedMethods: "*"
                 allowedHeaders: "*"
-                allowCredentials: false
+                #allowCredentials: false
+                allowCredentials: true
           routes:
             - id: demo-service
               uri: ${DEMO_SERVICE_URL:http://demo-service:8090}
