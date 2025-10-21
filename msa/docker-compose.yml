@@ -183,8 +183,6 @@ services:
     container_name: msa-owner
     ports:
       - "8081:8081"
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
     env_file:
       - .env.dev
     depends_on:
@@ -203,11 +201,11 @@ services:
       - .env.dev
     environment:
       OWNER_SERVICE_URL: http://owner-service:8081
+      USER_SERVICE_URL: http://user-service:8082
       ORDER_SERVICE_URL: http://order-service:8085
       REVIEW_SERVICE_URL: http://review-service:8086
       DELIVERY_SERVICE_URL: http://delivery-service:8087
       NOTIFICATION_SERVICE_URL: http://notification-service:8088
-      USER_SERVICE_URL: http://user-service:8082
     depends_on:
       - owner-service
       - order-service

@@ -8,20 +8,6 @@ spring:
     gateway:
       server:
         webflux:
-          globalcors:
-            cors-configurations:
-              "[/**]":
-                allowedOrigins: 
-                  - "http://localhost:5173"
-                allowedMethods: 
-                  - GET
-                  - POST
-                  - PUT
-                  - DELETE
-                  - PATCH
-                  - OPTIONS
-                allowedHeaders: "*"
-                allowCredentials: true
           routes:
             - id: demo-service
               uri: ${DEMO_SERVICE_URL:http://demo-service:8090}
@@ -43,16 +29,21 @@ spring:
               uri: ${NOTIFICATION_SERVICE_URL:http://notification-service:8088}
               predicates:
                 - Path=/api/sse/**
-
             - id: owner-service
               uri: ${OWNER_SERVICE_URL:http://owner-service:8081}
               predicates:
                 - Path=/api/owner/**
-
+            - id: store-service
+              uri: ${OWNER_SERVICE_URL:http://owner-service:8081}
+              predicates:
+                - Path=/api/stores/**
             - id: user-service
-              uri: ${USER_SERVICE_URL:http://msa-user:8082}
+              uri: ${USER_SERVICE_URL:http://user-service:8082}
               predicates:
                 - Path=/api/users/**
+            - id: user-service-auth
+              uri: ${USER_SERVICE_URL:http://user-service:8082}
+              predicates:
                 - Path=/api/auth/**
 
 # Logging

@@ -6,6 +6,7 @@ import io.goorm.team02.dto.orders.OrderRejectRequest;
 import io.goorm.team02.dto.orders.OrderAcceptRequest;
 import io.goorm.team02.dto.orders.OrderCancelRequest;
 import io.goorm.team02.dto.orders.OrderSearchRequest;
+import io.goorm.team02.dto.orders.OrderResponseForDelivery;
 import io.goorm.team02.order.entity.Order;
 import io.goorm.team02.order.service.OrderStatusService;
 import io.goorm.team02.order.service.OrderService;
@@ -102,6 +103,14 @@ public class OrderController implements OrderControllerDocs {
     @PutMapping("/{orderId}/cancel")
     public OrderResponse cancelOrder(@PathVariable Long orderId, @RequestBody OrderCancelRequest request) {
         return orderStatusService.cancelOrder(orderId, request);
+    }
+
+    /**
+     * 라이더 - 주문 상세 조회
+     */
+    @GetMapping("/delivery/{orderId}")
+    public OrderResponseForDelivery getOrderDetailForDelivery(@PathVariable Long orderId) {
+        return orderService.getOrderDetailForDelivery(orderId);
     }
 
     /**
