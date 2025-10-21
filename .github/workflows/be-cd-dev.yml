@@ -1,68 +1,88 @@
-name: (develop) Springboot CD - Deploy 
+name: (develop) MSA CD - Deploy Changed Services
 
 on:
   pull_request:
     types: [closed]
-    branches: [ develop ]
+    branches: [develop]
     paths:
-      - 'backend/**'
-      - '.github/workflows/**'
+      - "msa/**"
+      - ".github/workflows/**"
 
 env:
-  REGISTRY: docker.io
-  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/team02-backend
+  AWS_REGION: ap-northeast-2
+  ECS_CLUSTER: team02-cluster
+  DOCKER_REGISTRY: docker.io/wsk221e
 
 jobs:
-  deploy_backend:
-    runs-on: [self-hosted, ec2, dev]
-    if: github.event.pull_request.merged == true
+  check_microservices_should_deploy:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.detect-changed.outputs.services }}
     steps:
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_PASSWORD }}
-      
-    - name: Pull Docker image
-      run: |
-        docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Stop existing container
-      run: |
-        docker stop springboot-app || true
-        docker rm springboot-app || true
+      - name: Detect changed services
+        id: detect-changed
+        run: |
+          SERVICES=$(git diff --name-only HEAD~1 HEAD \
+            | grep -oE 'msa/[^/]+/' \
+            | cut -d'/' -f2 \
+            | sort -u \
+            | jq -R . | jq -cs .)
 
-    - name: Start new container
-      run: |
-        docker run -d \
-          --name springboot-app \
-          --restart unless-stopped \
-          -p 8080:8080 \
-          -e SPRING_PROFILES_ACTIVE=dev \
-          -e DB_URL_DEV="${{ secrets.DB_URL_DEV }}" \
-          -e DB_USERNAME_DEV="${{ secrets.DB_USERNAME_DEV }}" \
-          -e DB_PASSWORD_DEV="${{ secrets.DB_PASSWORD_DEV }}" \
-          -e ORIGIN_URL_DEV="${{ secrets.ORIGIN_URL_DEV }}" \
-          -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-          -e AWS_ACCESS_KEY="${{ secrets.AWS_ACCESS_KEY }}" \
-          -e AWS_SECRET_KEY="${{ secrets.AWS_SECRET_KEY }}" \
-          -e AWS_REGION="${{ secrets.AWS_REGION }}" \
-          -e AWS_S3_BUCKET="${{ secrets.AWS_S3_BUCKET }}" \
-          -e TOSS_CLIENT_KEY="${{ secrets.TOSS_CLIENT_KEY }}" \
-          -e TOSS_SECRET_KEY="${{ secrets.TOSS_SECRET_KEY }}" \
-          "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          echo "Detected services: $SERVICES"
+          echo "services=$SERVICES" >> $GITHUB_OUTPUT
 
-    - name: Verify deployment
-      run: |
-        sleep 10
-        if docker ps | grep -q springboot-app; then
-          echo "✅ Deployment successful!"
-        else
-          echo "❌ Deployment failed!"
-          docker logs springboot-app
-          exit 1
-        fi
+  deploy_microservices:
+    runs-on: ubuntu-latest
+    needs: check_microservices_should_deploy
+    if: ${{ needs.check_microservices_should_deploy.outputs.services != '[]' }}
 
-    - name: Clean up unused Docker images
-      run: docker image prune -af
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.check_microservices_should_deploy.outputs.services) }}
 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update ECS service for ${{ matrix.service }}
+        run: |
+          echo "🔄 Updating ${{ matrix.service }} in ECS..."
+
+          # ECS 서비스 강제 새 배포
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service ${{ matrix.service }} \
+            --force-new-deployment \
+            --region $AWS_REGION
+
+      - name: Wait for ${{ matrix.service }} deployment
+        run: |
+          echo "⏳ Waiting for ${{ matrix.service }} deployment..."
+
+          # 배포 완료 대기
+          aws ecs wait services-stable \
+            --cluster $ECS_CLUSTER \
+            --services ${{ matrix.service }} \
+            --region $AWS_REGION
+
+      - name: Health check for ${{ matrix.service }}
+        run: |
+          echo "✅ Checking ${{ matrix.service }} health..."
+
+          # 서비스 상태 확인
+          aws ecs describe-services \
+            --cluster $ECS_CLUSTER \
+            --services ${{ matrix.service }} \
+            --query 'services[0].{ServiceName:serviceName,Status:status,RunningCount:runningCount,DesiredCount:desiredCount}' \
+            --region $AWS_REGION

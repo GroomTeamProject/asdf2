@@ -1,6 +1,6 @@
 package io.goorm.team02.order.client;
 
-import io.goorm.team02.order.client.dto.UserDTO;
+import io.goorm.team02.dto.user.UserResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -9,5 +9,5 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface UserServiceClient {
 
     @GetMapping("/api/users/{id}")
-    UserDTO getUserById(@PathVariable("id") Long id);
+    UserResponse getUserById(@PathVariable Long id);
 }

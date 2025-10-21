@@ -12,13 +12,13 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -32,26 +32,32 @@ public class Order extends BaseEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(name = "order_number", nullable = false, unique = true, length = 50)
+	@Column(nullable = false, unique = true, length = 50)
 	private String orderNumber;
 
-	@JoinColumn(name = "user_id", nullable = false)
+	@Column(nullable = false)
 	private Long userId;
 
-	@JoinColumn(name = "store_id", nullable = false)
+	@Column(nullable = false)
 	private Long storeId;
 
-	@Column(nullable = false, columnDefinition = "TEXT")
-	private String deliveryAddress;
+	@Column(nullable = false)
+	private String storeName;
 
-	@Column(name = "delivery_detail_address", length = 100)
-	private String deliveryDetailAddress;
+	@Column(nullable = false)
+	private String storePhone;
 
 	@Column(nullable = false, columnDefinition = "TEXT")
 	private String storeAddress;
 
-	@Column(name = "store_detail_address", length = 100)
+	@Column(length = 100)
 	private String storeDetailAddress;
+
+	@Column(nullable = false, columnDefinition = "TEXT")
+	private String deliveryAddress;
+
+	@Column(length = 100)
+	private String deliveryDetailAddress;
 
 	@Column(nullable = false, length = 20)
 	private String phone;
@@ -59,17 +65,17 @@ public class Order extends BaseEntity {
 	@Column(columnDefinition = "TEXT")
 	private String orderMemo;
 
-	@Column(nullable = false, precision = 10, scale = 2)
-	private BigDecimal menuTotalAmount = BigDecimal.ZERO;
+	@Column(nullable = false)
+	private int menuTotalAmount = 0;
 
-	@Column(precision = 10, scale = 2)
-	private BigDecimal discountAmount = BigDecimal.ZERO;
+	@Column(nullable = false)
+	private int discountAmount = 0;
 
-	@Column(precision = 10, scale = 2)
-	private BigDecimal deliveryFee = BigDecimal.ZERO;
+	@Column(nullable = false)
+	private int deliveryFee = 0;
 
-	@Column(nullable = false, precision = 10, scale = 2)
-	private BigDecimal totalAmount;
+	@Column(nullable = false)
+	private int totalAmount = 0;
 
 	@Enumerated(EnumType.STRING)
 	private OrderStatus status = OrderStatus.PENDING;
@@ -87,49 +93,46 @@ public class Order extends BaseEntity {
 	@Column(name = "reject_reason", length = 500)
 	private String rejectReason;
 
-	@Column(name = "min_cooking_time")
-	private Integer minCookingTime;
-	@Column(name = "max_cooking_time")
-	private Integer maxCookingTime;
+	@Column(nullable = false)
+	private int minCookingTime = 0;
+	@Column(nullable = false)
+	private int maxCookingTime = 0;
 
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<OrderItem> orderItems;
 
-	// 도메인 비즈니스 로직
 	/**
 	 * 주문 총액 계산 (메뉴 총액 + 배달비 - 할인)
 	 */
 	public void calculateTotalAmount() {
-		BigDecimal menuTotal = calculateMenuTotalAmount();
+		int menuTotal = calculateMenuTotalAmount();
 		this.menuTotalAmount = menuTotal;
 
-		// null 값 처리
-		BigDecimal deliveryFee = this.deliveryFee != null ? this.deliveryFee : BigDecimal.ZERO;
-		BigDecimal discountAmount = this.discountAmount != null ? this.discountAmount : BigDecimal.ZERO;
-
-		this.totalAmount = menuTotal.add(deliveryFee).subtract(discountAmount);
+		this.totalAmount = menuTotal + deliveryFee - discountAmount;
 	}
 
 	/**
 	 * 메뉴 총액 계산
 	 */
-	private BigDecimal calculateMenuTotalAmount() {
+	private int calculateMenuTotalAmount() {
 		if (orderItems == null || orderItems.isEmpty()) {
-			return BigDecimal.ZERO;
+			return 0;
 		}
 
 		return orderItems.stream()
 				.map(OrderItem::getTotalPrice)
-				.filter(price -> price != null) // null 값 필터링
-				.reduce(BigDecimal.ZERO, BigDecimal::add);
+				.reduce(0, Integer::sum);
 	}
 
 	/**
 	 * 주문 번호 생성
 	 */
 	public void generateOrderNumber() {
-		this.orderNumber = "ORD-" + System.currentTimeMillis() + "-" +
-				java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+		String generatedOrderNumber = String.format(
+				"ORDER-%s",
+				UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+
+		this.orderNumber = generatedOrderNumber;
 	}
 
 	/**
@@ -143,7 +146,7 @@ public class Order extends BaseEntity {
 	/**
 	 * 주문 수락 (예상 조리 시간 포함)
 	 */
-	public void accept(Integer minCookingTime, Integer maxCookingTime) {
+	public void accept(int minCookingTime, int maxCookingTime) {
 		if (this.status != OrderStatus.PENDING) {
 			throw new IllegalStateException("수락할 수 없는 주문 상태입니다. 현재 상태: " + this.status);
 		}
@@ -240,37 +243,28 @@ public class Order extends BaseEntity {
 		}
 	}
 
-	public void validate() {
-		if (userId == null) {
-			throw new IllegalArgumentException("사용자 ID는 필수입니다.");
-		}
-		if (storeId == null) {
-			throw new IllegalArgumentException("가게 ID는 필수입니다.");
-		}
-	}
-
 	/**
 	 * 주문과 주문 아이템들을 함께 생성하는 팩토리 메서드
 	 */
-	public static Order create(OrderRequest orderRequest, Long userId, Long storeId, BigDecimal deliveryFee) {
+	public static Order create(OrderRequest orderRequest, Long userId, Long storeId, int deliveryFee) {
 		Order order = new Order();
 		order.setUserId(userId);
 		order.setStoreId(storeId);
 		order.setDeliveryAddress(orderRequest.deliveryAddress());
 		order.setDeliveryDetailAddress(orderRequest.deliveryDetailAddress());
+		// TODO: 가게 주소 추가
 		order.setStoreAddress("");
+		// TODO: 가게 상세 주소 추가
 		order.setStoreDetailAddress("");
 		order.setPhone(orderRequest.phone());
 		order.setOrderMemo(orderRequest.orderMemo());
 		order.setDeliveryFee(deliveryFee);
 		order.generateOrderNumber();
-		order.setOrderedAt(LocalDateTime.now());
-		order.setStatus(OrderStatus.PENDING);
 
-		List<OrderItem> items = orderRequest.orderItems().stream()
-			.map(req -> OrderItem.fromRequest(order, req))
-			.toList();
-		order.setOrderItems(items);
+		List<OrderItem> orderItems = orderRequest.orderItems().stream()
+				.map(request -> OrderItem.create(order, request))
+				.toList();
+		order.setOrderItems(orderItems);
 
 		order.calculateTotalAmount();
 		return order;
@@ -279,7 +273,7 @@ public class Order extends BaseEntity {
 	/**
 	 * OrderResponse로 변환
 	 */
-	public OrderResponse toOrderResponse() {
+	public OrderResponse toResponse() {
 		return new OrderResponse(
 				this.id,
 				this.orderNumber,
@@ -308,7 +302,7 @@ public class Order extends BaseEntity {
 				this.minCookingTime,
 				this.maxCookingTime,
 				this.orderItems != null ? this.orderItems.stream()
-						.map(OrderItem::toOrderItemResponse)
+						.map(OrderItem::toResponse)
 						.toList() : List.of());
 	}
 

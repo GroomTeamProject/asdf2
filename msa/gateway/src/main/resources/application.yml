@@ -8,15 +8,6 @@ spring:
     gateway:
       server:
         webflux:
-          globalcors:
-            cors-configurations:
-              "[/**]":
-                #allowedOrigins: "*"
-                allowedOrigins: "http://localhost:5173"
-                allowedMethods: "*"
-                allowedHeaders: "*"
-                #allowCredentials: false
-                allowCredentials: true
           routes:
             - id: demo-service
               uri: ${DEMO_SERVICE_URL:http://demo-service:8090}
@@ -39,9 +30,10 @@ spring:
               predicates:
                 - Path=/api/sse/**
             - id: owner-service
-              uri: ${DEMO_SERVICE_URL:http://localhost:8090}
+              uri: ${OWNER_SERVICE_URL:http://owner-service:8081}
               predicates:
                 - Path=/api/owner/**
+
             - id: owner-swagger
               uri: ${DEMO_SERVICE_URL:http://localhost:8090}
               predicates:
@@ -52,8 +44,20 @@ spring:
                 - Path=/api/users/**
             - id: user-service-auth
               uri: http://msa-user:8082 #${USER_SERVICE_URL:http://msa-user:8082}
+
+            - id: store-service
+              uri: ${OWNER_SERVICE_URL:http://owner-service:8081}
               predicates:
-                - Path=/api/auth/**
+                - Path=/api/stores/**
+            
+            #- id: user-service
+            #  uri: ${USER_SERVICE_URL:http://user-service:8082}
+            #  predicates:
+            #    - Path=/api/users/**
+            #- id: user-service-auth
+            #  uri: ${USER_SERVICE_URL:http://user-service:8082}
+            #  predicates:
+            #    - Path=/api/auth/**
 
 
 # Logging

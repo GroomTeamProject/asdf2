@@ -16,3 +16,12 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
   flyway:
     enabled: false
+  kafka:
+    bootstrap-servers: localhost:9092
+
+msa:
+  gateway:
+    url: http://localhost:8080
+
+jwt:
+  secret: this-is-a-really-long-secret-key-for-jwt-token-example-1234

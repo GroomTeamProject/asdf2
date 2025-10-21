@@ -1,11 +1,11 @@
 server:
-  port: 8080
+  port: 8081
 spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: ${DB_URL_PROD}
-    username: ${DB_USERNAME_PROD}
-    password: ${DB_PASSWORD_PROD}
+    url: ${OWNER_SERVICE_DB_URL}
+    username: ${OWNER_SERVICE_DB_USERNAME}
+    password: ${OWNER_SERVICE_DB_PASSWORD}
   flyway:
     enabled: true
     baseline-on-migrate: true

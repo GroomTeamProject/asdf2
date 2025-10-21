@@ -42,7 +42,7 @@ public class OrderStatusService {
         // 주문 상태 변경 이벤트 발행 (Kafka)
         eventPublisher.publish(ORDER_EVENTS_TOPIC, new OrderAcceptedEvent(dbOrder));
 
-        return dbOrder.toOrderResponse();
+        return dbOrder.toResponse();
     }
 
     /**
@@ -58,7 +58,7 @@ public class OrderStatusService {
         // 주문 조리 시작 이벤트 발행 (Kafka)
         eventPublisher.publish(ORDER_EVENTS_TOPIC, new OrderCookingEvent(dbOrder));
 
-        return dbOrder.toOrderResponse();
+        return dbOrder.toResponse();
     }
 
     /**
@@ -74,7 +74,7 @@ public class OrderStatusService {
         // 주문 준비 완료 이벤트 발행 (Kafka)
         eventPublisher.publish(ORDER_EVENTS_TOPIC, new OrderReadyEvent(dbOrder));
 
-        return dbOrder.toOrderResponse();
+        return dbOrder.toResponse();
     }
 
     /**
@@ -90,7 +90,7 @@ public class OrderStatusService {
         // 주문 배달 시작 이벤트 발행 (Kafka)
         eventPublisher.publish(ORDER_EVENTS_TOPIC, new OrderDeliveringEvent(dbOrder));
 
-        return dbOrder.toOrderResponse();
+        return dbOrder.toResponse();
     }
 
     /**
@@ -106,7 +106,7 @@ public class OrderStatusService {
         // 주문 배달 완료 이벤트 발행 (Kafka)
         eventPublisher.publish(ORDER_EVENTS_TOPIC, new OrderDeliveredEvent(dbOrder));
 
-        return dbOrder.toOrderResponse();
+        return dbOrder.toResponse();
     }
 
     /**
@@ -122,7 +122,7 @@ public class OrderStatusService {
         // 주문 취소 이벤트 발행 (Kafka)
         eventPublisher.publish(ORDER_EVENTS_TOPIC, new OrderCancelledEvent(dbOrder, request.cancelReason()));
 
-        return dbOrder.toOrderResponse();
+        return dbOrder.toResponse();
     }
 
     /**
@@ -138,7 +138,7 @@ public class OrderStatusService {
         // 주문 거절 이벤트 발행 (Kafka)
         eventPublisher.publish(ORDER_EVENTS_TOPIC, new OrderRejectedEvent(dbOrder, request.rejectReason()));
 
-        return dbOrder.toOrderResponse();
+        return dbOrder.toResponse();
     }
 
 }

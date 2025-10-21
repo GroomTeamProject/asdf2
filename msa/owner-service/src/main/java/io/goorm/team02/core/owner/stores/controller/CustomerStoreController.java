@@ -1,7 +1,8 @@
 package io.goorm.team02.core.owner.stores.controller;
 
-import io.goorm.team02.core.owner.stores.controller.dto.storemanagement.StoreResponse;
+import io.goorm.team02.dto.owner.stores.storemanagement.*;
 import io.goorm.team02.core.owner.stores.domain.Store;
+import io.goorm.team02.core.owner.stores.mapper.StoreMapper; // 추가
 import io.goorm.team02.core.owner.stores.service.CustomerStoreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,20 +20,21 @@ import java.util.List;
 public class CustomerStoreController implements CustomerStoreControllerDocs {
 
     private final CustomerStoreService customerStoreService;
+    private final StoreMapper storeMapper; // 추가
 
     @GetMapping
     public ResponseEntity<List<StoreResponse>> getAllStores() {
         List<Store> stores = customerStoreService.getAllStores();
-        List<StoreResponse> response = stores.stream()
-                .map(StoreResponse::from)
-                .toList();
+        // Mapper를 사용해서 변환
+        List<StoreResponse> response = storeMapper.toStoreResponseList(stores);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{storeId}")
     public ResponseEntity<StoreResponse> getStore(@PathVariable Long storeId) {
         Store store = customerStoreService.getStoreById(storeId);
-        return ResponseEntity.ok(StoreResponse.from(store));
+        // Mapper를 사용해서 변환
+        StoreResponse response = storeMapper.toStoreResponse(store);
+        return ResponseEntity.ok(response);
     }
-
 }

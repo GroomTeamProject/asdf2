@@ -1,8 +1,9 @@
 package io.goorm.team02.dto.orders;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Schema(description = "주문 생성 요청")
@@ -25,7 +26,10 @@ public record OrderRequest(
 	public record OrderItemRequest(
 			@Schema(description = "메뉴 ID", example = "1") Long menuId,
 
-			@Schema(description = "수량", example = "2") Integer quantity,
+			@Schema(description = "수량", example = "2", minimum = "1", maximum = "100")
+			@Min(value = 1, message = "수량은 1 이상이어야 합니다")
+			@Max(value = 100, message = "수량은 100 이하여야 합니다")
+			int quantity,
 
 			@Schema(description = "주문 아이템 옵션 목록") List<OrderItemOptionRequest> options) {
 	}
@@ -36,7 +40,10 @@ public record OrderRequest(
 
 			@Schema(description = "옵션 아이템명", example = "대") String optionItemName,
 
-			@Schema(description = "추가 가격", example = "2000.00") BigDecimal additionalPrice) {
+			@Schema(description = "추가 가격", example = "2000", minimum = "0", maximum = "1000000")
+			@Min(value = 0, message = "추가 가격은 0 이상이어야 합니다")
+			@Max(value = 1_000_000, message = "추가 가격은 1,000,000 이하여야 합니다")
+			int additionalPrice) {
 	}
 
 }
