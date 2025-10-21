@@ -8,20 +8,6 @@ spring:
     gateway:
       server:
         webflux:
-          globalcors:
-            cors-configurations:
-              "[/**]":
-                allowedOrigins: 
-                  - "http://localhost:5173"
-                allowedMethods: 
-                  - GET
-                  - POST
-                  - PUT
-                  - DELETE
-                  - PATCH
-                  - OPTIONS
-                allowedHeaders: "*"
-                allowCredentials: true
           routes:
             - id: demo-service
               uri: ${DEMO_SERVICE_URL:http://demo-service:8090}
