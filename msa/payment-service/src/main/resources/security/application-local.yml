@@ -1,9 +1,9 @@
 spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://localhost:3306/payment
-    username: root
-    password: Wnsrns3224!
+    url: ${PAYMENT_SERVICE_DB_URL}
+    username: ${PAYMENT_SERVICE_DB_USERNAME}
+    password: ${PAYMENT_SERVICE_DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: none
@@ -18,8 +18,4 @@ msa:
     url: http://localhost:8080
 
 jwt:
-  secret: NftAtwgVLJ9x9RdM4khkxhpW8/jziqI155MMtQUW2ZFzulID+1bXCndYCGkwnlDhjIF6d+0jvYzgKgL2RfS2dA==
-
-toss:
-  clientKey: test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm
-  secretKey: test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6
+  secret: ${JWT_SECRET}
