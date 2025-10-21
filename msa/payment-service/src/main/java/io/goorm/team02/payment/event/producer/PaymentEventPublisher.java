@@ -1,17 +1,18 @@
 package io.goorm.team02.payment.event;
 
-import io.goorm.team02.payment.dto.EventResponse;
 import org.springframework.stereotype.Component;
+import io.goorm.team02.payment.event.PaymentEvent;
 
 @Component
 public class PaymentEventPublisher {
 
-    public void publishPaymentCompleted(EventResponse event) {
-        // Kafka, RabbitMQ 등 이벤트 발행 로직
-        System.out.println("Payment Completed Event 발행: " + event);
+    public void publishPaymentCompleted(PaymentEvent event) {
+        // 실제 이벤트 브로커 연동 시 구현
+        System.out.println("[EVENT] Payment Completed: " + event.getPaymentKey());
     }
 
-    public void publishPaymentFailed(EventResponse event) {
-        System.out.println("Payment Failed Event 발행: " + event);
+    public void publishPaymentFailed(PaymentEvent event) {
+        // 실제 이벤트 브로커 연동 시 구현
+        System.out.println("[EVENT] Payment Failed: " + event.getPaymentKey());
     }
 }

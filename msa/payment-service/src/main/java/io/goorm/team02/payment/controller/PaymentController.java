@@ -1,8 +1,7 @@
 package io.goorm.team02.payment.controller;
 
-import io.goorm.team02.payment.client.OrderServiceClient;
-import io.goorm.team02.dto.payment.PaymentConfirmRequest;
-import io.goorm.team02.dto.payment.PaymentResponse;
+import io.goorm.team02.payment.dto.PaymentConfirmRequest;
+import io.goorm.team02.payment.dto.PaymentResponse;
 import io.goorm.team02.payment.service.PaymentService;
 import io.goorm.team02.common.dto.ApiResponse;
 import org.slf4j.Logger;
@@ -16,12 +15,9 @@ public class PaymentController {
     private final Logger log = LoggerFactory.getLogger(PaymentController.class);
 
     private final PaymentService paymentService;
-    private final OrderServiceClient orderServiceClient;
 
-    public PaymentController(PaymentService paymentService,
-                             OrderServiceClient orderServiceClient) {
+    public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
-        this.orderServiceClient = orderServiceClient;
     }
 
     @PostMapping("/callback")
@@ -32,12 +28,6 @@ public class PaymentController {
         log.info("=================================");
 
         try {
-            // Order 상태 확인 (Feign Client)
-            var order = orderServiceClient.getOrderById(request.getOrderId());
-            if (!"CREATED".equals(order.getStatus())) {
-                return ApiResponse.fail("결제를 진행할 수 없는 주문 상태: " + order.getStatus());
-            }
-
             // 결제 승인 처리 (PaymentService 내부에서 이벤트 발행 포함)
             PaymentResponse response = paymentService.confirmPayment(request);
 
@@ -50,7 +40,7 @@ public class PaymentController {
         } catch (Exception e) {
             log.error("==== 결제 승인 실패 ====", e);
 
-            // PaymentService 내부에서 이벤트 발행 처리 → Controller에서 중복 발행 제거
+            // Controller에서 중복 이벤트 발행 제거
             return ApiResponse.fail("결제 승인 실패: " + e.getMessage());
         }
     }

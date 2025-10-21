@@ -1,27 +1,34 @@
-package io.goorm.team02.payment.entity.enums;
+package io.goorm.team02.payment.entity;
 
+import io.goorm.team02.payment.entity.enums.RefundStatus;
 import jakarta.persistence.*;
+import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "refunds", uniqueConstraints = @UniqueConstraint(columnNames = "refundKey"))
+@Table(name = "refunds")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Refund {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "payment_id", nullable = false)
-    private Payment payment;
-
     private String refundKey;
     private BigDecimal amount;
-    private String status;
     private String reason;
+
+    @Enumerated(EnumType.STRING)
+    private RefundStatus status;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // getter / setter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_id")
+    private Payment payment;
 }

@@ -1,9 +1,11 @@
 package io.goorm.team02.payment.entity;
 
 import jakarta.persistence.*;
-import java.math.BigDecimal;
+import lombok.Data;
+
 import java.time.LocalDateTime;
 
+@Data
 @Entity
 @Table(name = "payment_transactions")
 public class PaymentTransaction {
@@ -13,15 +15,12 @@ public class PaymentTransaction {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "payment_id", nullable = false)
+    @JoinColumn(name = "payment_id")
     private Payment payment;
 
-    private String type;            // APPROVAL / CANCEL / FAIL
-    private String status;          // PENDING / COMPLETED / FAILED
-    private BigDecimal amount;
-    private String pgTransactionId; // PG사 트랜잭션 ID
+    private String type; // ATTEMPT, APPROVAL, FAIL
+    private String status; // PENDING, COMPLETED, FAILED
+    private Integer amount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-    // getter / setter
 }
