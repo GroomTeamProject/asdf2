@@ -5,6 +5,17 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  # Terraform State Bucket
+  backend "s3" {
+    bucket = "team02-terraform-state-bucket"
+    key    = "team02/terraform.tfstate"
+    region = "ap-northeast-2"
+    
+    # State Lock을 위한 DynamoDB
+    dynamodb_table = "terraform-state-lock"
+    encrypt        = true
+  }
 }
 
 provider "aws" {
