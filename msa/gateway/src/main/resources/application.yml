@@ -36,22 +36,23 @@ spring:
               uri: ${NOTIFICATION_SERVICE_URL:http://notification-service:8088}
               predicates:
                 - Path=/api/sse/**
-
             - id: owner-service
               uri: ${DEMO_SERVICE_URL:http://localhost:8090}
               predicates:
                 - Path=/api/owner/**
-
             - id: owner-swagger
               uri: ${DEMO_SERVICE_URL:http://localhost:8090}
               predicates:
                 - Path=/owner/swagger-ui.html
-
             - id: user-service
-              uri: ${USER_SERVICE_URL:http://msa-user:8082}
+              uri: http://msa-user:8082 #${USER_SERVICE_URL:http://msa-user:8082}
               predicates:
                 - Path=/api/users/**
+            - id: user-service-auth
+              uri: http://msa-user:8082 #${USER_SERVICE_URL:http://msa-user:8082}
+              predicates:
                 - Path=/api/auth/**
+
 
 # Logging
 logging:

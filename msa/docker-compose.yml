@@ -152,6 +152,10 @@ services:
     depends_on:
       - kafka
       - user-mariadb
+    environment:
+      USER_SERVICE_DB_URL: jdbc:mariadb://msa-user-mariadb:3306/team02user
+      USER_SERVICE_DB_USERNAME: root
+      USER_SERVICE_DB_PASSWORD: root
 
 
   # API Gateway
