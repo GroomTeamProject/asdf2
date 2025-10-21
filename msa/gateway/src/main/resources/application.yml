@@ -33,6 +33,10 @@ spring:
               uri: ${OWNER_SERVICE_URL:http://owner-service:8081}
               predicates:
                 - Path=/api/owner/**
+            - id: store-service
+              uri: ${OWNER_SERVICE_URL:http://owner-service:8081}
+              predicates:
+                - Path=/api/stores/**
             - id: user-service
               uri: ${USER_SERVICE_URL:http://user-service:8082}
               predicates:
