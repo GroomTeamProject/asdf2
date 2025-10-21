@@ -4,6 +4,7 @@ import static io.goorm.team02.order.service.OrderStatusService.ORDER_EVENTS_TOPI
 
 import io.goorm.team02.dto.orders.OrderRequest;
 import io.goorm.team02.dto.orders.OrderResponse;
+import io.goorm.team02.dto.orders.OrderResponseForDelivery;
 import io.goorm.team02.dto.orders.OrderSearchRequest;
 import io.goorm.team02.order.entity.Order;
 import io.goorm.team02.order.entity.enums.OrderStatus;
@@ -27,6 +28,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final EventPublisher eventPublisher;
     private final StoreServiceClient storeServiceClient;
+    private final OrderMapper orderMapper;
 
     // ================================
     // API Methods
@@ -49,20 +51,25 @@ public class OrderService {
     // ================================
     @Transactional
     public Order create(OrderRequest orderRequest, Long userId) {
-        // 1. 엔티티 참조 조회 & 검증
-        // TODO: 사용자/메뉴 서비스 호출 및 검증
-
+        // 1. 가게 정보 조회
+        var storeInfo = storeServiceClient.getStoreById(orderRequest.storeId());
+        
         // 2. 메뉴 정보 조회 (주문 시점에서의 메뉴 정보 스냅샷)
         // TODO: 실제 메뉴 정보 사용 (스냅샷)
 
         // 3. Order 도메인에 생성 요청
-        // TODO: 실제 배달비 사용
         Order order = Order.create(orderRequest, userId, orderRequest.storeId(), 0);
+        
+        // 4. 가게 정보 설정 (비정규화)
+        order.setStoreName(storeInfo.getName());
+        order.setStorePhone(storeInfo.getPhone());
+        order.setStoreAddress(storeInfo.getAddress());
+        order.setStoreDetailAddress(storeInfo.getDetailAddress());
 
-        // 4. 저장
+        // 5. 저장
         Order savedOrder = orderRepository.save(order);
 
-        // 5. 주문 생성 이벤트 발행 - OrderCreatedEvent
+        // 6. 주문 생성 이벤트 발행 - OrderCreatedEvent
         eventPublisher.publish(ORDER_EVENTS_TOPIC, new OrderCreatedEvent(savedOrder));
 
         return savedOrder;
@@ -134,6 +141,11 @@ public class OrderService {
         return orders.stream()
                 .map(Order::toResponse)
                 .toList();
+    }
+
+    public OrderResponseForDelivery getOrderDetailForDelivery(Long orderId) {
+        Order order = getOrderById(orderId);
+        return orderMapper.toResponseForDelivery(order);
     }
 
     /**

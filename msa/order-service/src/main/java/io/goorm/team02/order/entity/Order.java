@@ -41,17 +41,23 @@ public class Order extends BaseEntity {
 	@Column(nullable = false)
 	private Long storeId;
 
-	@Column(nullable = false, columnDefinition = "TEXT")
-	private String deliveryAddress;
+	@Column(nullable = false)
+	private String storeName;
 
-	@Column(length = 100)
-	private String deliveryDetailAddress;
+	@Column(nullable = false)
+	private String storePhone;
 
 	@Column(nullable = false, columnDefinition = "TEXT")
 	private String storeAddress;
 
 	@Column(length = 100)
 	private String storeDetailAddress;
+
+	@Column(nullable = false, columnDefinition = "TEXT")
+	private String deliveryAddress;
+
+	@Column(length = 100)
+	private String deliveryDetailAddress;
 
 	@Column(nullable = false, length = 20)
 	private String phone;
