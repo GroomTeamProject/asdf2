@@ -18,6 +18,21 @@ feign:
       default:
         connect-timeout: 5000
         read-timeout: 10000
+
+# Actuator & Prometheus 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    prometheus:
+      metrics:
+        export:
+          enabled: true
+    tags:
+      application: ${spring.application.name}
+
 ---
 spring:
   config:
