@@ -32,7 +32,7 @@ class SSEManager {
     try {
       const baseURL = import.meta.env.VITE_API_URL
       const token = localStorage.getItem('jwt')
-      const url = `${baseURL}/sse/connect`
+      const url = `${baseURL}/sse/connect?userId=${userId}`
       console.log('🔄 SSE 연결 시도:', url)
 
       this.eventSource = new EventSourcePolyfill(url, {
