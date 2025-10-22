@@ -2,7 +2,6 @@ package io.goorm.team02.core.owner.stores.controller;
 
 import io.goorm.team02.core.owner.auth.annotation.CurrentUser;
 import io.goorm.team02.core.owner.stores.component.FileUploadValidator;
-import io.goorm.team02.core.owner.stores.domain.TempUser;
 import io.goorm.team02.core.owner.stores.service.StoreService;
 import io.goorm.team02.dto.owner.stores.dashboard.StoreDashboardResponse;
 import io.goorm.team02.dto.owner.stores.storemanagement.*;
@@ -40,17 +39,15 @@ public class StoreController implements StoreControllerDocs {
 
     @PostMapping
     @Override
-    public ResponseEntity<StoreResponse> createStore(@CurrentUser TempUser currentUser,
+    public ResponseEntity<StoreResponse> createStore(@CurrentUser Long currentUser,
                                                      @RequestBody StoreCreateRequest request) {
-        // 이제 StoreService에서 StoreResponse를 직접 반환
         StoreResponse response = storeService.createStore(currentUser, request);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping
     @Override
-    public ResponseEntity<?> getMyStore(@CurrentUser TempUser currentUser) {
-        // 이제 StoreService에서 StoreResponse를 직접 반환 (null 가능)
+    public ResponseEntity<?> getMyStore(@CurrentUser Long currentUser) {
         StoreResponse store = storeService.getMyStore(currentUser);
 
         if (store == null) {
@@ -63,16 +60,15 @@ public class StoreController implements StoreControllerDocs {
 
     @PutMapping
     @Override
-    public ResponseEntity<StoreResponse> updateStore(@CurrentUser TempUser currentUser,
+    public ResponseEntity<StoreResponse> updateStore(@CurrentUser Long currentUser,
                                                      @RequestBody StoreUpdateRequest request) {
-        // 이미 StoreResponse를 반환하므로 추가 변환 불필요
         StoreResponse response = storeService.updateStore(currentUser, request);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping
     @Override
-    public ResponseEntity<Void> deleteStore(@CurrentUser TempUser currentUser) {
+    public ResponseEntity<Void> deleteStore(@CurrentUser Long currentUser) {
         storeService.deleteStore(currentUser);
         return ResponseEntity.ok().build();
     }
@@ -83,27 +79,24 @@ public class StoreController implements StoreControllerDocs {
 
     @PutMapping("/contact")
     @Override
-    public ResponseEntity<StoreResponse> updateContact(@CurrentUser TempUser currentUser,
+    public ResponseEntity<StoreResponse> updateContact(@CurrentUser Long currentUser,
                                                        @RequestBody StoreContactRequest request) {
-        // 이미 StoreResponse를 반환하므로 추가 변환 불필요
         StoreResponse response = storeService.updateContact(currentUser, request);
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/delivery")
     @Override
-    public ResponseEntity<StoreResponse> updateDelivery(@CurrentUser TempUser currentUser,
+    public ResponseEntity<StoreResponse> updateDelivery(@CurrentUser Long currentUser,
                                                         @RequestBody StoreDeliveryRequest request) {
-        // 이미 StoreResponse를 반환하므로 추가 변환 불필요
         StoreResponse response = storeService.updateDelivery(currentUser, request);
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/location")
     @Override
-    public ResponseEntity<StoreResponse> updateLocation(@CurrentUser TempUser currentUser,
+    public ResponseEntity<StoreResponse> updateLocation(@CurrentUser Long currentUser,
                                                         @RequestBody StoreLocationRequest request) {
-        // 이미 StoreResponse를 반환하므로 추가 변환 불필요
         StoreResponse response = storeService.updateLocation(currentUser, request);
         return ResponseEntity.ok(response);
     }
@@ -114,11 +107,11 @@ public class StoreController implements StoreControllerDocs {
 
     @PostMapping(value = "/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Override
-    public ResponseEntity<String> uploadImage(@CurrentUser TempUser currentUser,
+    public ResponseEntity<String> uploadImage(@CurrentUser Long currentUser,
                                               @RequestParam("file") MultipartFile file) {
 
-        // 🔒 파일 검증 (한 번에 처리)
-        FileValidationResult validationResult = fileUploadValidator.validate(file, currentUser.getId());
+        // 파일 검증
+        FileValidationResult validationResult = fileUploadValidator.validate(file, currentUser);
         if (!validationResult.isValid()) {
             return ResponseEntity.status(validationResult.getStatus())
                     .body(validationResult.getMessage());
@@ -139,7 +132,7 @@ public class StoreController implements StoreControllerDocs {
 
     @DeleteMapping("/images/{id}")
     @Override
-    public ResponseEntity<Void> deleteImage(@CurrentUser TempUser currentUser,
+    public ResponseEntity<Void> deleteImage(@CurrentUser Long currentUser,
                                             @PathVariable Long id) {
         try {
             storeService.deleteImage(currentUser, id);
@@ -155,17 +148,15 @@ public class StoreController implements StoreControllerDocs {
 
     @GetMapping("/hours")
     @Override
-    public ResponseEntity<List<StoreHourResponse>> getStoreHours(@CurrentUser TempUser currentUser) {
-        // 이제 StoreService에서 StoreHourResponse List를 직접 반환
+    public ResponseEntity<List<StoreHourResponse>> getStoreHours(@CurrentUser Long currentUser) {
         List<StoreHourResponse> response = storeService.getStoreHours(currentUser);
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/hours")
     @Override
-    public ResponseEntity<List<StoreHourResponse>> updateStoreHours(@CurrentUser TempUser currentUser,
+    public ResponseEntity<List<StoreHourResponse>> updateStoreHours(@CurrentUser Long currentUser,
                                                                     @RequestBody List<StoreHourRequest> requests) {
-        // 이미 StoreHourResponse List를 반환하므로 추가 변환 불필요
         List<StoreHourResponse> response = storeService.updateStoreHours(currentUser, requests);
         return ResponseEntity.ok(response);
     }
@@ -176,22 +167,21 @@ public class StoreController implements StoreControllerDocs {
 
     @PostMapping("/holidays")
     @Override
-    public ResponseEntity<String> createHoliday(@CurrentUser TempUser currentUser,
+    public ResponseEntity<String> createHoliday(@CurrentUser Long currentUser,
                                                 @RequestBody StoreHolidayRequest request) {
         return storeService.createHoliday(currentUser, request);
     }
 
     @GetMapping("/holidays")
     @Override
-    public ResponseEntity<List<StoreHolidayResponse>> getHolidays(@CurrentUser TempUser currentUser) {
-        // 이제 StoreService에서 StoreHolidayResponse List를 직접 반환
+    public ResponseEntity<List<StoreHolidayResponse>> getHolidays(@CurrentUser Long currentUser) {
         List<StoreHolidayResponse> response = storeService.getHolidays(currentUser);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/holidays/{id}")
     @Override
-    public ResponseEntity<String> deleteHoliday(@CurrentUser TempUser currentUser,
+    public ResponseEntity<String> deleteHoliday(@CurrentUser Long currentUser,
                                                 @PathVariable Long id) {
         return storeService.deleteHoliday(currentUser, id);
     }
@@ -202,26 +192,26 @@ public class StoreController implements StoreControllerDocs {
 
     @GetMapping("/status")
     @Override
-    public ResponseEntity<StoreStatusResponse> getStoreStatus(@CurrentUser TempUser currentUser) {
+    public ResponseEntity<StoreStatusResponse> getStoreStatus(@CurrentUser Long currentUser) {
         StoreStatusResponse response = storeService.getStoreStatus(currentUser);
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/status")
     @Override
-    public ResponseEntity<StoreStatusModifyResponse> updateStoreStatus(@CurrentUser TempUser currentUser,
+    public ResponseEntity<StoreStatusModifyResponse> updateStoreStatus(@CurrentUser Long currentUser,
                                                                        @RequestBody StoreStatusRequest request) {
         StoreStatusModifyResponse response = storeService.updateStoreStatus(currentUser, request);
         return ResponseEntity.ok(response);
     }
 
-//     ================================
-//     2.7 대시보드
-//     ================================
+    // ================================
+    // 2.7 대시보드
+    // ================================
 
     @GetMapping("/dashboard")
     @Override
-    public ResponseEntity<StoreDashboardResponse> getDashboard(@CurrentUser TempUser currentUser) {
+    public ResponseEntity<StoreDashboardResponse> getDashboard(@CurrentUser Long currentUser) {
         StoreDashboardResponse dashboard = storeService.getDashboard(currentUser);
         return ResponseEntity.ok(dashboard);
     }

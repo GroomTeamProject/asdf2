@@ -4,12 +4,11 @@ import io.goorm.team02.core.owner.menus.domain.Menu;
 import io.goorm.team02.core.owner.menus.domain.MenuOption;
 import io.goorm.team02.core.owner.menus.domain.MenuOptionItem;
 import io.goorm.team02.core.owner.menus.domain.enums.OptionType;
-import io.goorm.team02.core.owner.menus.mapper.MenuOptionMapper; // 추가
+import io.goorm.team02.core.owner.menus.mapper.MenuOptionMapper;
 import io.goorm.team02.core.owner.menus.repository.MenuOptionItemRepository;
 import io.goorm.team02.core.owner.menus.repository.MenuOptionRepository;
 import io.goorm.team02.core.owner.menus.repository.MenuRepository;
 import io.goorm.team02.core.owner.stores.domain.Store;
-import io.goorm.team02.core.owner.stores.domain.TempUser;
 import io.goorm.team02.dto.owner.menus.menucreate.MenuOptionGroupCreateRequest;
 import io.goorm.team02.dto.owner.menus.menucreate.MenuOptionGroupUpdateRequest;
 import io.goorm.team02.dto.owner.menus.menucreate.MenuOptionItemCreateRequest;
@@ -34,13 +33,13 @@ public class MenuOptionService {
     private final MenuOptionRepository menuOptionRepository;
     private final MenuOptionItemRepository menuOptionItemRepository;
     private final MenuValidationService menuValidationService;
-    private final MenuOptionMapper menuOptionMapper; // 추가
+    private final MenuOptionMapper menuOptionMapper;
 
     /**
      * 메뉴 옵션 그룹 목록 조회
      */
-    public List<MenuOption> getMenuOptionGroups(TempUser currentUser, Long menuId) {
-        log.info("=== 메뉴 옵션 그룹 목록 조회 시작 - 메뉴 ID: {} ===", menuId);
+    public List<MenuOption> getMenuOptionGroups(Long currentUser, Long menuId) {
+        log.info("=== 메뉴 옵션 그룹 목록 조회 시작 - 사용자 ID: {}, 메뉴 ID: {} ===", currentUser, menuId);
 
         Store store = menuValidationService.getMyStore(currentUser);
 
@@ -49,7 +48,8 @@ public class MenuOptionService {
 
         List<MenuOption> optionGroups = menuOptionRepository.findByMenuIdOrderByDisplayOrderAsc(menuId);
 
-        log.info("메뉴 옵션 그룹 조회 완료 - 총 {}개 그룹", optionGroups.size());
+        log.info("메뉴 옵션 그룹 조회 완료 - 사용자 ID: {}, 메뉴 ID: {}, 총 {}개 그룹",
+                currentUser, menuId, optionGroups.size());
         return optionGroups;
     }
 
@@ -57,8 +57,8 @@ public class MenuOptionService {
      * 메뉴 옵션 그룹 등록
      */
     @Transactional
-    public MenuOption createOptionGroup(TempUser currentUser, Long menuId, MenuOptionGroupCreateRequest request) {
-        log.info("=== 메뉴 옵션 그룹 등록 시작 - 메뉴 ID: {} ===", menuId);
+    public MenuOption createOptionGroup(Long currentUser, Long menuId, MenuOptionGroupCreateRequest request) {
+        log.info("=== 메뉴 옵션 그룹 등록 시작 - 사용자 ID: {}, 메뉴 ID: {} ===", currentUser, menuId);
 
         Store store = menuValidationService.getMyStore(currentUser);
 
@@ -85,7 +85,7 @@ public class MenuOptionService {
         MenuOption optionGroup = MenuOption.builder()
                 .menu(menu)
                 .name(request.getName().trim())
-                .type(optionType) // 변환된 enum 사용
+                .type(optionType)
                 .isRequired(request.getIsRequired() != null ? request.getIsRequired() : false)
                 .displayOrder(displayOrder)
                 .build();
@@ -97,8 +97,8 @@ public class MenuOptionService {
             createOptionItemsForGroup(savedOptionGroup, request.getItems());
         }
 
-        log.info("메뉴 옵션 그룹 등록 완료! ID: {}, 이름: {}",
-                savedOptionGroup.getId(), savedOptionGroup.getName());
+        log.info("메뉴 옵션 그룹 등록 완료! 사용자 ID: {}, 그룹 ID: {}, 이름: {}",
+                currentUser, savedOptionGroup.getId(), savedOptionGroup.getName());
         return savedOptionGroup;
     }
 
@@ -106,8 +106,9 @@ public class MenuOptionService {
      * 메뉴 옵션 그룹 수정
      */
     @Transactional
-    public MenuOption updateOptionGroup(TempUser currentUser, Long menuId, Long groupId, MenuOptionGroupUpdateRequest request) {
-        log.info("=== 메뉴 옵션 그룹 수정 시작 - 메뉴 ID: {}, 그룹 ID: {} ===", menuId, groupId);
+    public MenuOption updateOptionGroup(Long currentUser, Long menuId, Long groupId, MenuOptionGroupUpdateRequest request) {
+        log.info("=== 메뉴 옵션 그룹 수정 시작 - 사용자 ID: {}, 메뉴 ID: {}, 그룹 ID: {} ===",
+                currentUser, menuId, groupId);
 
         Store store = menuValidationService.getMyStore(currentUser);
 
@@ -168,7 +169,7 @@ public class MenuOptionService {
         }
 
         MenuOption savedOptionGroup = menuOptionRepository.save(optionGroup);
-        log.info("메뉴 옵션 그룹 수정 완료!");
+        log.info("메뉴 옵션 그룹 수정 완료! 사용자 ID: {}", currentUser);
         return savedOptionGroup;
     }
 
@@ -176,8 +177,9 @@ public class MenuOptionService {
      * 메뉴 옵션 그룹 삭제
      */
     @Transactional
-    public void deleteOptionGroup(TempUser currentUser, Long menuId, Long groupId) {
-        log.info("=== 메뉴 옵션 그룹 삭제 시작 - 메뉴 ID: {}, 그룹 ID: {} ===", menuId, groupId);
+    public void deleteOptionGroup(Long currentUser, Long menuId, Long groupId) {
+        log.info("=== 메뉴 옵션 그룹 삭제 시작 - 사용자 ID: {}, 메뉴 ID: {}, 그룹 ID: {} ===",
+                currentUser, menuId, groupId);
 
         Store store = menuValidationService.getMyStore(currentUser);
 
@@ -202,10 +204,167 @@ public class MenuOptionService {
         }
 
         menuOptionRepository.delete(optionGroup);
-        log.info("메뉴 옵션 그룹 삭제 완료: {}", optionGroup.getName());
+        log.info("메뉴 옵션 그룹 삭제 완료 - 사용자 ID: {}, 그룹명: {}", currentUser, optionGroup.getName());
     }
 
-    // ... 나머지 메서드들은 그대로 (getMenuOptions, createOption, updateOption, deleteOption)
+    /**
+     * 메뉴 옵션 목록 조회
+     */
+    public List<MenuOptionItem> getMenuOptions(Long currentUser, Long menuId, Long groupId) {
+        log.info("=== 메뉴 옵션 목록 조회 시작 - 사용자 ID: {}, 메뉴 ID: {}, 그룹 ID: {} ===",
+                currentUser, menuId, groupId);
+
+        Store store = menuValidationService.getMyStore(currentUser);
+
+        // 메뉴 권한 확인
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "메뉴를 찾을 수 없습니다"));
+
+        // 옵션 그룹 권한 확인
+        MenuOption optionGroup = menuOptionRepository.findById(groupId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "옵션 그룹을 찾을 수 없습니다"));
+
+        if (!optionGroup.getMenu().getId().equals(menuId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "다른 메뉴의 옵션 그룹입니다");
+        }
+
+        List<MenuOptionItem> optionItems = menuOptionItemRepository.findByOptionIdOrderByDisplayOrderAsc(groupId);
+
+        log.info("메뉴 옵션 목록 조회 완료 - 사용자 ID: {}, 총 {}개 옵션", currentUser, optionItems.size());
+        return optionItems;
+    }
+
+    /**
+     * 메뉴 옵션 등록
+     */
+    @Transactional
+    public MenuOptionItem createOption(Long currentUser, Long menuId, Long groupId, MenuOptionItemCreateRequest request) {
+        log.info("=== 메뉴 옵션 등록 시작 - 사용자 ID: {}, 메뉴 ID: {}, 그룹 ID: {} ===",
+                currentUser, menuId, groupId);
+
+        Store store = menuValidationService.getMyStore(currentUser);
+
+        // 메뉴 권한 확인
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "메뉴를 찾을 수 없습니다"));
+
+        // 옵션 그룹 권한 확인
+        MenuOption optionGroup = menuOptionRepository.findById(groupId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "옵션 그룹을 찾을 수 없습니다"));
+
+        if (!optionGroup.getMenu().getId().equals(menuId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "다른 메뉴의 옵션 그룹입니다");
+        }
+
+        // 입력값 검증
+        validateOptionItemCreateRequest(request, groupId);
+
+        // 표시 순서 자동 설정
+        Integer displayOrder = request.getDisplayOrder();
+        if (displayOrder == null) {
+            Integer maxOrder = getMaxOptionItemOrder(groupId);
+            displayOrder = maxOrder + 1;
+            log.info("표시 순서 자동 설정: {}", displayOrder);
+        }
+
+        MenuOptionItem optionItem = MenuOptionItem.builder()
+                .option(optionGroup)
+                .name(request.getName().trim())
+                .additionalPrice(request.getAdditionalPrice() != null ?
+                        request.getAdditionalPrice() : BigDecimal.ZERO)
+                .displayOrder(displayOrder)
+                .isActive(request.getIsActive() != null ? request.getIsActive() : true)
+                .build();
+
+        MenuOptionItem savedOptionItem = menuOptionItemRepository.save(optionItem);
+
+        log.info("메뉴 옵션 등록 완료! 사용자 ID: {}, 옵션 ID: {}, 이름: {}",
+                currentUser, savedOptionItem.getId(), savedOptionItem.getName());
+        return savedOptionItem;
+    }
+
+    /**
+     * 메뉴 옵션 수정
+     */
+    @Transactional
+    public MenuOptionItem updateOption(Long currentUser, Long menuId, Long groupId, Long optionId, MenuOptionItemUpdateRequest request) {
+        log.info("=== 메뉴 옵션 수정 시작 - 사용자 ID: {}, 메뉴 ID: {}, 그룹 ID: {}, 옵션 ID: {} ===",
+                currentUser, menuId, groupId, optionId);
+
+        // 권한 확인 체인
+        validateOptionItemAccess(currentUser, menuId, groupId, optionId);
+
+        MenuOptionItem optionItem = menuOptionItemRepository.findById(optionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "옵션 아이템을 찾을 수 없습니다"));
+
+        // 입력값 검증
+        validateOptionItemUpdateRequest(request, groupId, optionId);
+
+        boolean hasChanges = false;
+
+        // 옵션 아이템명 변경
+        if (request.getName() != null && !request.getName().trim().isEmpty()) {
+            String newName = request.getName().trim();
+            if (!newName.equals(optionItem.getName())) {
+                optionItem.updateName(newName);
+                hasChanges = true;
+            }
+        }
+
+        // 추가 금액 변경
+        if (request.getAdditionalPrice() != null &&
+                request.getAdditionalPrice().compareTo(optionItem.getAdditionalPrice()) != 0) {
+            optionItem.updateAdditionalPrice(request.getAdditionalPrice());
+            hasChanges = true;
+        }
+
+        // 표시 순서 변경
+        if (request.getDisplayOrder() != null &&
+                !request.getDisplayOrder().equals(optionItem.getDisplayOrder())) {
+            optionItem.updateDisplayOrder(request.getDisplayOrder());
+            hasChanges = true;
+        }
+
+        // 활성화 상태 변경
+        if (request.getIsActive() != null &&
+                !request.getIsActive().equals(optionItem.getIsActive())) {
+            if (!request.getIsActive()) {
+                validateOptionItemDeactivation(optionItem, optionItem.getOption());
+            }
+            optionItem.updateIsActive(request.getIsActive());
+            hasChanges = true;
+        }
+
+        if (!hasChanges) {
+            log.info("변경된 정보가 없습니다.");
+            return optionItem;
+        }
+
+        MenuOptionItem savedOptionItem = menuOptionItemRepository.save(optionItem);
+        log.info("메뉴 옵션 수정 완료! 사용자 ID: {}", currentUser);
+        return savedOptionItem;
+    }
+
+    /**
+     * 메뉴 옵션 삭제
+     */
+    @Transactional
+    public void deleteOption(Long currentUser, Long menuId, Long groupId, Long optionId) {
+        log.info("=== 메뉴 옵션 삭제 시작 - 사용자 ID: {}, 메뉴 ID: {}, 그룹 ID: {}, 옵션 ID: {} ===",
+                currentUser, menuId, groupId, optionId);
+
+        // 권한 확인
+        validateOptionItemAccess(currentUser, menuId, groupId, optionId);
+
+        MenuOptionItem optionItem = menuOptionItemRepository.findById(optionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "옵션 아이템을 찾을 수 없습니다"));
+
+        // 삭제 전 검증
+        validateOptionItemDeletion(optionItem, optionItem.getOption());
+
+        menuOptionItemRepository.delete(optionItem);
+        log.info("메뉴 옵션 삭제 완료 - 사용자 ID: {}, 옵션명: {}", currentUser, optionItem.getName());
+    }
 
     // ================================
     // Private Helper Methods
@@ -292,8 +451,6 @@ public class MenuOptionService {
         }
     }
 
-    // ... 기존 validateOptionItemCreateRequest, validateOptionItemUpdateRequest 메서드들은 그대로
-
     private void validateOptionTypeChange(MenuOption optionGroup, OptionType newType) {
         if (optionGroup.getType() == OptionType.MULTIPLE && newType == OptionType.SINGLE) {
             log.warn("다중 선택에서 단일 선택으로 변경합니다. 고객의 선택 방식이 제한됩니다.");
@@ -318,7 +475,29 @@ public class MenuOptionService {
         }
     }
 
-    // ... 기타 기존 헬퍼 메서드들은 그대로 유지
+    private void validateOptionItemAccess(Long currentUser, Long menuId, Long groupId, Long optionId) {
+        Store store = menuValidationService.getMyStore(currentUser);
+
+        // 메뉴 권한 확인
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "메뉴를 찾을 수 없습니다"));
+
+        // 옵션 그룹 권한 확인
+        MenuOption optionGroup = menuOptionRepository.findById(groupId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "옵션 그룹을 찾을 수 없습니다"));
+
+        if (!optionGroup.getMenu().getId().equals(menuId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "다른 메뉴의 옵션 그룹입니다");
+        }
+
+        // 옵션 아이템 존재 확인
+        MenuOptionItem optionItem = menuOptionItemRepository.findById(optionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "옵션 아이템을 찾을 수 없습니다"));
+
+        if (!optionItem.getOption().getId().equals(groupId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "다른 옵션 그룹의 아이템입니다");
+        }
+    }
 
     private Integer getMaxOptionGroupOrder(Long menuId) {
         List<MenuOption> optionGroups = menuOptionRepository.findByMenuIdOrderByDisplayOrderAsc(menuId);
@@ -364,7 +543,6 @@ public class MenuOptionService {
         }
     }
 
-    // ... 기타 검증 메서드들
     private void validateOptionGroupLimit(Long menuId) {
         List<MenuOption> existingGroups = menuOptionRepository.findByMenuIdOrderByDisplayOrderAsc(menuId);
         int maxOptionGroups = 10;
@@ -499,179 +677,5 @@ public class MenuOptionService {
         if (request.getDisplayOrder() != null && request.getDisplayOrder() < 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "표시 순서는 0 이상이어야 합니다");
         }
-    }
-
-    private void validateOptionItemAccess(TempUser currentUser, Long menuId, Long groupId, Long optionId) {
-        Store store = menuValidationService.getMyStore(currentUser);
-
-        // 메뉴 권한 확인
-        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "메뉴를 찾을 수 없습니다"));
-
-        // 옵션 그룹 권한 확인
-        MenuOption optionGroup = menuOptionRepository.findById(groupId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "옵션 그룹을 찾을 수 없습니다"));
-
-        if (!optionGroup.getMenu().getId().equals(menuId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "다른 메뉴의 옵션 그룹입니다");
-        }
-
-        // 옵션 아이템 존재 확인
-        MenuOptionItem optionItem = menuOptionItemRepository.findById(optionId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "옵션 아이템을 찾을 수 없습니다"));
-
-        if (!optionItem.getOption().getId().equals(groupId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "다른 옵션 그룹의 아이템입니다");
-        }
-    }
-
-    public List<MenuOptionItem> getMenuOptions(TempUser currentUser, Long menuId, Long groupId) {
-        log.info("=== 메뉴 옵션 목록 조회 시작 - 메뉴 ID: {}, 그룹 ID: {} ===", menuId, groupId);
-
-        Store store = menuValidationService.getMyStore(currentUser);
-
-        // 메뉴 권한 확인
-        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "메뉴를 찾을 수 없습니다"));
-
-        // 옵션 그룹 권한 확인
-        MenuOption optionGroup = menuOptionRepository.findById(groupId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "옵션 그룹을 찾을 수 없습니다"));
-
-        if (!optionGroup.getMenu().getId().equals(menuId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "다른 메뉴의 옵션 그룹입니다");
-        }
-
-        List<MenuOptionItem> optionItems = menuOptionItemRepository.findByOptionIdOrderByDisplayOrderAsc(groupId);
-
-        log.info("메뉴 옵션 목록 조회 완료 - 총 {}개 옵션", optionItems.size());
-        return optionItems;
-    }
-
-    public MenuOptionItem createOption(TempUser currentUser, Long menuId, Long groupId, MenuOptionItemCreateRequest request) {
-        log.info("=== 메뉴 옵션 등록 시작 - 메뉴 ID: {}, 그룹 ID: {} ===", menuId, groupId);
-
-        Store store = menuValidationService.getMyStore(currentUser);
-
-        // 메뉴 권한 확인
-        Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "메뉴를 찾을 수 없습니다"));
-
-        // 옵션 그룹 권한 확인
-        MenuOption optionGroup = menuOptionRepository.findById(groupId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "옵션 그룹을 찾을 수 없습니다"));
-
-        if (!optionGroup.getMenu().getId().equals(menuId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "다른 메뉴의 옵션 그룹입니다");
-        }
-
-        // 입력값 검증
-        validateOptionItemCreateRequest(request, groupId);
-
-        // 표시 순서 자동 설정
-        Integer displayOrder = request.getDisplayOrder();
-        if (displayOrder == null) {
-            Integer maxOrder = getMaxOptionItemOrder(groupId);
-            displayOrder = maxOrder + 1;
-            log.info("표시 순서 자동 설정: {}", displayOrder);
-        }
-
-        MenuOptionItem optionItem = MenuOptionItem.builder()
-                .option(optionGroup)
-                .name(request.getName().trim())
-                .additionalPrice(request.getAdditionalPrice() != null ?
-                        request.getAdditionalPrice() : BigDecimal.ZERO)
-                .displayOrder(displayOrder)
-                .isActive(request.getIsActive() != null ? request.getIsActive() : true)
-                .build();
-
-        MenuOptionItem savedOptionItem = menuOptionItemRepository.save(optionItem);
-
-        log.info("메뉴 옵션 등록 완료! ID: {}, 이름: {}",
-                savedOptionItem.getId(), savedOptionItem.getName());
-        return savedOptionItem;
-    }
-
-    /**
-     * 메뉴 옵션 수정
-     */
-    @Transactional
-    public MenuOptionItem updateOption(TempUser currentUser, Long menuId, Long groupId, Long optionId, MenuOptionItemUpdateRequest request) {
-        log.info("=== 메뉴 옵션 수정 시작 - 메뉴 ID: {}, 그룹 ID: {}, 옵션 ID: {} ===", menuId, groupId, optionId);
-
-        Store store = menuValidationService.getMyStore(currentUser);
-
-        // 권한 확인 체인
-        validateOptionItemAccess(currentUser, menuId, groupId, optionId);
-
-        MenuOptionItem optionItem = menuOptionItemRepository.findById(optionId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "옵션 아이템을 찾을 수 없습니다"));
-
-        // 입력값 검증
-        validateOptionItemUpdateRequest(request, groupId, optionId);
-
-        boolean hasChanges = false;
-
-        // 옵션 아이템명 변경
-        if (request.getName() != null && !request.getName().trim().isEmpty()) {
-            String newName = request.getName().trim();
-            if (!newName.equals(optionItem.getName())) {
-                optionItem.updateName(newName);
-                hasChanges = true;
-            }
-        }
-
-        // 추가 금액 변경
-        if (request.getAdditionalPrice() != null &&
-                request.getAdditionalPrice().compareTo(optionItem.getAdditionalPrice()) != 0) {
-            optionItem.updateAdditionalPrice(request.getAdditionalPrice());
-            hasChanges = true;
-        }
-
-        // 표시 순서 변경
-        if (request.getDisplayOrder() != null &&
-                !request.getDisplayOrder().equals(optionItem.getDisplayOrder())) {
-            optionItem.updateDisplayOrder(request.getDisplayOrder());
-            hasChanges = true;
-        }
-
-        // 활성화 상태 변경
-        if (request.getIsActive() != null &&
-                !request.getIsActive().equals(optionItem.getIsActive())) {
-            if (!request.getIsActive()) {
-                validateOptionItemDeactivation(optionItem, optionItem.getOption());
-            }
-            optionItem.updateIsActive(request.getIsActive());
-            hasChanges = true;
-        }
-
-        if (!hasChanges) {
-            log.info("변경된 정보가 없습니다.");
-            return optionItem;
-        }
-
-        MenuOptionItem savedOptionItem = menuOptionItemRepository.save(optionItem);
-        log.info("메뉴 옵션 수정 완료!");
-        return savedOptionItem;
-    }
-
-    /**
-     * 메뉴 옵션 삭제
-     */
-    @Transactional
-    public void deleteOption(TempUser currentUser, Long menuId, Long groupId, Long optionId) {
-        log.info("=== 메뉴 옵션 삭제 시작 - 메뉴 ID: {}, 그룹 ID: {}, 옵션 ID: {} ===", menuId, groupId, optionId);
-
-        // 권한 확인
-        validateOptionItemAccess(currentUser, menuId, groupId, optionId);
-
-        MenuOptionItem optionItem = menuOptionItemRepository.findById(optionId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "옵션 아이템을 찾을 수 없습니다"));
-
-        // 삭제 전 검증
-        validateOptionItemDeletion(optionItem, optionItem.getOption());
-
-        menuOptionItemRepository.delete(optionItem);
-        log.info("메뉴 옵션 삭제 완료: {}", optionItem.getName());
     }
 }

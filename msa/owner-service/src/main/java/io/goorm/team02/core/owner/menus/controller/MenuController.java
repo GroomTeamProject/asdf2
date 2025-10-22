@@ -6,11 +6,10 @@ import io.goorm.team02.core.owner.menus.domain.MenuCategory;
 import io.goorm.team02.core.owner.menus.domain.MenuOption;
 import io.goorm.team02.core.owner.menus.domain.MenuOptionItem;
 import io.goorm.team02.core.owner.menus.mapper.MenuCategoryMapper;
-import io.goorm.team02.core.owner.menus.mapper.MenuMapper; // 추가 필요
+import io.goorm.team02.core.owner.menus.mapper.MenuMapper;
 import io.goorm.team02.core.owner.menus.mapper.MenuOptionItemMapper;
-import io.goorm.team02.core.owner.menus.mapper.MenuOptionMapper; // 추가 필요
+import io.goorm.team02.core.owner.menus.mapper.MenuOptionMapper;
 import io.goorm.team02.core.owner.menus.service.MenuService;
-import io.goorm.team02.core.owner.stores.domain.TempUser;
 import io.goorm.team02.dto.owner.menus.categorycreate.CategoryMoveRequest;
 import io.goorm.team02.dto.owner.menus.categorycreate.MenuCategoryCreateRequest;
 import io.goorm.team02.dto.owner.menus.categorycreate.MenuCategoryResponse;
@@ -33,8 +32,8 @@ public class MenuController implements MenuControllerDocs {
 
     private final MenuService menuService;
     private final MenuCategoryMapper menuCategoryMapper;
-    private final MenuMapper menuMapper; // 추가 필요
-    private final MenuOptionMapper menuOptionMapper; // 추가 필요
+    private final MenuMapper menuMapper;
+    private final MenuOptionMapper menuOptionMapper;
     private final MenuOptionItemMapper menuOptionItemMapper;
 
     // ================================
@@ -43,7 +42,7 @@ public class MenuController implements MenuControllerDocs {
 
     @Override
     @GetMapping("/categories")
-    public ResponseEntity<List<MenuCategoryResponse>> getMenuCategories(@CurrentUser TempUser currentUser) {
+    public ResponseEntity<List<MenuCategoryResponse>> getMenuCategories(@CurrentUser Long currentUser) {
         List<MenuCategory> categories = menuService.getMenuCategories(currentUser);
         List<MenuCategoryResponse> response = menuCategoryMapper.toResponseList(categories);
         return ResponseEntity.ok(response);
@@ -52,7 +51,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @PostMapping("/categories")
     public ResponseEntity<MenuCategoryResponse> createCategory(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @Valid @RequestBody MenuCategoryCreateRequest request) {
         MenuCategory category = menuService.createCategory(currentUser, request);
         MenuCategoryResponse response = menuCategoryMapper.toResponse(category);
@@ -62,7 +61,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @PutMapping("/categories/{categoryId}")
     public ResponseEntity<MenuCategoryResponse> updateCategory(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @PathVariable Long categoryId,
             @Valid @RequestBody MenuCategoryUpdateRequest request) {
         MenuCategory category = menuService.updateCategory(currentUser, categoryId, request);
@@ -73,7 +72,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @DeleteMapping("/categories/{categoryId}")
     public ResponseEntity<Void> deleteCategory(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @PathVariable Long categoryId) {
         menuService.deleteCategory(currentUser, categoryId);
         return ResponseEntity.ok().build();
@@ -82,7 +81,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @PutMapping("/categories/order")
     public ResponseEntity<List<MenuCategoryResponse>> updateCategoryOrder(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @Valid @RequestBody CategoryMoveRequest request) {
         List<MenuCategory> categories = menuService.updateCategoryOrder(currentUser, request);
         List<MenuCategoryResponse> response = menuCategoryMapper.toResponseList(categories);
@@ -96,7 +95,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @GetMapping
     public ResponseEntity<List<MenuResponse>> getMenus(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @RequestParam(required = false) Long categoryId) {
         List<Menu> menus = menuService.getMenus(currentUser, categoryId);
         List<MenuResponse> response = menuMapper.toResponseList(menus);
@@ -106,7 +105,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @GetMapping("/{menuId}")
     public ResponseEntity<MenuDetailResponse> getMenu(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @PathVariable Long menuId) {
         Menu menu = menuService.getMenu(currentUser, menuId);
         MenuDetailResponse response = menuMapper.toDetailResponse(menu);
@@ -116,7 +115,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @PostMapping
     public ResponseEntity<MenuResponse> createMenu(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @Valid @RequestBody MenuCreateRequest request) {
         Menu menu = menuService.createMenu(currentUser, request);
         MenuResponse response = menuMapper.toResponse(menu);
@@ -126,7 +125,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @PutMapping("/{menuId}")
     public ResponseEntity<MenuResponse> updateMenu(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @PathVariable Long menuId,
             @Valid @RequestBody MenuUpdateRequest request) {
         Menu menu = menuService.updateMenu(currentUser, menuId, request);
@@ -137,7 +136,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @DeleteMapping("/{menuId}")
     public ResponseEntity<Void> deleteMenu(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @PathVariable Long menuId) {
         menuService.deleteMenu(currentUser, menuId);
         return ResponseEntity.ok().build();
@@ -146,7 +145,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @PutMapping("/{menuId}/status")
     public ResponseEntity<MenuResponse> updateMenuStatus(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @PathVariable Long menuId,
             @Valid @RequestBody MenuStatusRequest request) {
         Menu menu = menuService.updateMenuStatus(currentUser, menuId, request);
@@ -157,7 +156,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @PutMapping("/order")
     public ResponseEntity<List<MenuResponse>> updateMenuOrder(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @Valid @RequestBody MenuOrderUpdateRequest request) {
         List<Menu> menus = menuService.updateMenuOrder(currentUser, request);
         List<MenuResponse> response = menuMapper.toResponseList(menus);
@@ -171,7 +170,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @PostMapping(value = "/{menuId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> uploadMenuImage(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @PathVariable Long menuId,
             @RequestParam("file") MultipartFile file) {
 
@@ -186,7 +185,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @GetMapping("/{menuId}/images/info")
     public ResponseEntity<Map<String, Object>> getMenuImageInfo(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @PathVariable Long menuId) {
         Map<String, Object> imageInfo = menuService.getMenuImageInfo(currentUser, menuId);
         return ResponseEntity.ok(imageInfo);
@@ -195,7 +194,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @DeleteMapping("/{menuId}/images/{imageId}")
     public ResponseEntity<Void> deleteMenuImage(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @PathVariable Long menuId,
             @PathVariable Long imageId) {
         menuService.deleteMenuImage(currentUser, menuId, imageId);
@@ -209,7 +208,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @GetMapping("/{menuId}/option-groups")
     public ResponseEntity<List<MenuOptionGroupResponse>> getMenuOptionGroups(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @PathVariable Long menuId) {
         List<MenuOption> optionGroups = menuService.getMenuOptionGroups(currentUser, menuId);
         List<MenuOptionGroupResponse> response = menuOptionMapper.toGroupResponseList(optionGroups);
@@ -219,7 +218,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @PostMapping("/{menuId}/option-groups")
     public ResponseEntity<MenuOptionGroupResponse> createOptionGroup(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @PathVariable Long menuId,
             @Valid @RequestBody MenuOptionGroupCreateRequest request) {
         MenuOption optionGroup = menuService.createOptionGroup(currentUser, menuId, request);
@@ -230,7 +229,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @PutMapping("/{menuId}/option-groups/{groupId}")
     public ResponseEntity<MenuOptionGroupResponse> updateOptionGroup(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @PathVariable Long menuId,
             @PathVariable Long groupId,
             @Valid @RequestBody MenuOptionGroupUpdateRequest request) {
@@ -242,7 +241,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @DeleteMapping("/{menuId}/option-groups/{groupId}")
     public ResponseEntity<Void> deleteOptionGroup(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @PathVariable Long menuId,
             @PathVariable Long groupId) {
         menuService.deleteOptionGroup(currentUser, menuId, groupId);
@@ -256,7 +255,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @GetMapping("/{menuId}/option-groups/{groupId}/options")
     public ResponseEntity<List<MenuOptionItemResponse>> getMenuOptions(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @PathVariable Long menuId,
             @PathVariable Long groupId) {
         List<MenuOptionItem> options = menuService.getMenuOptions(currentUser, menuId, groupId);
@@ -267,7 +266,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @PostMapping("/{menuId}/option-groups/{groupId}/options")
     public ResponseEntity<MenuOptionItemResponse> createOption(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @PathVariable Long menuId,
             @PathVariable Long groupId,
             @Valid @RequestBody MenuOptionItemCreateRequest request) {
@@ -279,7 +278,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @PutMapping("/{menuId}/option-groups/{groupId}/options/{optionId}")
     public ResponseEntity<MenuOptionItemResponse> updateOption(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @PathVariable Long menuId,
             @PathVariable Long groupId,
             @PathVariable Long optionId,
@@ -292,7 +291,7 @@ public class MenuController implements MenuControllerDocs {
     @Override
     @DeleteMapping("/{menuId}/option-groups/{groupId}/options/{optionId}")
     public ResponseEntity<Void> deleteOption(
-            @CurrentUser TempUser currentUser,
+            @CurrentUser Long currentUser,
             @PathVariable Long menuId,
             @PathVariable Long groupId,
             @PathVariable Long optionId) {

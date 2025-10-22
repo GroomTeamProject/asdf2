@@ -1,8 +1,8 @@
 package io.goorm.team02.core.owner.auth.service;
 
 import io.goorm.team02.core.owner.auth.annotation.CurrentUser;
-import io.goorm.team02.core.owner.stores.domain.TempUser;
-import io.goorm.team02.core.owner.stores.repository.UserRepository;
+//import io.goorm.team02.core.owner.stores.domain.TempUser;
+//import io.goorm.team02.core.owner.stores.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
@@ -16,13 +16,10 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 @RequiredArgsConstructor
 public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolver {
 
-    private final UserRepository userRepository;
-    private final JwtUtil jwtUtils;
-
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         return parameter.hasParameterAnnotation(CurrentUser.class) &&
-                parameter.getParameterType().equals(TempUser.class);
+                parameter.getParameterType().equals(Long.class);
     }
 
     @Override
@@ -38,7 +35,6 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
             throw new IllegalStateException("인증된 사용자 정보를 찾을 수 없습니다.");
         }
 
-        return userRepository.findById((Long) userId)
-                .orElseThrow(() -> new IllegalStateException("유효하지 않은 사용자입니다."));
+        return (Long) userId;  // DB 조회 없이 JWT에서 추출한 userId만 반환
     }
 }
