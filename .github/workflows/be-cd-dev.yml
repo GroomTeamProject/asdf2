@@ -1,88 +1,35 @@
-name: (develop) MSA CD - Deploy Changed Services
+# 이 파일은 더 이상 사용되지 않습니다.
+# 각 서비스별로 독립적인 워크플로우 파일을 사용하세요:
+# - gateway-cd-dev.yml
+# - user-service-cd-dev.yml
+# - owner-service-cd-dev.yml
+# - order-service-cd-dev.yml
+# - review-service-cd-dev.yml
+# - notification-service-cd-dev.yml
+# - delivery-service-cd-dev.yml
+
+name: "DEPRECATED - Use individual service workflows instead"
 
 on:
-  pull_request:
-    types: [closed]
-    branches: [develop]
-    paths:
-      - "msa/**"
-      - ".github/workflows/**"
-
-env:
-  AWS_REGION: ap-northeast-2
-  ECS_CLUSTER: team02-cluster
-  DOCKER_REGISTRY: docker.io/wsk221e
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'This workflow is deprecated'
+        required: true
+        default: 'Use individual service workflows instead'
 
 jobs:
-  check_microservices_should_deploy:
+  deprecated:
     runs-on: ubuntu-latest
-    outputs:
-      services: ${{ steps.detect-changed.outputs.services }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Detect changed services
-        id: detect-changed
+      - name: Deprecated workflow
         run: |
-          SERVICES=$(git diff --name-only HEAD~1 HEAD \
-            | grep -oE 'msa/[^/]+/' \
-            | cut -d'/' -f2 \
-            | sort -u \
-            | jq -R . | jq -cs .)
-
-          echo "Detected services: $SERVICES"
-          echo "services=$SERVICES" >> $GITHUB_OUTPUT
-
-  deploy_microservices:
-    runs-on: ubuntu-latest
-    needs: check_microservices_should_deploy
-    if: ${{ needs.check_microservices_should_deploy.outputs.services != '[]' }}
-
-    strategy:
-      matrix:
-        service: ${{ fromJson(needs.check_microservices_should_deploy.outputs.services) }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Update ECS service for ${{ matrix.service }}
-        run: |
-          echo "🔄 Updating ${{ matrix.service }} in ECS..."
-
-          # ECS 서비스 강제 새 배포
-          aws ecs update-service \
-            --cluster $ECS_CLUSTER \
-            --service ${{ matrix.service }} \
-            --force-new-deployment \
-            --region $AWS_REGION
-
-      - name: Wait for ${{ matrix.service }} deployment
-        run: |
-          echo "⏳ Waiting for ${{ matrix.service }} deployment..."
-
-          # 배포 완료 대기
-          aws ecs wait services-stable \
-            --cluster $ECS_CLUSTER \
-            --services ${{ matrix.service }} \
-            --region $AWS_REGION
-
-      - name: Health check for ${{ matrix.service }}
-        run: |
-          echo "✅ Checking ${{ matrix.service }} health..."
-
-          # 서비스 상태 확인
-          aws ecs describe-services \
-            --cluster $ECS_CLUSTER \
-            --services ${{ matrix.service }} \
-            --query 'services[0].{ServiceName:serviceName,Status:status,RunningCount:runningCount,DesiredCount:desiredCount}' \
-            --region $AWS_REGION
+          echo "This workflow is deprecated. Please use individual service workflows instead."
+          echo "Available workflows:"
+          echo "- gateway-cd-dev.yml"
+          echo "- user-service-cd-dev.yml"
+          echo "- owner-service-cd-dev.yml"
+          echo "- order-service-cd-dev.yml"
+          echo "- review-service-cd-dev.yml"
+          echo "- notification-service-cd-dev.yml"
+          echo "- delivery-service-cd-dev.yml"
