@@ -1,6 +1,7 @@
 package io.goorm.team02.core.owner.stores.service;
 
 import io.goorm.team02.core.owner.common.service.S3Service;
+import io.goorm.team02.core.owner.stores.client.OrderServiceClient;
 import io.goorm.team02.core.owner.stores.domain.Store;
 import io.goorm.team02.core.owner.stores.domain.StoreHoliday;
 import io.goorm.team02.core.owner.stores.domain.StoreHour;
@@ -13,6 +14,10 @@ import io.goorm.team02.core.owner.stores.repository.StoreHourRepository;
 import io.goorm.team02.core.owner.stores.domain.TempUser;
 import io.goorm.team02.core.owner.stores.repository.StoreRepository;
 import io.goorm.team02.core.owner.stores.repository.UserRepository;
+import io.goorm.team02.dto.orders.OrderDashboardDto;
+import io.goorm.team02.dto.orders.OrderItemDto;
+import io.goorm.team02.dto.orders.RecentOrderDto;
+import io.goorm.team02.dto.owner.stores.dashboard.StoreDashboardResponse;
 import io.goorm.team02.dto.owner.stores.storemanagement.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,7 +52,8 @@ public class StoreService {
     private final StoreHolidayRepository storeHolidayRepository;
     private final S3Service s3Service;
     private final ApplicationEventPublisher eventPublisher;
-    private final StoreMapper storeMapper; // 추가
+    private final StoreMapper storeMapper;
+    private final OrderServiceClient orderServiceClient;
 
     /**
      * 가게 등록 (최초 1회)
@@ -688,5 +695,99 @@ public class StoreService {
         }
 
         return "운영시간 확인 필요";
+    }
+
+    public StoreDashboardResponse getDashboard(TempUser currentUser) {
+        log.info("=== 대시보드 조회 시작 - 사용자 ID: {} ===", currentUser.getId());
+
+        // 1. 내 가게 정보 조회
+        Store store = getMyStoreEntity(currentUser);
+        if (store == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다");
+        }
+
+        try {
+            // 2. Order 서비스에서 주문 관련 데이터 조회
+            OrderDashboardDto orderData = orderServiceClient.getDashboardData(store.getId());
+
+            // 3. 가게 운영시간 정보 조회
+            List<StoreHour> storeHours = store.getStoreHours();
+
+            // 4. StoreDashboardResponse 생성 (record는 생성자 사용)
+            StoreDashboardResponse response = new StoreDashboardResponse(
+                    // 오늘 통계
+                    new StoreDashboardResponse.TodayStats(
+                            orderData.getTodayOrderCount(),
+                            orderData.getTodayRevenue()
+                    ),
+
+                    // 가게 정보
+                    new StoreDashboardResponse.RestaurantInfo(
+                            store.getId(),
+                            store.getName(),
+                            orderData.getAverageRating(),
+                            orderData.getReviewCount(),
+                            orderData.getTotalOrderCount()
+                    ),
+
+                    // 운영시간 정보
+                    convertToStoreHourInfoList(storeHours),
+
+                    // 최근 주문 정보
+                    convertToRecentOrderInfoList(orderData.getRecentOrders())
+            );
+
+            log.info("=== 대시보드 조회 완료 - 오늘 주문: {}, 오늘 매출: {} ===",
+                    orderData.getTodayOrderCount(), orderData.getTodayRevenue());
+
+            return response;
+
+        } catch (Exception e) {
+            log.error("대시보드 데이터 조회 중 오류 발생", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "대시보드 데이터를 불러올 수 없습니다");
+        }
+    }
+
+    /**
+     * StoreHour를 StoreHourInfo로 변환
+     */
+    private List<StoreDashboardResponse.StoreHourInfo> convertToStoreHourInfoList(List<StoreHour> storeHours) {
+        return storeHours.stream()
+                .map(hour -> new StoreDashboardResponse.StoreHourInfo(
+                        hour.getDayOfWeek(),
+                        hour.getOpenTime() != null ? hour.getOpenTime().toString() : null,
+                        hour.getCloseTime() != null ? hour.getCloseTime().toString() : null,
+                        hour.getIsClosed()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * RecentOrderDto를 RecentOrderInfo로 변환
+     */
+    private List<StoreDashboardResponse.RecentOrderInfo> convertToRecentOrderInfoList(List<RecentOrderDto> recentOrders) {
+        return recentOrders.stream()
+                .map(order -> new StoreDashboardResponse.RecentOrderInfo(
+                        order.getId(),
+                        order.getOrderNumber(),
+                        order.getCustomerName(),
+                        order.getTotal(),
+                        order.getStatus(),
+                        order.getOrderTime().toString(),
+                        convertToOrderItemInfoList(order.getItems())
+                ))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * OrderItemDto를 OrderItemInfo로 변환
+     */
+    private List<StoreDashboardResponse.OrderItemInfo> convertToOrderItemInfoList(List<OrderItemDto> items) {
+        return items.stream()
+                .map(item -> new StoreDashboardResponse.OrderItemInfo(
+                        item.getName(),
+                        item.getQuantity()
+                ))
+                .collect(Collectors.toList());
     }
 }

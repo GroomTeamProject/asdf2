@@ -2,13 +2,15 @@ package io.goorm.team02.order.service;
 
 import static io.goorm.team02.order.service.OrderStatusService.ORDER_EVENTS_TOPIC;
 
-import io.goorm.team02.dto.orders.OrderRequest;
-import io.goorm.team02.dto.orders.OrderResponse;
-import io.goorm.team02.dto.orders.OrderSearchRequest;
+import io.goorm.team02.dto.orders.*;
 import io.goorm.team02.order.entity.Order;
 import io.goorm.team02.order.entity.enums.OrderStatus;
 import io.goorm.team02.order.repository.OrderRepository;
+
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -145,6 +147,68 @@ public class OrderService {
         });
     }
 
+    /**
+     * 가게별 대시보드 데이터 조회
+     */
+    public OrderDashboardDto getDashboardData(Long storeId) {
+
+        Long todayOrderCount = getTodayOrderCount(storeId);
+        BigDecimal todayRevenue = getTodayRevenue(storeId);
+        Long totalOrderCount = getTotalOrderCount(storeId);
+        List<RecentOrderDto> recentOrders = getRecentOrders(storeId, 5);
+
+        // TODO: 리뷰 데이터는 Review 서비스에서 가져와야 함
+        BigDecimal averageRating = BigDecimal.valueOf(4.5); // 임시값
+        Long reviewCount = 100L; // 임시값
+
+        OrderDashboardDto result = OrderDashboardDto.builder()
+                .todayOrderCount(todayOrderCount)
+                .todayRevenue(todayRevenue)
+                .totalOrderCount(totalOrderCount)
+                .averageRating(averageRating)
+                .reviewCount(reviewCount)
+                .recentOrders(recentOrders)
+                .build();
+
+        return result;
+    }
+
+    /**
+     * 가게별 오늘 주문 개수 조회
+     */
+    public Long getTodayOrderCount(Long storeId) {
+        return orderRepository.countTodayOrdersByStoreId(storeId);
+    }
+
+    /**
+     * 가게별 오늘 매출 조회 (배달 완료된 주문만)
+     */
+    public BigDecimal getTodayRevenue(Long storeId) {
+        BigDecimal revenue = orderRepository.getTodayRevenueByStoreId(storeId);
+        return revenue != null ? revenue : BigDecimal.ZERO;
+    }
+
+    /**
+     * 가게별 총 주문 개수 조회
+     */
+    public Long getTotalOrderCount(Long storeId) {
+        return orderRepository.countTotalOrdersByStoreId(storeId);
+    }
+
+    /**
+     * 가게별 최근 주문 조회
+     */
+    public List<RecentOrderDto> getRecentOrders(Long storeId, int limit) {
+
+        Pageable pageable = PageRequest.of(0, limit);
+        List<Order> orders = orderRepository.findRecentOrdersByStoreId(storeId, pageable);
+
+        return orders.stream()
+                .map(this::convertToRecentOrderDto)
+                .collect(Collectors.toList());
+    }
+
+
     // ================================
     // Internal Methods
     // ================================
@@ -166,6 +230,29 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("주문이 존재하지 않습니다."));
         order.setStatus(status);
         orderRepository.save(order);
+    }
+
+    /**
+     * Order Entity를 RecentOrderDto로 변환
+     */
+    private RecentOrderDto convertToRecentOrderDto(Order order) {
+        // 주문 아이템들 변환
+        List<OrderItemDto> items = order.getOrderItems().stream()
+                .map(orderItem -> OrderItemDto.builder()
+                        .name(orderItem.getMenuName())
+                        .quantity(orderItem.getQuantity())
+                        .build())
+                .collect(Collectors.toList());
+
+        return RecentOrderDto.builder()
+                .id(order.getId())
+                .orderNumber(order.getOrderNumber())
+                .customerName("고객" + order.getUserId())
+                .total(BigDecimal.valueOf(order.getTotalAmount()))
+                .status(order.getStatus().name())
+                .orderTime(order.getCreatedAt())
+                .items(items)
+                .build();
     }
 
 }

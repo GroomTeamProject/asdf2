@@ -1,6 +1,7 @@
 package io.goorm.team02.core.owner.stores.controller;
 
 import io.goorm.team02.core.owner.auth.annotation.CurrentUser;
+import io.goorm.team02.dto.owner.stores.dashboard.StoreDashboardResponse;
 import io.goorm.team02.dto.owner.stores.storemanagement.StoreCreateRequest;
 import io.goorm.team02.dto.owner.stores.storemanagement.StoreUpdateRequest;
 import io.goorm.team02.dto.owner.stores.storemanagement.StoreResponse;
@@ -274,14 +275,14 @@ public interface StoreControllerDocs {
     // 2.7 대시보드
     // ================================
 
-//    @Operation(summary = "가게 대시보드 조회", description = "가게 운영에 필요한 통계 정보를 조회합니다")
-//    @Tag(name = "Store Dashboard")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "대시보드 조회 성공"),
-//            @ApiResponse(responseCode = "401", description = "인증 실패"),
-//            @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
-//    })
-//    ResponseEntity<StoreDashboardResponse> getDashboard(
-//            @Parameter(hidden = true) @CurrentUser TempUser currentUser
-//    );
+    @Operation(summary = "가게 대시보드 조회", description = "가게 운영에 필요한 통계 정보를 조회합니다")
+    @Tag(name = "Store Dashboard")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "대시보드 조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
+    })
+    ResponseEntity<StoreDashboardResponse> getDashboard(
+            @Parameter(hidden = true) @CurrentUser TempUser currentUser
+    );
 }

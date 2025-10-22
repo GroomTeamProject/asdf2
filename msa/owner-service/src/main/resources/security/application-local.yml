@@ -4,9 +4,9 @@ server:
 spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: ${DB_URL_LOCAL}
-    username: ${DB_USERNAME_LOCAL}
-    password: ${DB_PASSWORD_LOCAL}
+    url: ${OWNER_SERVICE_DB_URL_LOCAL}
+    username: ${OWNER_SERVICE_DB_USERNAME_LOCAL}
+    password: ${OWNER_SERVICE_DB_PASSWORD_LOCAL}
   jpa:
     hibernate:
       ddl-auto: none

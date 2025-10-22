@@ -4,6 +4,7 @@ import io.goorm.team02.core.owner.auth.annotation.CurrentUser;
 import io.goorm.team02.core.owner.stores.component.FileUploadValidator;
 import io.goorm.team02.core.owner.stores.domain.TempUser;
 import io.goorm.team02.core.owner.stores.service.StoreService;
+import io.goorm.team02.dto.owner.stores.dashboard.StoreDashboardResponse;
 import io.goorm.team02.dto.owner.stores.storemanagement.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -214,14 +215,14 @@ public class StoreController implements StoreControllerDocs {
         return ResponseEntity.ok(response);
     }
 
-    // ================================
-    // 2.7 대시보드
-    // ================================
+//     ================================
+//     2.7 대시보드
+//     ================================
 
-//    @GetMapping("/dashboard")
-//    @Override
-//    public ResponseEntity<StoreDashboardResponse> getDashboard(@CurrentUser TempUser currentUser) {
-//        StoreDashboardResponse dashboard = storeService.getDashboard(currentUser);
-//        return ResponseEntity.ok(dashboard);
-//    }
+    @GetMapping("/dashboard")
+    @Override
+    public ResponseEntity<StoreDashboardResponse> getDashboard(@CurrentUser TempUser currentUser) {
+        StoreDashboardResponse dashboard = storeService.getDashboard(currentUser);
+        return ResponseEntity.ok(dashboard);
+    }
 }
