@@ -102,6 +102,14 @@ public class OrderController implements OrderControllerDocs {
     }
 
     /**
+     * 라이더 - 주문 상세 조회
+     */
+    @GetMapping("/delivery/{orderId}")
+    public OrderResponseForDelivery getOrderDetailForDelivery(@PathVariable Long orderId) {
+        return orderService.getOrderDetailForDelivery(orderId);
+    }
+
+    /**
      * 픽업 가능한 주문 목록 조회 (배달 기사용)
      */
     @GetMapping("/delivery/available")

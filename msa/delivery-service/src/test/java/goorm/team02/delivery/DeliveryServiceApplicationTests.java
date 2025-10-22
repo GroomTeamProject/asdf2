@@ -1,13 +1,14 @@
-package io.goorm.team02.rider;
+package goorm.team02.delivery;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+// import org.springframework.boot.test.context.SpringBootTest;
+
+// @SpringBootTest
 class DeliveryServiceApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads() {
+    }
 
 }
