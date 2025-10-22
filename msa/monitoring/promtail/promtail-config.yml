@@ -15,7 +15,14 @@ scrape_configs:
         refresh_interval: 5s
         filters:
           - name: name
-            values: ["msa-order", "msa-review", "msa-notification"]
+            values: 
+              - "msa-gateway"
+              - "msa-owner"
+              - "msa-user"
+              - "msa-order"
+              - "msa-review"
+              - "msa-delivery"
+              - "msa-notification"
     relabel_configs:
       - source_labels: ['__meta_docker_container_name']
         regex: '/(.*)'

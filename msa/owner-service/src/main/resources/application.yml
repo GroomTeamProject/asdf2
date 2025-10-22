@@ -2,6 +2,20 @@ spring:
   application:
     name: team02
 
+# Actuator & Prometheus 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    prometheus:
+      metrics:
+        export:
+          enabled: true
+    tags:
+      application: ${spring.application.name}
+
 ---
 
 spring:

@@ -6,6 +6,7 @@ import io.goorm.team02.common.exception.errors.ForbiddenException;
 import io.goorm.team02.common.exception.errors.UnauthorizedException;
 import io.goorm.team02.common.exception.errors.ConflictException;
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -17,11 +18,22 @@ public class GlobalExceptionHandler {
     public static final String DEFAULT_INTERNAL_SERVER_ERROR_MESSAGE = "서버 내부 오류가 발생했습니다.";
 
     /**
+     * SSE 엔드포인트 체크 (text/event-stream 응답이 필요하므로 JSON 응답 불가)
+     */
+    private boolean isSseRequest(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        return uri != null && uri.contains("/api/sse/");
+    }
+
+    /**
      * Http Status 400
      * 잘못된 요청
      */
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
-    public ResponseEntity<ErrorResponse> handleBadRequestException(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleBadRequestException(Exception ex, HttpServletRequest request) throws Exception {
+        if (isSseRequest(request)) {
+            throw ex;
+        }
         return createErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
@@ -30,7 +42,10 @@ public class GlobalExceptionHandler {
      * 인증이 필요한 요청
      */
     @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ErrorResponse> handleUnauthorizedException(UnauthorizedException ex) {
+    public ResponseEntity<ErrorResponse> handleUnauthorizedException(UnauthorizedException ex, HttpServletRequest request) throws Exception {
+        if (isSseRequest(request)) {
+            throw ex;
+        }
         return createErrorResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
@@ -39,7 +54,10 @@ public class GlobalExceptionHandler {
      * 요청에 대한 권한이 충분하지 않음
      */
     @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<ErrorResponse> handleForbiddenException(ForbiddenException ex) {
+    public ResponseEntity<ErrorResponse> handleForbiddenException(ForbiddenException ex, HttpServletRequest request) throws Exception {
+        if (isSseRequest(request)) {
+            throw ex;
+        }
         return createErrorResponse(HttpStatus.FORBIDDEN, ex.getMessage());
     }
 
@@ -48,7 +66,10 @@ public class GlobalExceptionHandler {
      * 요청에 대한 항목을 찾을 수 없음
      */
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNotFoundException(NotFoundException ex) {
+    public ResponseEntity<ErrorResponse> handleNotFoundException(NotFoundException ex, HttpServletRequest request) throws Exception {
+        if (isSseRequest(request)) {
+            throw ex;
+        }
         return createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
@@ -57,7 +78,10 @@ public class GlobalExceptionHandler {
      * 요청된 리소스가 충돌
      */
     @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<ErrorResponse> handleConflictException(ConflictException ex) {
+    public ResponseEntity<ErrorResponse> handleConflictException(ConflictException ex, HttpServletRequest request) throws Exception {
+        if (isSseRequest(request)) {
+            throw ex;
+        }
         return createErrorResponse(HttpStatus.CONFLICT, ex.getMessage());
     }
 
@@ -66,7 +90,10 @@ public class GlobalExceptionHandler {
      * 서버 내부 오류
      */
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex) {
+    public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex, HttpServletRequest request) throws Exception {
+        if (isSseRequest(request)) {
+            throw ex;
+        }
         return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, DEFAULT_INTERNAL_SERVER_ERROR_MESSAGE);
     }
 
@@ -75,7 +102,10 @@ public class GlobalExceptionHandler {
      * 서버 내부 오류
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleException(Exception ex, HttpServletRequest request) throws Exception {
+        if (isSseRequest(request)) {
+            throw ex;
+        }
         return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, DEFAULT_INTERNAL_SERVER_ERROR_MESSAGE);
     }
 
