@@ -38,11 +38,11 @@ spring:
               predicates:
                 - Path=/api/stores/**
             - id: user-service
-              uri: ${USER_SERVICE_URL:http://user-service:8082}
+              uri: http://localhost:8082  #${USER_SERVICE_URL:http://msa-user:8082}
               predicates:
                 - Path=/api/users/**
             - id: user-service-auth
-              uri: ${USER_SERVICE_URL:http://user-service:8082}
+              uri: http://localhost:8082  #${USER_SERVICE_URL:http://msa-user:8082}
               predicates:
                 - Path=/api/auth/**
 
