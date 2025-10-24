@@ -1,6 +1,13 @@
 package io.goorm.team02.order.controller;
 
-import io.goorm.team02.dto.orders.*;
+import io.goorm.team02.dto.orders.OrderRequest;
+import io.goorm.team02.dto.orders.OrderResponse;
+import io.goorm.team02.dto.orders.OrderRejectRequest;
+import io.goorm.team02.dto.orders.OrderAcceptRequest;
+import io.goorm.team02.dto.orders.OrderCancelRequest;
+import io.goorm.team02.dto.orders.OrderSearchRequest;
+import io.goorm.team02.dto.orders.OrderResponseForDelivery;
+import io.goorm.team02.security.annotation.CurrentUser;
 import io.goorm.team02.order.entity.Order;
 import io.goorm.team02.order.service.OrderStatusService;
 import io.goorm.team02.order.service.OrderService;
@@ -28,19 +35,19 @@ public class OrderController implements OrderControllerDocs {
     private final OrderStatusService orderStatusService;
 
     @PostMapping
-    public OrderResponse create(@Valid @RequestBody OrderRequest orderRequest, @RequestParam Long userId) {
+    public OrderResponse create(@Valid @RequestBody OrderRequest orderRequest, @CurrentUser Long userId) {
         Order order = orderService.create(orderRequest, userId);
         return order.toResponse();
     }
 
     @GetMapping
-    public Page<OrderResponse> getAllByParams(OrderSearchRequest searchRequest, @RequestParam Long userId) {
+    public Page<OrderResponse> getAllByParams(OrderSearchRequest searchRequest, @CurrentUser Long userId) {
         Page<Order> orders = orderService.getAllByParams(searchRequest, userId);
         return orders.map(Order::toResponse);
     }
 
     @GetMapping("/{orderId}")
-    public OrderResponse getOrderDetail(@PathVariable Long orderId, @RequestParam Long userId) {
+    public OrderResponse getOrderDetail(@PathVariable Long orderId, @CurrentUser Long userId) {
         Order order = orderService.getOrderDetail(orderId, userId);
         return order.toResponse();
     }
