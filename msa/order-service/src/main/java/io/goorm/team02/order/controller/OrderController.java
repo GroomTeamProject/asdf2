@@ -1,16 +1,12 @@
 package io.goorm.team02.order.controller;
 
-import io.goorm.team02.dto.orders.OrderRequest;
-import io.goorm.team02.dto.orders.OrderResponse;
-import io.goorm.team02.dto.orders.OrderRejectRequest;
-import io.goorm.team02.dto.orders.OrderAcceptRequest;
-import io.goorm.team02.dto.orders.OrderCancelRequest;
-import io.goorm.team02.dto.orders.OrderSearchRequest;
-import io.goorm.team02.dto.orders.OrderResponseForDelivery;
+import io.goorm.team02.dto.orders.*;
 import io.goorm.team02.order.entity.Order;
 import io.goorm.team02.order.service.OrderStatusService;
 import io.goorm.team02.order.service.OrderService;
 import jakarta.validation.Valid;
+
+import java.math.BigDecimal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -120,6 +116,48 @@ public class OrderController implements OrderControllerDocs {
     public List<OrderResponse> getAvailableOrders(
             @RequestParam(value = "storeId", required = false) Long storeId) {
         return orderService.getAvailableOrders(storeId);
+    }
+
+    /**
+     * 가게별 대시보드 데이터 조회 (Store 서비스용)
+     */
+    @GetMapping("/store/{storeId}/dashboard")
+    public OrderDashboardDto getDashboardData(@PathVariable Long storeId) {
+        return orderService.getDashboardData(storeId);
+    }
+
+    /**
+     * 가게별 오늘 주문 개수 조회
+     */
+    @GetMapping("/store/{storeId}/today/count")
+    public Long getTodayOrderCount(@PathVariable Long storeId) {
+        return orderService.getTodayOrderCount(storeId);
+    }
+
+    /**
+     * 가게별 오늘 매출 조회
+     */
+    @GetMapping("/store/{storeId}/today/revenue")
+    public BigDecimal getTodayRevenue(@PathVariable Long storeId) {
+        return orderService.getTodayRevenue(storeId);
+    }
+
+    /**
+     * 가게별 총 주문 개수 조회
+     */
+    @GetMapping("/store/{storeId}/total/count")
+    public Long getTotalOrderCount(@PathVariable Long storeId) {
+        return orderService.getTotalOrderCount(storeId);
+    }
+
+    /**
+     * 가게별 최근 주문 조회
+     */
+    @GetMapping("/store/{storeId}/recent")
+    public List<RecentOrderDto> getRecentOrders(
+            @PathVariable Long storeId,
+            @RequestParam(defaultValue = "5") int limit) {
+        return orderService.getRecentOrders(storeId, limit);
     }
 
 }

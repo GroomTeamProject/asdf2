@@ -1,18 +1,21 @@
 package io.goorm.team02.core.owner.stores.service;
 
 import io.goorm.team02.core.owner.common.service.S3Service;
+import io.goorm.team02.core.owner.stores.client.OrderServiceClient;
 import io.goorm.team02.core.owner.stores.domain.Store;
 import io.goorm.team02.core.owner.stores.domain.StoreHoliday;
 import io.goorm.team02.core.owner.stores.domain.StoreHour;
 import io.goorm.team02.core.owner.stores.domain.enums.StoreCategory;
 import io.goorm.team02.core.owner.stores.domain.enums.StoreStatus;
 import io.goorm.team02.core.owner.stores.events.ImageCleanupEvent;
-import io.goorm.team02.core.owner.stores.mapper.StoreMapper; // 추가
+import io.goorm.team02.core.owner.stores.mapper.StoreMapper;
 import io.goorm.team02.core.owner.stores.repository.StoreHolidayRepository;
 import io.goorm.team02.core.owner.stores.repository.StoreHourRepository;
-import io.goorm.team02.core.owner.stores.domain.TempUser;
 import io.goorm.team02.core.owner.stores.repository.StoreRepository;
-import io.goorm.team02.core.owner.stores.repository.UserRepository;
+import io.goorm.team02.dto.orders.OrderDashboardDto;
+import io.goorm.team02.dto.orders.OrderItemDto;
+import io.goorm.team02.dto.orders.RecentOrderDto;
+import io.goorm.team02.dto.owner.stores.dashboard.StoreDashboardResponse;
 import io.goorm.team02.dto.owner.stores.storemanagement.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,23 +45,23 @@ import java.util.Set;
 public class StoreService {
 
     private final StoreRepository storeRepository;
-    private final UserRepository userRepository;
     private final StoreHourRepository storeHourRepository;
     private final StoreHolidayRepository storeHolidayRepository;
     private final S3Service s3Service;
     private final ApplicationEventPublisher eventPublisher;
-    private final StoreMapper storeMapper; // 추가
+    private final StoreMapper storeMapper;
+    private final OrderServiceClient orderServiceClient;
 
     /**
      * 가게 등록 (최초 1회)
      */
     @Transactional
-    public StoreResponse createStore(TempUser currentUser, StoreCreateRequest request) {
-        log.info("=== 가게 등록 시작 - 사용자 ID: {} ===", currentUser.getId());
+    public StoreResponse createStore(Long currentUser, StoreCreateRequest request) {
+        log.info("=== 가게 등록 시작 - 사용자 ID: {} ===", currentUser);
 
         // 사용자가 이미 가게를 가지고 있는지 확인
-        if (storeRepository.existsByOwnerIdAndIsActiveTrue(currentUser.getId())) {
-            log.warn("이미 등록된 가게가 있습니다. 사용자 ID: {}", currentUser.getId());
+        if (storeRepository.existsByOwnerIdAndIsActiveTrue(currentUser)) {
+            log.warn("이미 등록된 가게가 있습니다. 사용자 ID: {}", currentUser);
             throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 등록된 가게가 있습니다");
         }
 
@@ -69,7 +73,7 @@ public class StoreService {
             StoreCategory category = storeMapper.convertStringToStoreCategory(request.getCategory());
 
             Store store = new Store();
-            store.setOwner(currentUser);
+            store.setOwnerId(currentUser);
             store.setBusinessNumber(request.getBusinessNumber());
             store.setName(request.getName());
             store.setDescription(request.getDescription());
@@ -78,7 +82,7 @@ public class StoreService {
             store.setDetailAddress(request.getDetailAddress());
             store.setLatitude(request.getLatitude());
             store.setLongitude(request.getLongitude());
-            store.setCategory(category); // 변환된 enum 사용
+            store.setCategory(category);
             store.setMinOrderAmount(request.getMinOrderAmount());
             store.setDeliveryFee(request.getDeliveryFee());
             store.setDeliveryTimeMin(request.getDeliveryTimeMin());
@@ -88,7 +92,6 @@ public class StoreService {
             Store savedStore = storeRepository.save(store);
             log.info("가게 등록 완료! 생성된 가게 ID: {}, 가게명: {}", savedStore.getId(), savedStore.getName());
 
-            // Mapper를 사용해서 응답 생성
             return storeMapper.toStoreResponse(savedStore);
 
         } catch (DataIntegrityViolationException e) {
@@ -103,10 +106,10 @@ public class StoreService {
     /**
      * 내 가게 정보 조회
      */
-    public StoreResponse getMyStore(TempUser currentUser) {
-        log.debug("가게 정보 조회 - 사용자 ID: {}", currentUser.getId());
+    public StoreResponse getMyStore(Long currentUser) {
+        log.debug("가게 정보 조회 - 사용자 ID: {}", currentUser);
 
-        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser.getId())
+        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser)
                 .orElse(null);
 
         return store != null ? storeMapper.toStoreResponse(store) : null;
@@ -115,8 +118,8 @@ public class StoreService {
     /**
      * 내 가게 Entity 조회 (내부용)
      */
-    public Store getMyStoreEntity(TempUser currentUser) {
-        return storeRepository.findByOwnerIdAndIsActiveTrue(currentUser.getId())
+    public Store getMyStoreEntity(Long currentUser) {
+        return storeRepository.findByOwnerIdAndIsActiveTrue(currentUser)
                 .orElse(null);
     }
 
@@ -124,10 +127,10 @@ public class StoreService {
      * 가게 정보 수정
      */
     @Transactional
-    public StoreResponse updateStore(TempUser currentUser, StoreUpdateRequest request) {
-        log.info("=== 가게 정보 수정 시작 - 사용자 ID: {} ===", currentUser.getId());
+    public StoreResponse updateStore(Long currentUser, StoreUpdateRequest request) {
+        log.info("=== 가게 정보 수정 시작 - 사용자 ID: {} ===", currentUser);
 
-        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser.getId())
+        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다"));
 
         // 입력값 검증
@@ -175,10 +178,10 @@ public class StoreService {
      * 연락처 정보 수정
      */
     @Transactional
-    public StoreResponse updateContact(TempUser currentUser, StoreContactRequest request) {
-        log.info("=== 연락처 정보 수정 시작 - 사용자 ID: {} ===", currentUser.getId());
+    public StoreResponse updateContact(Long currentUser, StoreContactRequest request) {
+        log.info("=== 연락처 정보 수정 시작 - 사용자 ID: {} ===", currentUser);
 
-        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser.getId())
+        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다"));
 
         boolean hasChanges = false;
@@ -203,10 +206,10 @@ public class StoreService {
      * 배달 정보 수정
      */
     @Transactional
-    public StoreResponse updateDelivery(TempUser currentUser, StoreDeliveryRequest request) {
-        log.info("=== 배달 정보 수정 시작 - 사용자 ID: {} ===", currentUser.getId());
+    public StoreResponse updateDelivery(Long currentUser, StoreDeliveryRequest request) {
+        log.info("=== 배달 정보 수정 시작 - 사용자 ID: {} ===", currentUser);
 
-        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser.getId())
+        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다"));
 
         boolean hasChanges = false;
@@ -249,10 +252,10 @@ public class StoreService {
      * 위치 정보 수정
      */
     @Transactional
-    public StoreResponse updateLocation(TempUser currentUser, StoreLocationRequest request) {
-        log.info("=== 위치 정보 수정 시작 - 사용자 ID: {} ===", currentUser.getId());
+    public StoreResponse updateLocation(Long currentUser, StoreLocationRequest request) {
+        log.info("=== 위치 정보 수정 시작 - 사용자 ID: {} ===", currentUser);
 
-        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser.getId())
+        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다"));
 
         boolean hasChanges = false;
@@ -283,10 +286,10 @@ public class StoreService {
      * 가게 삭제 (비활성화)
      */
     @Transactional
-    public void deleteStore(TempUser currentUser) {
-        log.info("=== 가게 삭제 시작 - 사용자 ID: {} ===", currentUser.getId());
+    public void deleteStore(Long currentUser) {
+        log.info("=== 가게 삭제 시작 - 사용자 ID: {} ===", currentUser);
 
-        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser.getId())
+        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다"));
 
         store.setIsActive(false);
@@ -299,8 +302,8 @@ public class StoreService {
      * 트랜잭션 안전한 이미지 업로드
      */
     @Transactional
-    public String uploadImage(TempUser currentUser, MultipartFile file) {
-        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser.getId())
+    public String uploadImage(Long currentUser, MultipartFile file) {
+        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다"));
 
         String oldImageUrl = store.getImageUrl();
@@ -334,8 +337,8 @@ public class StoreService {
      * 안전한 이미지 삭제
      */
     @Transactional
-    public void deleteImage(TempUser currentUser, Long imageId) {
-        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser.getId())
+    public void deleteImage(Long currentUser, Long imageId) {
+        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다"));
 
         String currentImageUrl = store.getImageUrl();
@@ -375,16 +378,15 @@ public class StoreService {
     /**
      * 운영시간 조회
      */
-    public List<StoreHourResponse> getStoreHours(TempUser currentUser) {
-        log.info("=== 운영시간 조회 - 사용자 ID: {} ===", currentUser.getId());
+    public List<StoreHourResponse> getStoreHours(Long currentUser) {
+        log.info("=== 운영시간 조회 - 사용자 ID: {} ===", currentUser);
 
-        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser.getId())
+        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다"));
 
         List<StoreHour> storeHours = store.getStoreHours();
         log.info("운영시간 조회 완료: {}개의 운영시간 설정", storeHours.size());
 
-        // Mapper를 사용해서 변환
         return storeMapper.toHourResponseList(storeHours);
     }
 
@@ -392,10 +394,10 @@ public class StoreService {
      * 운영시간 설정
      */
     @Transactional
-    public List<StoreHourResponse> updateStoreHours(TempUser currentUser, List<StoreHourRequest> requests) {
-        log.info("=== 운영시간 설정 시작 - 사용자 ID: {} ===", currentUser.getId());
+    public List<StoreHourResponse> updateStoreHours(Long currentUser, List<StoreHourRequest> requests) {
+        log.info("=== 운영시간 설정 시작 - 사용자 ID: {} ===", currentUser);
 
-        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser.getId())
+        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다"));
 
         // 업데이트 대상 요일 수집
@@ -449,7 +451,6 @@ public class StoreService {
         List<StoreHour> savedHours = storeHourRepository.saveAll(updatedHours);
         log.info("=== 운영시간 설정 완료 ===");
 
-        // Mapper를 사용해서 변환
         return storeMapper.toHourResponseList(savedHours);
     }
 
@@ -457,10 +458,10 @@ public class StoreService {
      * 휴무일 등록
      */
     @Transactional
-    public ResponseEntity<String> createHoliday(TempUser currentUser, StoreHolidayRequest request) {
-        log.info("=== 휴무일 등록 시작 - 사용자 ID: {} ===", currentUser.getId());
+    public ResponseEntity<String> createHoliday(Long currentUser, StoreHolidayRequest request) {
+        log.info("=== 휴무일 등록 시작 - 사용자 ID: {} ===", currentUser);
 
-        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser.getId())
+        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다"));
 
         if (request.getDate() == null) {
@@ -491,16 +492,15 @@ public class StoreService {
     /**
      * 휴무일 목록 조회
      */
-    public List<StoreHolidayResponse> getHolidays(TempUser currentUser) {
-        log.info("=== 휴무일 조회 시작 - 사용자 ID: {} ===", currentUser.getId());
+    public List<StoreHolidayResponse> getHolidays(Long currentUser) {
+        log.info("=== 휴무일 조회 시작 - 사용자 ID: {} ===", currentUser);
 
-        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser.getId())
+        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다"));
 
         List<StoreHoliday> holidays = storeHolidayRepository
                 .findByStoreIdAndDateGreaterThanEqualOrderByDateAsc(store.getId(), LocalDate.now());
 
-        // Mapper를 사용해서 변환
         List<StoreHolidayResponse> result = storeMapper.toHolidayResponseList(holidays);
 
         log.info("휴무일 조회 완료: {}개", result.size());
@@ -511,10 +511,10 @@ public class StoreService {
      * 휴무일 삭제
      */
     @Transactional
-    public ResponseEntity<String> deleteHoliday(TempUser currentUser, Long holidayId) {
-        log.info("=== 휴무일 삭제 시작 - 사용자 ID: {}, 휴무일 ID: {} ===", currentUser.getId(), holidayId);
+    public ResponseEntity<String> deleteHoliday(Long currentUser, Long holidayId) {
+        log.info("=== 휴무일 삭제 시작 - 사용자 ID: {}, 휴무일 ID: {} ===", currentUser, holidayId);
 
-        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser.getId())
+        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다"));
 
         // 권한 검증을 위한 Repository 메소드 사용
@@ -530,10 +530,10 @@ public class StoreService {
     /**
      * 가게 상태 조회
      */
-    public StoreStatusResponse getStoreStatus(TempUser currentUser) {
-        log.info("=== 가게 상태 조회 시작 - 사용자 ID: {} ===", currentUser.getId());
+    public StoreStatusResponse getStoreStatus(Long currentUser) {
+        log.info("=== 가게 상태 조회 시작 - 사용자 ID: {} ===", currentUser);
 
-        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser.getId())
+        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다"));
 
         boolean isCurrentlyOpen = checkIfCurrentlyOpen(store);
@@ -541,7 +541,6 @@ public class StoreService {
 
         log.info("가게 상태 조회 완료 - 현재 영업 중: {}", isCurrentlyOpen);
 
-        // Mapper를 사용해서 응답 생성
         return storeMapper.toStoreStatusResponse(store, isCurrentlyOpen, currentDayStatus);
     }
 
@@ -549,14 +548,14 @@ public class StoreService {
      * 영업 상태 변경
      */
     @Transactional
-    public StoreStatusModifyResponse updateStoreStatus(TempUser currentUser, StoreStatusRequest request) {
-        log.info("=== 영업 상태 변경 시작 - 사용자 ID: {} ===", currentUser.getId());
+    public StoreStatusModifyResponse updateStoreStatus(Long currentUser, StoreStatusRequest request) {
+        log.info("=== 영업 상태 변경 시작 - 사용자 ID: {} ===", currentUser);
 
         // Mapper를 사용해서 검증 및 변환
         StoreStatus newStatus = storeMapper.validateAndConvertStoreStatus(request);
         storeMapper.validateStatusChangeMessage(request);
 
-        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser.getId())
+        Store store = storeRepository.findByOwnerIdAndIsActiveTrue(currentUser)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다"));
 
         if (store.getStatus() == newStatus) {
@@ -573,7 +572,6 @@ public class StoreService {
         Store savedStore = storeRepository.save(store);
         log.info("영업 상태가 {}로 변경되었습니다.", newStatus);
 
-        // Mapper를 사용해서 응답 생성
         return storeMapper.toStatusModifyResponse(savedStore, "영업 상태가 성공적으로 변경되었습니다.");
     }
 
@@ -688,5 +686,99 @@ public class StoreService {
         }
 
         return "운영시간 확인 필요";
+    }
+
+    public StoreDashboardResponse getDashboard(Long currentUser) {
+        log.info("=== 대시보드 조회 시작 - 사용자 ID: {} ===", currentUser);
+
+        // 1. 내 가게 정보 조회
+        Store store = getMyStoreEntity(currentUser);
+        if (store == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다");
+        }
+
+        try {
+            // 2. Order 서비스에서 주문 관련 데이터 조회
+            OrderDashboardDto orderData = orderServiceClient.getDashboardData(store.getId());
+
+            // 3. 가게 운영시간 정보 조회
+            List<StoreHour> storeHours = store.getStoreHours();
+
+            // 4. StoreDashboardResponse 생성 (record는 생성자 사용)
+            StoreDashboardResponse response = new StoreDashboardResponse(
+                    // 오늘 통계
+                    new StoreDashboardResponse.TodayStats(
+                            orderData.getTodayOrderCount(),
+                            orderData.getTodayRevenue()
+                    ),
+
+                    // 가게 정보
+                    new StoreDashboardResponse.RestaurantInfo(
+                            store.getId(),
+                            store.getName(),
+                            orderData.getAverageRating(),
+                            orderData.getReviewCount(),
+                            orderData.getTotalOrderCount()
+                    ),
+
+                    // 운영시간 정보
+                    convertToStoreHourInfoList(storeHours),
+
+                    // 최근 주문 정보
+                    convertToRecentOrderInfoList(orderData.getRecentOrders())
+            );
+
+            log.info("=== 대시보드 조회 완료 - 오늘 주문: {}, 오늘 매출: {} ===",
+                    orderData.getTodayOrderCount(), orderData.getTodayRevenue());
+
+            return response;
+
+        } catch (Exception e) {
+            log.error("대시보드 데이터 조회 중 오류 발생", e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "대시보드 데이터를 불러올 수 없습니다");
+        }
+    }
+
+    /**
+     * StoreHour를 StoreHourInfo로 변환
+     */
+    private List<StoreDashboardResponse.StoreHourInfo> convertToStoreHourInfoList(List<StoreHour> storeHours) {
+        return storeHours.stream()
+                .map(hour -> new StoreDashboardResponse.StoreHourInfo(
+                        hour.getDayOfWeek(),
+                        hour.getOpenTime() != null ? hour.getOpenTime().toString() : null,
+                        hour.getCloseTime() != null ? hour.getCloseTime().toString() : null,
+                        hour.getIsClosed()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * RecentOrderDto를 RecentOrderInfo로 변환
+     */
+    private List<StoreDashboardResponse.RecentOrderInfo> convertToRecentOrderInfoList(List<RecentOrderDto> recentOrders) {
+        return recentOrders.stream()
+                .map(order -> new StoreDashboardResponse.RecentOrderInfo(
+                        order.getId(),
+                        order.getOrderNumber(),
+                        order.getCustomerName(),
+                        order.getTotal(),
+                        order.getStatus(),
+                        order.getOrderTime().toString(),
+                        convertToOrderItemInfoList(order.getItems())
+                ))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * OrderItemDto를 OrderItemInfo로 변환
+     */
+    private List<StoreDashboardResponse.OrderItemInfo> convertToOrderItemInfoList(List<OrderItemDto> items) {
+        return items.stream()
+                .map(item -> new StoreDashboardResponse.OrderItemInfo(
+                        item.getName(),
+                        item.getQuantity()
+                ))
+                .collect(Collectors.toList());
     }
 }

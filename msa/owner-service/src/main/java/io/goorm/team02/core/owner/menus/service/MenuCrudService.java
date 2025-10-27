@@ -15,7 +15,6 @@ import io.goorm.team02.core.owner.menus.repository.MenuOptionItemRepository;
 import io.goorm.team02.core.owner.menus.repository.MenuOptionRepository;
 import io.goorm.team02.core.owner.menus.repository.MenuRepository;
 import io.goorm.team02.core.owner.stores.domain.Store;
-import io.goorm.team02.core.owner.stores.domain.TempUser;
 import io.goorm.team02.dto.owner.menus.menucreate.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,8 +47,8 @@ public class MenuCrudService {
     /**
      * 메뉴 목록 조회
      */
-    public List<Menu> getMenus(TempUser currentUser, Long categoryId) {
-        SecureLogger.logSecurely(log, "info", "=== 메뉴 목록 조회 시작 - 사용자 ID: {} ===", currentUser.getId());
+    public List<Menu> getMenus(Long currentUser, Long categoryId) {
+        SecureLogger.logSecurely(log, "info", "=== 메뉴 목록 조회 시작 - 사용자 ID: {} ===", currentUser);
 
         Store store = menuValidationService.getMyStore(currentUser);
 
@@ -60,23 +59,23 @@ public class MenuCrudService {
             MenuCategory category = menuCategoryRepository.findById(categoryId)
                     .orElseThrow(() -> {
                         SecureLogger.logSecurely(log, "warn", "존재하지 않는 카테고리 조회 시도 - 사용자 ID: {}, 카테고리 ID: {}",
-                                currentUser.getId(), categoryId);
+                                currentUser, categoryId);
                         return new ResponseStatusException(HttpStatus.NOT_FOUND, "카테고리를 찾을 수 없습니다");
                     });
 
             if (!category.getStore().getId().equals(store.getId())) {
                 SecureLogger.logSecurely(log, "warn", "권한 없는 카테고리 접근 시도 - 사용자 ID: {}, 카테고리 ID: {}, 소유 가게 ID: {}",
-                        currentUser.getId(), categoryId, store.getId());
+                        currentUser, categoryId, store.getId());
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "다른 가게의 카테고리입니다");
             }
 
             menus = menuRepository.findByStoreIdAndCategoryIdOrderByDisplayOrderAsc(store.getId(), categoryId);
             SecureLogger.logSecurely(log, "info", "카테고리별 메뉴 조회 완료 - 사용자 ID: {}, 카테고리명: {}, 메뉴 수: {}개",
-                    currentUser.getId(), category.getName(), menus.size());
+                    currentUser, category.getName(), menus.size());
         } else {
             menus = menuRepository.findByStoreIdOrderByDisplayOrderAsc(store.getId());
             SecureLogger.logSecurely(log, "info", "전체 메뉴 조회 완료 - 사용자 ID: {}, 총 메뉴 수: {}개",
-                    currentUser.getId(), menus.size());
+                    currentUser, menus.size());
         }
 
         return menus;
@@ -85,21 +84,21 @@ public class MenuCrudService {
     /**
      * 메뉴 상세 조회
      */
-    public Menu getMenu(TempUser currentUser, Long menuId) {
+    public Menu getMenu(Long currentUser, Long menuId) {
         SecureLogger.logSecurely(log, "info", "=== 메뉴 상세 조회 시작 - 사용자 ID: {}, 메뉴 ID: {} ===",
-                currentUser.getId(), menuId);
+                currentUser, menuId);
 
         Store store = menuValidationService.getMyStore(currentUser);
 
         Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
                 .orElseThrow(() -> {
                     SecureLogger.logSecurely(log, "warn", "존재하지 않는 메뉴 조회 시도 - 사용자 ID: {}, 메뉴 ID: {}",
-                            currentUser.getId(), menuId);
+                            currentUser, menuId);
                     return new ResponseStatusException(HttpStatus.NOT_FOUND, "메뉴를 찾을 수 없습니다");
                 });
 
         SecureLogger.logSecurely(log, "info", "메뉴 조회 완료 - 사용자 ID: {}, 메뉴 ID: {}, 상태: {}",
-                currentUser.getId(), menu.getId(), menu.getStatus());
+                currentUser, menu.getId(), menu.getStatus());
         return menu;
     }
 
@@ -107,9 +106,9 @@ public class MenuCrudService {
      * 메뉴 등록
      */
     @Transactional
-    public Menu createMenu(TempUser currentUser, MenuCreateRequest request) {
+    public Menu createMenu(Long currentUser, MenuCreateRequest request) {
         SecureLogger.logSecurely(log, "info", "=== 메뉴 등록 시작 - 사용자 ID: {}, 메뉴명: {} ===",
-                currentUser.getId(), request.getName());
+                currentUser, request.getName());
 
         Store store = menuValidationService.getMyStore(currentUser);
 
@@ -124,14 +123,14 @@ public class MenuCrudService {
             inputValidator.validateImageUrl(request.getImageUrl());
         } catch (SecurityException e) {
             SecureLogger.logSecurely(log, "warn", "메뉴 등록 입력값 검증 실패 - 사용자 ID: {}, 오류: {}",
-                    currentUser.getId(), e.getMessage());
+                    currentUser, e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
 
         // 메뉴명 중복 체크
         if (menuRepository.existsByStoreIdAndName(store.getId(), request.getName())) {
             SecureLogger.logSecurely(log, "warn", "중복 메뉴명 등록 시도 - 사용자 ID: {}, 메뉴명: {}",
-                    currentUser.getId(), request.getName());
+                    currentUser, request.getName());
             throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 존재하는 메뉴명입니다");
         }
 
@@ -147,7 +146,7 @@ public class MenuCrudService {
                 .imageUrl(request.getImageUrl())
                 .isPopular(request.getIsPopular() != null ? request.getIsPopular() : false)
                 .isRecommended(request.getIsRecommended() != null ? request.getIsRecommended() : false)
-                .status(menuStatus) // 변환된 enum 사용
+                .status(menuStatus)
                 .displayOrder(request.getDisplayOrder() != null ? request.getDisplayOrder() : 0)
                 .build();
 
@@ -161,7 +160,7 @@ public class MenuCrudService {
         }
 
         SecureLogger.logSecurely(log, "info", "메뉴 등록 완료 - 사용자 ID: {}, 메뉴 ID: {}",
-                currentUser.getId(), savedMenu.getId());
+                currentUser, savedMenu.getId());
         return savedMenu;
     }
 
@@ -169,16 +168,16 @@ public class MenuCrudService {
      * 메뉴 수정
      */
     @Transactional
-    public Menu updateMenu(TempUser currentUser, Long menuId, MenuUpdateRequest request) {
+    public Menu updateMenu(Long currentUser, Long menuId, MenuUpdateRequest request) {
         SecureLogger.logSecurely(log, "info", "=== 메뉴 수정 시작 - 사용자 ID: {}, 메뉴 ID: {} ===",
-                currentUser.getId(), menuId);
+                currentUser, menuId);
 
         Store store = menuValidationService.getMyStore(currentUser);
 
         Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
                 .orElseThrow(() -> {
                     SecureLogger.logSecurely(log, "warn", "존재하지 않는 메뉴 수정 시도 - 사용자 ID: {}, 메뉴 ID: {}",
-                            currentUser.getId(), menuId);
+                            currentUser, menuId);
                     return new ResponseStatusException(HttpStatus.NOT_FOUND, "메뉴를 찾을 수 없습니다");
                 });
 
@@ -272,7 +271,7 @@ public class MenuCrudService {
 
         if (!hasChanges) {
             SecureLogger.logSecurely(log, "info", "메뉴 수정 - 변경사항 없음 - 사용자 ID: {}, 메뉴 ID: {}",
-                    currentUser.getId(), menuId);
+                    currentUser, menuId);
             return menu;
         }
 
@@ -280,7 +279,7 @@ public class MenuCrudService {
 
         // 변경사항 로깅 (민감정보 제외)
         SecureLogger.logSecurely(log, "info", "메뉴 수정 완료 - 사용자 ID: {}, 메뉴 ID: {}, 변경항목 수: {}개",
-                currentUser.getId(), menuId, changes.size());
+                currentUser, menuId, changes.size());
 
         return savedMenu;
     }
@@ -289,16 +288,16 @@ public class MenuCrudService {
      * 메뉴 삭제
      */
     @Transactional
-    public void deleteMenu(TempUser currentUser, Long menuId) {
+    public void deleteMenu(Long currentUser, Long menuId) {
         SecureLogger.logSecurely(log, "info", "=== 메뉴 삭제 시작 - 사용자 ID: {}, 메뉴 ID: {} ===",
-                currentUser.getId(), menuId);
+                currentUser, menuId);
 
         Store store = menuValidationService.getMyStore(currentUser);
 
         Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
                 .orElseThrow(() -> {
                     SecureLogger.logSecurely(log, "warn", "존재하지 않는 메뉴 삭제 시도 - 사용자 ID: {}, 메뉴 ID: {}",
-                            currentUser.getId(), menuId);
+                            currentUser, menuId);
                     return new ResponseStatusException(HttpStatus.NOT_FOUND, "메뉴를 찾을 수 없습니다");
                 });
 
@@ -325,26 +324,26 @@ public class MenuCrudService {
         menuRepository.delete(menu);
 
         SecureLogger.logSecurely(log, "info", "메뉴 삭제 완료 - 사용자 ID: {}, 메뉴 ID: {}, 옵션 그룹: {}개, 옵션 아이템: {}개",
-                currentUser.getId(), menuId, optionGroupCount, optionItemCount);
+                currentUser, menuId, optionGroupCount, optionItemCount);
     }
 
     /**
      * 메뉴 상태 변경
      */
     @Transactional
-    public Menu updateMenuStatus(TempUser currentUser, Long menuId, MenuStatusRequest request) {
+    public Menu updateMenuStatus(Long currentUser, Long menuId, MenuStatusRequest request) {
         // String status를 MenuStatus enum으로 변환
         MenuStatus newStatus = menuMapper.convertStringToMenuStatus(request.getStatus());
 
         SecureLogger.logSecurely(log, "info", "=== 메뉴 상태 변경 시작 - 사용자 ID: {}, 메뉴 ID: {}, 새 상태: {} ===",
-                currentUser.getId(), menuId, newStatus);
+                currentUser, menuId, newStatus);
 
         Store store = menuValidationService.getMyStore(currentUser);
 
         Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
                 .orElseThrow(() -> {
                     SecureLogger.logSecurely(log, "warn", "존재하지 않는 메뉴 상태 변경 시도 - 사용자 ID: {}, 메뉴 ID: {}",
-                            currentUser.getId(), menuId);
+                            currentUser, menuId);
                     return new ResponseStatusException(HttpStatus.NOT_FOUND, "메뉴를 찾을 수 없습니다");
                 });
 
@@ -354,7 +353,7 @@ public class MenuCrudService {
         // 현재 상태와 동일한지 확인
         if (menu.getStatus() == newStatus) {
             SecureLogger.logSecurely(log, "info", "메뉴 상태 변경 - 동일한 상태 - 사용자 ID: {}, 메뉴 ID: {}, 상태: {}",
-                    currentUser.getId(), menuId, newStatus);
+                    currentUser, menuId, newStatus);
             return menu;
         }
 
@@ -370,26 +369,25 @@ public class MenuCrudService {
         Menu savedMenu = menuRepository.save(menu);
 
         SecureLogger.logSecurely(log, "info", "메뉴 상태 변경 완료 - 사용자 ID: {}, 메뉴 ID: {}, 상태: {} -> {}",
-                currentUser.getId(), menuId, previousStatus, savedMenu.getStatus());
+                currentUser, menuId, previousStatus, savedMenu.getStatus());
 
         return savedMenu;
     }
-
 
     /**
      * 메뉴 순서 변경
      */
     @Transactional
-    public List<Menu> updateMenuOrder(TempUser currentUser, MenuOrderUpdateRequest request) {
+    public List<Menu> updateMenuOrder(Long currentUser, MenuOrderUpdateRequest request) {
         SecureLogger.logSecurely(log, "info", "=== 메뉴 순서 변경 시작 - 사용자 ID: {}, 메뉴 ID: {}, 새 위치: {} ===",
-                currentUser.getId(), request.getMenuId(), request.getNewPosition());
+                currentUser, request.getMenuId(), request.getNewPosition());
 
         Store store = menuValidationService.getMyStore(currentUser);
 
         Menu targetMenu = menuRepository.findByIdAndStoreId(request.getMenuId(), store.getId())
                 .orElseThrow(() -> {
                     SecureLogger.logSecurely(log, "warn", "존재하지 않는 메뉴 순서 변경 시도 - 사용자 ID: {}, 메뉴 ID: {}",
-                            currentUser.getId(), request.getMenuId());
+                            currentUser, request.getMenuId());
                     return new ResponseStatusException(HttpStatus.NOT_FOUND, "메뉴를 찾을 수 없습니다");
                 });
 
@@ -406,7 +404,7 @@ public class MenuCrudService {
 
             if (categoryIdForOrder == null) {
                 SecureLogger.logSecurely(log, "warn", "카테고리 정보 없는 순서 변경 시도 - 사용자 ID: {}, 메뉴 ID: {}",
-                        currentUser.getId(), request.getMenuId());
+                        currentUser, request.getMenuId());
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "카테고리 정보가 필요합니다");
             }
 
@@ -416,7 +414,7 @@ public class MenuCrudService {
 
             if (!category.getStore().getId().equals(store.getId())) {
                 SecureLogger.logSecurely(log, "warn", "권한 없는 카테고리 순서 변경 시도 - 사용자 ID: {}, 카테고리 ID: {}",
-                        currentUser.getId(), categoryIdForOrder);
+                        currentUser, categoryIdForOrder);
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "다른 가게의 카테고리입니다");
             }
 
@@ -425,14 +423,14 @@ public class MenuCrudService {
         }
 
         if (menus.isEmpty()) {
-            SecureLogger.logSecurely(log, "warn", "순서 변경할 메뉴 없음 - 사용자 ID: {}", currentUser.getId());
+            SecureLogger.logSecurely(log, "warn", "순서 변경할 메뉴 없음 - 사용자 ID: {}", currentUser);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "순서를 변경할 메뉴가 없습니다");
         }
 
         // 새로운 위치 유효성 검증
         if (request.getNewPosition() < 1 || request.getNewPosition() > menus.size()) {
             SecureLogger.logSecurely(log, "warn", "잘못된 순서 위치 - 사용자 ID: {}, 요청 위치: {}, 최대 위치: {}",
-                    currentUser.getId(), request.getNewPosition(), menus.size());
+                    currentUser, request.getNewPosition(), menus.size());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     String.format("위치는 1부터 %d 사이여야 합니다", menus.size()));
         }
@@ -448,14 +446,14 @@ public class MenuCrudService {
 
         if (currentPosition == -1) {
             SecureLogger.logSecurely(log, "warn", "메뉴를 해당 범위에서 찾을 수 없음 - 사용자 ID: {}, 메뉴 ID: {}",
-                    currentUser.getId(), request.getMenuId());
+                    currentUser, request.getMenuId());
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "메뉴를 해당 범위에서 찾을 수 없습니다");
         }
 
         // 위치가 같으면 변경하지 않음
         if (currentPosition == request.getNewPosition()) {
             SecureLogger.logSecurely(log, "info", "메뉴 순서 변경 - 동일한 위치 - 사용자 ID: {}, 메뉴 ID: {}, 위치: {}",
-                    currentUser.getId(), request.getMenuId(), currentPosition);
+                    currentUser, request.getMenuId(), currentPosition);
             return menus;
         }
 
@@ -480,7 +478,7 @@ public class MenuCrudService {
         }
 
         SecureLogger.logSecurely(log, "info", "메뉴 순서 변경 완료 - 사용자 ID: {}, 메뉴 ID: {}, 위치: {} -> {}, 업데이트된 메뉴 수: {}개",
-                currentUser.getId(), request.getMenuId(), currentPosition, request.getNewPosition(), updatedMenus.size());
+                currentUser, request.getMenuId(), currentPosition, request.getNewPosition(), updatedMenus.size());
 
         return menus;
     }
@@ -569,9 +567,9 @@ public class MenuCrudService {
     /**
      * 보안이 강화된 상태 변경 로그
      */
-    private void logStatusChangeSecurely(TempUser currentUser, Menu menu, MenuStatus previousStatus, MenuStatusRequest request) {
+    private void logStatusChangeSecurely(Long currentUser, Menu menu, MenuStatus previousStatus, MenuStatusRequest request) {
         SecureLogger.logSecurely(log, "info", "메뉴 상태 변경 상세:");
-        SecureLogger.logSecurely(log, "info", "  - 사용자 ID: {}", currentUser.getId());
+        SecureLogger.logSecurely(log, "info", "  - 사용자 ID: {}", currentUser);
         SecureLogger.logSecurely(log, "info", "  - 메뉴 ID: {}", menu.getId());
         SecureLogger.logSecurely(log, "info", "  - 상태 변경: {} -> {}", previousStatus, request.getStatus());
         SecureLogger.logSecurely(log, "info", "  - 일시적 변경: {}", request.getIsTemporary());
@@ -680,21 +678,20 @@ public class MenuCrudService {
         }
     }
 
-
     /**
      * 보안 감사를 위한 중요 작업 로깅
      */
-    private void logSecurityAudit(TempUser currentUser, String action, String resource, String details) {
+    private void logSecurityAudit(Long currentUser, String action, String resource, String details) {
         SecureLogger.logSecurely(log, "info", "[SECURITY_AUDIT] 사용자 ID: {}, 작업: {}, 리소스: {}, 상세: {}",
-                currentUser.getId(), action, resource, details);
+                currentUser, action, resource, details);
     }
 
     /**
      * 사용자 활동 패턴 분석을 위한 로깅
      */
-    private void logUserActivity(TempUser currentUser, String activity, Map<String, Object> metadata) {
+    private void logUserActivity(Long currentUser, String activity, Map<String, Object> metadata) {
         SecureLogger.logSecurely(log, "info", "[USER_ACTIVITY] 사용자 ID: {}, 활동: {}, 시간: {}",
-                currentUser.getId(), activity, LocalDateTime.now());
+                currentUser, activity, LocalDateTime.now());
 
         if (metadata != null && !metadata.isEmpty()) {
             // 민감정보 제외하고 메타데이터 로깅
@@ -727,11 +724,11 @@ public class MenuCrudService {
     /**
      * 예외 발생 시 보안 로깅
      */
-    private void logSecurityException(TempUser currentUser, String operation, Exception e) {
+    private void logSecurityException(Long currentUser, String operation, Exception e) {
         String errorId = java.util.UUID.randomUUID().toString();
 
         SecureLogger.logSecurely(log, "error", "[SECURITY_ERROR] 오류 ID: {}, 사용자 ID: {}, 작업: {}, 오류 타입: {}",
-                errorId, currentUser.getId(), operation, e.getClass().getSimpleName());
+                errorId, currentUser, operation, e.getClass().getSimpleName());
 
         // 스택 트레이스는 DEBUG 레벨로 (운영에서는 출력되지 않음)
         SecureLogger.logSecurely(log, "debug", "[SECURITY_ERROR_DETAIL] 오류 ID: {}, 상세: {}",
@@ -756,8 +753,8 @@ public class MenuCrudService {
     /**
      * 비즈니스 규칙 위반 시 로깅
      */
-    private void logBusinessRuleViolation(TempUser currentUser, String rule, String violation) {
+    private void logBusinessRuleViolation(Long currentUser, String rule, String violation) {
         SecureLogger.logSecurely(log, "warn", "[BUSINESS_RULE_VIOLATION] 사용자 ID: {}, 규칙: {}, 위반사항: {}",
-                currentUser.getId(), rule, violation);
+                currentUser, rule, violation);
     }
 }

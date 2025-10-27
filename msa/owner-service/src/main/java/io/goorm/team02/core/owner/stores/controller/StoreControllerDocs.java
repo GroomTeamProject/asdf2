@@ -1,6 +1,7 @@
 package io.goorm.team02.core.owner.stores.controller;
 
 import io.goorm.team02.core.owner.auth.annotation.CurrentUser;
+import io.goorm.team02.dto.owner.stores.dashboard.StoreDashboardResponse;
 import io.goorm.team02.dto.owner.stores.storemanagement.StoreCreateRequest;
 import io.goorm.team02.dto.owner.stores.storemanagement.StoreUpdateRequest;
 import io.goorm.team02.dto.owner.stores.storemanagement.StoreResponse;
@@ -14,7 +15,6 @@ import io.goorm.team02.dto.owner.stores.storemanagement.StoreHolidayResponse;
 import io.goorm.team02.dto.owner.stores.storemanagement.StoreStatusRequest;
 import io.goorm.team02.dto.owner.stores.storemanagement.StoreStatusResponse;
 import io.goorm.team02.dto.owner.stores.storemanagement.StoreStatusModifyResponse;
-import io.goorm.team02.core.owner.stores.domain.TempUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -50,10 +50,10 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "409", description = "이미 등록된 가게가 있음")
     })
-    ResponseEntity<StoreResponse> createStore( // Store -> ResponseEntity<StoreResponse>로 변경
-                                               @Parameter(hidden = true) @CurrentUser TempUser currentUser,
-                                               @Parameter(description = "가게 생성 요청 정보", required = true)
-                                               @RequestBody StoreCreateRequest request
+    ResponseEntity<StoreResponse> createStore(
+            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @Parameter(description = "가게 생성 요청 정보", required = true)
+            @RequestBody StoreCreateRequest request
     );
 
     @Operation(summary = "내 가게 정보 조회", description = "현재 사용자의 가게 정보를 조회합니다")
@@ -63,7 +63,7 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
-    ResponseEntity<?> getMyStore(@Parameter(hidden = true) @CurrentUser TempUser currentUser);
+    ResponseEntity<?> getMyStore(@Parameter(hidden = true) @CurrentUser Long currentUser);
 
     @Operation(summary = "가게 기본 정보 수정", description = "가게의 기본 정보를 수정합니다")
     @Tag(name = "Store Basic Info")
@@ -74,7 +74,7 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
     ResponseEntity<StoreResponse> updateStore(
-            @Parameter(hidden = true) @CurrentUser TempUser currentUser,
+            @Parameter(hidden = true) @CurrentUser Long currentUser,
             @Parameter(description = "가게 수정 요청 정보", required = true)
             @RequestBody StoreUpdateRequest request
     );
@@ -86,7 +86,7 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
-    ResponseEntity<Void> deleteStore(@Parameter(hidden = true) @CurrentUser TempUser currentUser);
+    ResponseEntity<Void> deleteStore(@Parameter(hidden = true) @CurrentUser Long currentUser);
 
     // ================================
     // 2.2 가게 상세 설정
@@ -101,7 +101,7 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
     ResponseEntity<StoreResponse> updateContact(
-            @Parameter(hidden = true) @CurrentUser TempUser currentUser,
+            @Parameter(hidden = true) @CurrentUser Long currentUser,
             @Parameter(description = "연락처 수정 요청 정보", required = true)
             @RequestBody StoreContactRequest request
     );
@@ -115,7 +115,7 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
     ResponseEntity<StoreResponse> updateDelivery(
-            @Parameter(hidden = true) @CurrentUser TempUser currentUser,
+            @Parameter(hidden = true) @CurrentUser Long currentUser,
             @Parameter(description = "배달 설정 요청 정보", required = true)
             @RequestBody StoreDeliveryRequest request
     );
@@ -129,7 +129,7 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
     ResponseEntity<StoreResponse> updateLocation(
-            @Parameter(hidden = true) @CurrentUser TempUser currentUser,
+            @Parameter(hidden = true) @CurrentUser Long currentUser,
             @Parameter(description = "위치 정보 요청", required = true)
             @RequestBody StoreLocationRequest request
     );
@@ -148,7 +148,7 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "500", description = "파일 업로드 실패")
     })
     ResponseEntity<String> uploadImage(
-            @Parameter(hidden = true) @CurrentUser TempUser currentUser,
+            @Parameter(hidden = true) @CurrentUser Long currentUser,
             @Parameter(description = "업로드할 이미지 파일 (JPG, PNG 등)", required = true)
             @RequestParam("file") MultipartFile file
     );
@@ -162,7 +162,7 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "404", description = "이미지를 찾을 수 없음")
     })
     ResponseEntity<Void> deleteImage(
-            @Parameter(hidden = true) @CurrentUser TempUser currentUser,
+            @Parameter(hidden = true) @CurrentUser Long currentUser,
             @Parameter(description = "삭제할 이미지 ID", required = true, example = "1")
             @PathVariable Long id
     );
@@ -179,7 +179,7 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
     ResponseEntity<List<StoreHourResponse>> getStoreHours(
-            @Parameter(hidden = true) @CurrentUser TempUser currentUser
+            @Parameter(hidden = true) @CurrentUser Long currentUser
     );
 
     @Operation(summary = "운영시간 설정", description = "원하는 혹은 전체 요일의 운영시간을 설정합니다")
@@ -190,10 +190,10 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
-    ResponseEntity<List<StoreHourResponse>> updateStoreHours( // List<StoreHourResponse> -> ResponseEntity<List<StoreHourResponse>>로 변경
-                                                              @Parameter(hidden = true) @CurrentUser TempUser currentUser,
-                                                              @Parameter(description = "요일 (0:일요일, 1:월요일, ..., 6:토요일, 7:일괄)", required = true)
-                                                              @RequestBody List<StoreHourRequest> requests
+    ResponseEntity<List<StoreHourResponse>> updateStoreHours(
+            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @Parameter(description = "요일 (0:일요일, 1:월요일, ..., 6:토요일, 7:일괄)", required = true)
+            @RequestBody List<StoreHourRequest> requests
     );
 
     // ================================
@@ -210,7 +210,7 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     ResponseEntity<String> createHoliday(
-            @Parameter(hidden = true) @CurrentUser TempUser currentUser,
+            @Parameter(hidden = true) @CurrentUser Long currentUser,
             @Parameter(description = "휴무일 등록 정보", required = true)
             @RequestBody StoreHolidayRequest request
     );
@@ -222,8 +222,8 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
-    ResponseEntity<List<StoreHolidayResponse>> getHolidays( // List<StoreHolidayResponse> -> ResponseEntity<List<StoreHolidayResponse>>로 변경
-                                                            @Parameter(hidden = true) @CurrentUser TempUser currentUser
+    ResponseEntity<List<StoreHolidayResponse>> getHolidays(
+            @Parameter(hidden = true) @CurrentUser Long currentUser
     );
 
     @Operation(summary = "휴무일 삭제", description = "등록된 휴무일을 삭제합니다")
@@ -236,7 +236,7 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     ResponseEntity<String> deleteHoliday(
-            @Parameter(hidden = true) @CurrentUser TempUser currentUser,
+            @Parameter(hidden = true) @CurrentUser Long currentUser,
             @Parameter(description = "삭제할 휴무일 ID", required = true, example = "1")
             @PathVariable Long id
     );
@@ -253,7 +253,7 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
     ResponseEntity<StoreStatusResponse> getStoreStatus(
-            @Parameter(hidden = true) @CurrentUser TempUser currentUser
+            @Parameter(hidden = true) @CurrentUser Long currentUser
     );
 
     @Operation(summary = "영업 상태 변경", description = "가게의 영업 상태를 변경합니다 (영업중/준비중/마감)")
@@ -265,7 +265,7 @@ public interface StoreControllerDocs {
             @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
     ResponseEntity<StoreStatusModifyResponse> updateStoreStatus(
-            @Parameter(hidden = true) @CurrentUser TempUser currentUser,
+            @Parameter(hidden = true) @CurrentUser Long currentUser,
             @Parameter(description = "영업 상태 변경 요청", required = true)
             @RequestBody StoreStatusRequest request
     );
@@ -274,14 +274,14 @@ public interface StoreControllerDocs {
     // 2.7 대시보드
     // ================================
 
-//    @Operation(summary = "가게 대시보드 조회", description = "가게 운영에 필요한 통계 정보를 조회합니다")
-//    @Tag(name = "Store Dashboard")
-//    @ApiResponses({
-//            @ApiResponse(responseCode = "200", description = "대시보드 조회 성공"),
-//            @ApiResponse(responseCode = "401", description = "인증 실패"),
-//            @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
-//    })
-//    ResponseEntity<StoreDashboardResponse> getDashboard(
-//            @Parameter(hidden = true) @CurrentUser TempUser currentUser
-//    );
+    @Operation(summary = "가게 대시보드 조회", description = "가게 운영에 필요한 통계 정보를 조회합니다")
+    @Tag(name = "Store Dashboard")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "대시보드 조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
+    })
+    ResponseEntity<StoreDashboardResponse> getDashboard(
+            @Parameter(hidden = true) @CurrentUser Long currentUser
+    );
 }

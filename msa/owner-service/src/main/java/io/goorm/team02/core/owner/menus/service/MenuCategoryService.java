@@ -1,6 +1,5 @@
 package io.goorm.team02.core.owner.menus.service;
 
-
 import io.goorm.team02.core.owner.menus.domain.Menu;
 import io.goorm.team02.core.owner.menus.domain.MenuCategory;
 import io.goorm.team02.core.owner.menus.domain.enums.MenuStatus;
@@ -8,7 +7,6 @@ import io.goorm.team02.core.owner.menus.mapper.MenuCategoryMapper;
 import io.goorm.team02.core.owner.menus.repository.MenuCategoryRepository;
 import io.goorm.team02.core.owner.menus.repository.MenuRepository;
 import io.goorm.team02.core.owner.stores.domain.Store;
-import io.goorm.team02.core.owner.stores.domain.TempUser;
 import io.goorm.team02.dto.owner.menus.categorycreate.CategoryMoveRequest;
 import io.goorm.team02.dto.owner.menus.categorycreate.MenuCategoryCreateRequest;
 import io.goorm.team02.dto.owner.menus.categorycreate.MenuCategoryResponse;
@@ -37,7 +35,7 @@ public class MenuCategoryService {
     /**
      * 메뉴 카테고리 목록 조회 - Response DTO 반환
      */
-    public List<MenuCategoryResponse> getMenuCategoriesResponse(TempUser currentUser) {
+    public List<MenuCategoryResponse> getMenuCategoriesResponse(Long currentUser) {
         log.info("=== 메뉴 카테고리 목록 조회 시작 ===");
 
         Store store = menuValidationService.getMyStore(currentUser);
@@ -50,7 +48,7 @@ public class MenuCategoryService {
     /**
      * 기존 메뉴 카테고리 목록 조회 (Entity 반환) - 내부용
      */
-    public List<MenuCategory> getMenuCategories(TempUser currentUser) {
+    public List<MenuCategory> getMenuCategories(Long currentUser) {
         log.info("=== 메뉴 카테고리 목록 조회 시작 ===");
 
         Store store = menuValidationService.getMyStore(currentUser);
@@ -64,17 +62,16 @@ public class MenuCategoryService {
      * 메뉴 카테고리 등록 - Response DTO 반환
      */
     @Transactional
-    public MenuCategoryResponse createCategoryResponse(TempUser currentUser, MenuCategoryCreateRequest request) {
+    public MenuCategoryResponse createCategoryResponse(Long currentUser, MenuCategoryCreateRequest request) {
         MenuCategory savedCategory = createCategory(currentUser, request);
         return menuCategoryMapper.toResponse(savedCategory);
     }
-
 
     /**
      * 메뉴 카테고리 등록
      */
     @Transactional
-    public MenuCategory createCategory(TempUser currentUser, MenuCategoryCreateRequest request) {
+    public MenuCategory createCategory(Long currentUser, MenuCategoryCreateRequest request) {
         log.info("=== 메뉴 카테고리 등록 시작 ===");
 
         Store store = menuValidationService.getMyStore(currentUser);
@@ -114,7 +111,7 @@ public class MenuCategoryService {
      * 메뉴 카테고리 수정
      */
     @Transactional
-    public MenuCategory updateCategory(TempUser currentUser, Long categoryId, MenuCategoryUpdateRequest request) {
+    public MenuCategory updateCategory(Long currentUser, Long categoryId, MenuCategoryUpdateRequest request) {
         log.info("=== 메뉴 카테고리 수정 시작 - ID: {} ===", categoryId);
 
         Store store = menuValidationService.getMyStore(currentUser);
@@ -175,7 +172,7 @@ public class MenuCategoryService {
      * 메뉴 카테고리 삭제
      */
     @Transactional
-    public void deleteCategory(TempUser currentUser, Long categoryId) {
+    public void deleteCategory(Long currentUser, Long categoryId) {
         log.info("=== 메뉴 카테고리 삭제 시작 - ID: {} ===", categoryId);
 
         Store store = menuValidationService.getMyStore(currentUser);
@@ -199,7 +196,7 @@ public class MenuCategoryService {
      * 카테고리 순서 변경
      */
     @Transactional
-    public List<MenuCategory> updateCategoryOrder(TempUser currentUser, CategoryMoveRequest request) {
+    public List<MenuCategory> updateCategoryOrder(Long currentUser, CategoryMoveRequest request) {
         log.info("=== 카테고리 순서 변경 시작 ===");
 
         Store store = menuValidationService.getMyStore(currentUser);

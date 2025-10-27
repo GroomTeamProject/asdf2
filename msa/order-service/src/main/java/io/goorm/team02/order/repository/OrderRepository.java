@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -61,4 +62,31 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Optional<Order> findTopByUserIdOrderByOrderedAtDesc(Long userId);
 
+    /**
+     * 가게별 오늘 주문 개수 조회
+     */
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.storeId = :storeId " +
+            "AND FUNCTION('DATE', o.createdAt) = CURRENT_DATE")
+    Long countTodayOrdersByStoreId(@Param("storeId") Long storeId);
+
+    /**
+     * 가게별 오늘 매출 조회 (배달 완료된 주문만)
+     */
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o WHERE o.storeId = :storeId " +
+            "AND FUNCTION('DATE', o.createdAt) = CURRENT_DATE " +
+            "AND o.status = 'DELIVERED'")
+    BigDecimal getTodayRevenueByStoreId(@Param("storeId") Long storeId);
+
+    /**
+     * 가게별 총 주문 개수 조회
+     */
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.storeId = :storeId")
+    Long countTotalOrdersByStoreId(@Param("storeId") Long storeId);
+
+    /**
+     * 가게별 최근 주문 조회 (최대 N개)
+     */
+    @Query("SELECT o FROM Order o WHERE o.storeId = :storeId " +
+            "ORDER BY o.createdAt DESC")
+    List<Order> findRecentOrdersByStoreId(@Param("storeId") Long storeId, Pageable pageable);
 }

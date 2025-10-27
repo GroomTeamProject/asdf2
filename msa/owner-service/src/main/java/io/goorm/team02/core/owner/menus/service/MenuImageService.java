@@ -4,7 +4,6 @@ import io.goorm.team02.core.owner.common.service.S3Service;
 import io.goorm.team02.core.owner.menus.domain.Menu;
 import io.goorm.team02.core.owner.menus.repository.MenuRepository;
 import io.goorm.team02.core.owner.stores.domain.Store;
-import io.goorm.team02.core.owner.stores.domain.TempUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -31,8 +30,8 @@ public class MenuImageService {
      * 메뉴 이미지 업로드
      */
     @Transactional
-    public String uploadMenuImage(TempUser currentUser, Long menuId, MultipartFile file) {
-        log.info("=== 메뉴 이미지 업로드 시작 - 메뉴 ID: {} ===", menuId);
+    public String uploadMenuImage(Long currentUser, Long menuId, MultipartFile file) {
+        log.info("=== 메뉴 이미지 업로드 시작 - 사용자 ID: {}, 메뉴 ID: {} ===", currentUser, menuId);
 
         fileValidationService.validateImageFile(file);
 
@@ -61,11 +60,12 @@ public class MenuImageService {
                 }
             }
 
-            log.info("메뉴 이미지 업로드 완료! 메뉴: {}, 이미지 URL: {}", menu.getName(), newImageUrl);
+            log.info("메뉴 이미지 업로드 완료! 사용자 ID: {}, 메뉴: {}, 이미지 URL: {}",
+                    currentUser, menu.getName(), newImageUrl);
             return newImageUrl;
 
         } catch (Exception e) {
-            log.error("메뉴 이미지 업로드 실패", e);
+            log.error("메뉴 이미지 업로드 실패 - 사용자 ID: {}, 메뉴 ID: {}", currentUser, menuId, e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드에 실패했습니다: " + e.getMessage());
         }
     }
@@ -73,8 +73,8 @@ public class MenuImageService {
     /**
      * 메뉴 이미지 정보 조회
      */
-    public Map<String, Object> getMenuImageInfo(TempUser currentUser, Long menuId) {
-        log.info("메뉴 이미지 정보 조회 - 메뉴 ID: {}", menuId);
+    public Map<String, Object> getMenuImageInfo(Long currentUser, Long menuId) {
+        log.info("메뉴 이미지 정보 조회 - 사용자 ID: {}, 메뉴 ID: {}", currentUser, menuId);
 
         Store store = menuValidationService.getMyStore(currentUser);
         Menu menu = menuRepository.findByIdAndStoreId(menuId, store.getId())
@@ -92,6 +92,9 @@ public class MenuImageService {
             imageInfo.put("imageId", imageId);
         }
 
+        log.info("메뉴 이미지 정보 조회 완료 - 사용자 ID: {}, 메뉴 ID: {}, 이미지 존재: {}",
+                currentUser, menuId, imageInfo.get("hasImage"));
+
         return imageInfo;
     }
 
@@ -99,8 +102,9 @@ public class MenuImageService {
      * 메뉴 이미지 삭제
      */
     @Transactional
-    public void deleteMenuImage(TempUser currentUser, Long menuId, Long imageId) {
-        log.info("=== 메뉴 이미지 삭제 시작 - 메뉴 ID: {}, 이미지 ID: {} ===", menuId, imageId);
+    public void deleteMenuImage(Long currentUser, Long menuId, Long imageId) {
+        log.info("=== 메뉴 이미지 삭제 시작 - 사용자 ID: {}, 메뉴 ID: {}, 이미지 ID: {} ===",
+                currentUser, menuId, imageId);
 
         Store store = menuValidationService.getMyStore(currentUser);
 
@@ -114,6 +118,8 @@ public class MenuImageService {
 
         // 이미지 ID 검증
         if (!isValidImageId(menu.getImageUrl(), imageId)) {
+            log.warn("잘못된 이미지 ID 접근 시도 - 사용자 ID: {}, 메뉴 ID: {}, 이미지 ID: {}",
+                    currentUser, menuId, imageId);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 이미지 ID입니다");
         }
 
@@ -125,10 +131,11 @@ public class MenuImageService {
             menu.removeImage();
             menuRepository.save(menu);
 
-            log.info("메뉴 이미지 삭제 완료! 메뉴: {}, 삭제된 이미지: {}", menu.getName(), imageUrl);
+            log.info("메뉴 이미지 삭제 완료! 사용자 ID: {}, 메뉴: {}, 삭제된 이미지: {}",
+                    currentUser, menu.getName(), imageUrl);
 
         } catch (Exception e) {
-            log.error("메뉴 이미지 삭제 실패", e);
+            log.error("메뉴 이미지 삭제 실패 - 사용자 ID: {}, 메뉴 ID: {}", currentUser, menuId, e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 삭제에 실패했습니다: " + e.getMessage());
         }
     }

@@ -2,7 +2,6 @@ package io.goorm.team02.core.owner.auth.filter;
 
 
 import io.goorm.team02.core.owner.auth.service.JwtUtil;
-import io.goorm.team02.core.owner.stores.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,7 +23,6 @@ import java.util.ArrayList;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtils; // JwtUtils 사용
-    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,

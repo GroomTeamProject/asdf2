@@ -5,7 +5,6 @@ import io.goorm.team02.common.config.BaseEntity;
 import io.goorm.team02.core.owner.menus.domain.MenuCategory;
 import io.goorm.team02.core.owner.stores.domain.enums.StoreCategory;
 import io.goorm.team02.core.owner.stores.domain.enums.StoreStatus;
-import io.goorm.team02.core.owner.stores.domain.TempUser;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,8 +13,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
@@ -33,9 +30,13 @@ public class Store extends BaseEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@ManyToOne
-	@JoinColumn(name = "owner_id", nullable = false)
-	private TempUser owner;
+	// TempUser 참조 대신 ownerId 필드 추가
+	@Column(name = "owner_id", nullable = false)
+	private Long ownerId;
+
+//	@ManyToOne
+//	@JoinColumn(name = "owner_id", nullable = false)
+//	private TempUser owner;
 
 	@Column(name = "business_number", nullable = false, length = 20, unique = true)
 	private String businessNumber;
