@@ -1,4 +1,4 @@
-package io.goorm.team02.payment.dto;
+package io.goorm.team02.dto.payment;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

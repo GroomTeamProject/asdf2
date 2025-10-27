@@ -38,18 +38,13 @@ spring:
               predicates:
                 - Path=/api/stores/**
             - id: user-service
-              uri: ${USER_SERVICE_URL:http://user-service:8082}
+              uri: http://localhost:8082 #${USER_SERVICE_URL:http://user-service:8082}
               predicates:
                 - Path=/api/users/**
-            - id: user-service-auth
-              uri: ${USER_SERVICE_URL:http://user-service:8082}
-              predicates:
-                - Path=/api/auth/**
-
             - id: payment-service
               uri: ${PAYMENT_SERVICE_URL:http://payment-service:8084}
               predicates:
-                - path=/api/payments/**
+                - Path=/api/payments/**
 
 # Logging
 logging:

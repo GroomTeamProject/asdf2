@@ -71,6 +71,8 @@ public class SecurityConfig {
 
                         // 공통접근
                         .requestMatchers("/api/auth/**", "/error").permitAll() // 로그인/회원가입 허용
+                        // 내부 통신용 API는 누구나 접근 가능하도록 허용
+                        .requestMatchers("/api/internal/**").permitAll()
 
                         // 마이페이지 접근 허용
                         .requestMatchers("/api/users/me/password",
