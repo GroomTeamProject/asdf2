@@ -45,6 +45,10 @@ spring:
               uri: ${USER_SERVICE_URL:http://user-service:8082}
               predicates:
                 - Path=/api/auth/**
+            - id: delivery-service
+              uri: ${DELIVERY_SERVICE_URL:http://delivery-service:8087}
+              predicates:
+                - Path=/api/deliveries/**
 
 # Logging
 logging:

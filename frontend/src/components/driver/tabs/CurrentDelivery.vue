@@ -48,11 +48,16 @@ export default {
     async getCurrentOrder() {
       this.loading = true;
       try{
-        const resp = await api.get(`/rider/${this.riderInfo.riderId}/currentDelivery`);
-        console.log(`[${this.activeTab}] getCurrentOrder->data: `, resp.data)
+        const resp = await api.get(`/deliveries/current`);
+        console.log(`[${this.activeTab}]: getCurrentOrder->data: `, resp.data)
         this.currentOrder = resp.data;
       }catch(e){
-        console.log(`[${this.activeTab}] getCurrentOrder error: `,e)
+        if(e.response && e.response.status === 404){
+          console.log("[${this.activeTab}]: (배달 없음)");
+          this.currentOrder = null;
+        }else{
+          console.log(`[${this.activeTab}]: 기계오작동!: `,e)
+        }
       }finally {
         this.loading = false;
       }

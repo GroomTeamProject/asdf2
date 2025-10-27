@@ -56,7 +56,7 @@ export default{
     },
     async getRiderStatus() {
       try{
-        const resp = await api.get(`/rider/${this.riderInfo.riderId}/status`);
+        const resp = await api.get(`/deliveries/rider-status`);
         this.riderStatus = await resp.data;
       }catch(e){
         console.log(`[${this.activeTab} getRiderStatus: error`,e);
@@ -136,7 +136,7 @@ export default{
             <!-- 액션 -->
             <div class="mt-4 flex gap-2">
               <button
-                  :disabled="riderStatus === 'ACCEPTED' || riderStatus ==='PICKED_UP'"
+                  :disabled="riderStatus === 'BAD'"
                   class="flex-1 bg-blue-600 text-white border border-blue-700 hover:bg-blue-700 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   @click="accept(d)"
               >

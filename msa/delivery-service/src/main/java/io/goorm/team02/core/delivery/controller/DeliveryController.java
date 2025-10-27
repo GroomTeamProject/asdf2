@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -76,12 +77,12 @@ public class DeliveryController {
     }
 
     @GetMapping("/today-count")
-    public ResponseEntity<ApiResponse<Long>> todayCount(@CurrentUser Long riderId) {
+    public ResponseEntity<ApiResponse<BigDecimal>> todayCount(@CurrentUser Long riderId) {
         return ResponseEntity.ok(ApiResponse.ok(deliveryService.getTodayCount(riderId)));
     }
 
     @GetMapping("/today-income")
-    public ResponseEntity<ApiResponse<Long>> todayIncome(@CurrentUser Long riderId) {
+    public ResponseEntity<ApiResponse<BigDecimal>> todayIncome(@CurrentUser Long riderId) {
         return ResponseEntity.ok(ApiResponse.ok(deliveryService.getTodayIncome(riderId)));
     }
 
