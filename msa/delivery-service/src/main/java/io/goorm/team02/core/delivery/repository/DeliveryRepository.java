@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface DeliveryRepository extends JpaRepository<Delivery,Long> {
     @Query("SELECT COUNT (d.id) FROM Delivery d " +
@@ -44,7 +45,7 @@ public interface DeliveryRepository extends JpaRepository<Delivery,Long> {
 
     @Query("SELECT d FROM Delivery d " +
             "WHERE d.riderId = :riderId")
-    List<DeliveryResponse> findDeliveriesByRiderId(@Param("riderId") Long riderId);
+    List<Delivery> findDeliveriesByRiderId(@Param("riderId") Long riderId);
 
     @Query("""
     SELECT COUNT(d.id)
@@ -53,5 +54,11 @@ public interface DeliveryRepository extends JpaRepository<Delivery,Long> {
     AND d.status <> 'DELIVERED'
 """)
     Long notDeliveredCountByRiderId(@Param("riderId") Long riderId);
+
+    Optional<Delivery> findByOrderId(Long orderId);
+
+    Optional<Delivery> findByRiderIdAndOrderIdAndStatus(Long riderId, Long orderId, String status);
+
+    Optional<Delivery> findByRiderIdAndStatusIn(Long riderId, List<String> statuses);
 
 }
