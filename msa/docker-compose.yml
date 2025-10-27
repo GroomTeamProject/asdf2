@@ -189,6 +189,32 @@ services:
       - kafka
       - owner-mariadb
 
+  # Payment Service MariaDB
+  payment-mariadb:
+    image: mariadb:12.0
+    container_name: msa-payment-mariadb
+    ports:
+      - "33084:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: team02payment
+    volumes:
+      - payment_mariadb_data:/var/lib/mysql
+
+  # payment Service
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: msa-payment
+    ports:
+      - "8084:8084"
+    env_file:
+      - .env.dev
+    depends_on:
+      - kafka
+      - payment-mariadb
+
   # API Gateway
   api-gateway:
     build:
@@ -206,6 +232,7 @@ services:
       REVIEW_SERVICE_URL: http://review-service:8086
       DELIVERY_SERVICE_URL: http://delivery-service:8087
       NOTIFICATION_SERVICE_URL: http://notification-service:8088
+      PAYMETN_SERVICE_URL: http://payment-service:8084
     depends_on:
       - owner-service
       - order-service
@@ -221,7 +248,9 @@ volumes:
   notification_mariadb_data:
   user_mariadb_data:
   delivery_mariadb_data:
+  payment_mariadb_data:
 
 networks:
   default:
     name: msa-network
+

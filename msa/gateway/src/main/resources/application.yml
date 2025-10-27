@@ -46,6 +46,11 @@ spring:
               predicates:
                 - Path=/api/auth/**
 
+            - id: payment-service
+              uri: ${PAYMENT_SERVICE_URL:http://payment-service:8084}
+              predicates:
+                - path=/api/payments/**
+
 # Logging
 logging:
   level:
