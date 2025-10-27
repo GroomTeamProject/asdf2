@@ -9,6 +9,7 @@ import io.goorm.team02.dto.deliveries.DeliveryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -52,20 +53,20 @@ public class DeliveryService {
         return deliveryRepository.save(delivery);
     }
 
-    public Long getTodayCount(Long riderId) {
+    public BigDecimal getTodayCount(Long riderId) {
         LocalDate today = LocalDate.now();
         LocalDateTime start = today.atStartOfDay();
         LocalDateTime end = today.plusDays(1).atStartOfDay();
-        Long count = deliveryRepository.countByRiderId(riderId, start, end, DeliveryStatus.ACCEPTED.name());
-        return count != null ? count : 0;
+        BigDecimal count = deliveryRepository.countByRiderId(riderId, start, end, DeliveryStatus.ACCEPTED);
+        return count != null ? count : BigDecimal.valueOf(0);
     }
 
-    public Long getTodayIncome(Long riderId) {
+    public BigDecimal getTodayIncome(Long riderId) {
         LocalDate today = LocalDate.now();
         LocalDateTime start = today.atStartOfDay();
         LocalDateTime end = today.plusDays(1).atStartOfDay();
-        Long income = deliveryRepository.sumFeeByRiderAndDate(riderId, start, end, DeliveryStatus.DELIVERED.name());
-        return income != null ? income : 0;
+        BigDecimal income = deliveryRepository.sumFeeByRiderAndDate(riderId, start, end, DeliveryStatus.DELIVERED);
+        return income != null ? income : BigDecimal.valueOf(0);
     }
 
     public Long getTodayAvg(Long riderId) {
