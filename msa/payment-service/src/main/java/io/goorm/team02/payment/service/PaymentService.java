@@ -6,8 +6,8 @@ import io.goorm.team02.payment.entity.PaymentTransaction;
 import io.goorm.team02.payment.entity.enums.PaymentStatus;
 import io.goorm.team02.payment.dto.PaymentConfirmRequest;
 import io.goorm.team02.payment.dto.PaymentResponse;
-import io.goorm.team02.payment.event.PaymentEvent;            // <-- 추가
-import io.goorm.team02.payment.event.PaymentEventPublisher;  // <-- 너의 기존 publisher 경로에 맞춰 수정
+import io.goorm.team02.payment.event.PaymentEvent;
+import io.goorm.team02.payment.event.PaymentEventPublisher;
 import io.goorm.team02.payment.repository.PaymentRepository;
 import io.goorm.team02.payment.repository.PaymentTransactionRepository;
 import org.springframework.stereotype.Service;
@@ -33,7 +33,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentTransactionRepository transactionRepository;
     private final PaymentServiceClient paymentServiceClient;
-    private final PaymentEventPublisher eventPublisher; // <-- 네 프로젝트에 맞는 타입/패키지인지 확인
+    private final PaymentEventPublisher eventPublisher;  // Kafka + SSE 연동
 
     @Value("${toss.secret-key}")
     private String secretKey;
@@ -55,7 +55,7 @@ public class PaymentService {
 
         log.info("Payment request received: orderId={}, amount={}", request.getOrderId(), request.getAmount());
 
-        // --- 1) 주문 상태 확인 (API 호출) ---
+        // --- 1) 주문 상태 확인 ---
         var orderResponse = paymentServiceClient.getOrderEvent(request.getOrderId());
         if (!"CREATED".equals(orderResponse.getStatus())) {
             throw new PaymentException("결제를 진행할 수 없는 주문 상태입니다.");
@@ -66,17 +66,10 @@ public class PaymentService {
             throw new PaymentException("이미 결제 완료된 주문입니다.");
         }
 
-        // --- 3) Payment 엔티티 생성 및 저장 (문자열 -> Long 변환) ---
+        // --- 3) Payment 엔티티 생성 ---
         Payment payment = new Payment();
-        // request.getOrderId() 가 String 이면 Long 으로 변환. 숫자 아님 예외 발생 가능
-        Long orderIdLong = null;
-        if (request.getOrderId() != null) {
-            orderIdLong = Long.valueOf(request.getOrderId());
-        }
-        Long userIdLong = null;
-        if (request.getUserId() != null) {
-            userIdLong = Long.valueOf(request.getUserId());
-        }
+        Long orderIdLong = request.getOrderId() != null ? Long.valueOf(request.getOrderId()) : null;
+        Long userIdLong = request.getUserId() != null ? Long.valueOf(request.getUserId()) : null;
 
         payment.setOrderId(orderIdLong);
         payment.setUserId(userIdLong);
@@ -88,27 +81,18 @@ public class PaymentService {
         payment.setCreatedAt(LocalDateTime.now());
         paymentRepository.save(payment);
 
-        // --- 4) PaymentTransaction 기록 (결제 시도) ---
+        // --- 4) PaymentTransaction 기록 ---
         PaymentTransaction tx = new PaymentTransaction();
         tx.setPayment(payment);
         tx.setType("ATTEMPT");
         tx.setStatus(PaymentStatus.PENDING.name());
-
-        // PaymentTransaction 에 amount 필드가 Integer(int) 라면 BigDecimal -> int 로 변환
-        BigDecimal payAmount = payment.getAmount();
-        if (payAmount != null) {
-            tx.setAmount(payAmount.intValue()); // 소수점 주의: 필요한 경우 반올림/절삭 로직 적용
-        } else {
-            tx.setAmount(0);
-        }
-
+        tx.setAmount(payment.getAmount() != null ? payment.getAmount().intValue() : 0);
         tx.setCreatedAt(LocalDateTime.now());
         transactionRepository.save(tx);
 
         // --- 5) Toss 결제 API 호출 ---
         String url = "https://api.tosspayments.com/v1/payments/confirm";
         String encodedKey = Base64.getEncoder().encodeToString((secretKey + ":").getBytes());
-
         Map<String, Object> body = Map.of(
                 "paymentKey", request.getPaymentKey(),
                 "orderId", request.getOrderId(),
@@ -125,18 +109,16 @@ public class PaymentService {
                     .retrieve()
                     .bodyToMono(PaymentResponse.class)
                     .block();
-
         } catch (Exception e) {
             payment.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);
 
-            // Transaction 실패 기록
             tx.setType("FAIL");
             tx.setStatus(PaymentStatus.FAILED.name());
             tx.setUpdatedAt(LocalDateTime.now());
             transactionRepository.save(tx);
 
-            publishFailedEvent(payment);
+            publishEvent(payment, false); // 실패 이벤트 발행
             log.error("결제 API 호출 실패: orderId={}", request.getOrderId(), e);
             throw new PaymentException("결제 실패: " + e.getMessage());
         }
@@ -151,26 +133,19 @@ public class PaymentService {
         tx.setUpdatedAt(LocalDateTime.now());
         transactionRepository.save(tx);
 
-        publishCompletedEvent(payment);
+        publishEvent(payment, true); // 성공 이벤트 발행
 
         log.info("Payment completed: orderId={}, amount={}", payment.getOrderId(), payment.getAmount());
 
         return paymentResponse;
     }
 
-    private void publishCompletedEvent(Payment payment) {
-        PaymentEvent event = new PaymentEvent();
-        event.setPaymentKey(payment.getPaymentKey());
-        // 이벤트의 orderId 타입이 String 이면 String.valueOf(...)
-        event.setOrderId(payment.getOrderId() != null ? String.valueOf(payment.getOrderId()) : null);
-        event.setAmount(payment.getAmount());
-        event.setMethod(payment.getPaymentMethod());
-        event.setStatus(payment.getStatus() != null ? payment.getStatus().name() : null);
-        event.setPgProvider(payment.getPgProvider());
-        eventPublisher.publishPaymentCompleted(event);
-    }
-
-    private void publishFailedEvent(Payment payment) {
+    /**
+     * Kafka + SSE 이벤트 발행
+     * @param payment 결제 엔티티
+     * @param success 성공 여부
+     */
+    private void publishEvent(Payment payment, boolean success) {
         PaymentEvent event = new PaymentEvent();
         event.setPaymentKey(payment.getPaymentKey());
         event.setOrderId(payment.getOrderId() != null ? String.valueOf(payment.getOrderId()) : null);
@@ -178,10 +153,15 @@ public class PaymentService {
         event.setMethod(payment.getPaymentMethod());
         event.setStatus(payment.getStatus() != null ? payment.getStatus().name() : null);
         event.setPgProvider(payment.getPgProvider());
-        eventPublisher.publishPaymentFailed(event);
+
+        if (success) {
+            eventPublisher.publishPaymentCompleted(event);
+        } else {
+            eventPublisher.publishPaymentFailed(event);
+        }
     }
 
-    // Custom Exception
+    // --- Custom Exception ---
     public static class PaymentException extends RuntimeException {
         public PaymentException(String message) { super(message); }
     }
