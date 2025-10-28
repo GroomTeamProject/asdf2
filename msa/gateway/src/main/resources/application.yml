@@ -38,18 +38,22 @@ spring:
               predicates:
                 - Path=/api/stores/**
             - id: user-service
-              uri: ${USER_SERVICE_URL:http://user-service:8082}
+              uri: ${USER_SERVICE_URL:http://localhost:8082}
               predicates:
                 - Path=/api/users/**
             - id: user-service-auth
-              uri: ${USER_SERVICE_URL:http://user-service:8082}
+              uri: ${USER_SERVICE_URL:http://localhost:8082}
               predicates:
                 - Path=/api/auth/**
 
             - id: payment-service
               uri: ${PAYMENT_SERVICE_URL:http://payment-service:8084}
               predicates:
-                - path=/api/payments/**
+                - Path=/api/payments/**
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 # Logging
 logging:
@@ -60,3 +64,7 @@ logging:
     reactor.netty: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 3600000
