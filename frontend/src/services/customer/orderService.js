@@ -101,21 +101,8 @@ export class OrderService {
         options: []
       }
       
-      // 선택된 옵션들을 백엔드 스키마에 맞게 변환
-      if (cartItem.selectedOptions && cartItem.menuOptions) {
-        Object.entries(cartItem.selectedOptions).forEach(([optionGroupId, selectedItemId]) => {
-          const optionGroup = cartItem.menuOptions.find(opt => opt.id == optionGroupId)
-          if (optionGroup) {
-            const selectedItem = optionGroup.items?.find(item => item.id == selectedItemId)
-            if (selectedItem) {
-              orderItem.options.push({
-                optionId: parseInt(optionGroupId),
-                optionItemId: parseInt(selectedItemId)
-              })
-            }
-          }
-        })
-      }
+      // 옵션은 PaymentButton에서 직접 처리하므로 여기서는 빈 배열로 설정
+      orderItem.options = []
       
       return orderItem
     })
