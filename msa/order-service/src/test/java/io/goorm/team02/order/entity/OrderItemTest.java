@@ -1,7 +1,8 @@
 package io.goorm.team02.order.entity;
 
-import io.goorm.team02.order.TestEnv;
-import io.goorm.team02.dto.orders.OrderRequest;
+import io.goorm.team02.dto.orders.OrderResponse;
+import io.goorm.team02.order.service.dto.OrderItemData;
+import io.goorm.team02.order.service.dto.OrderItemOptionData;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("OrderItem 도메인 테스트")
-class OrderItemTest extends TestEnv {
+class OrderItemTest {
 
     private OrderItem orderItem;
     private Order order;
@@ -172,34 +173,59 @@ class OrderItemTest extends TestEnv {
     }
 
     @Test
-    @DisplayName("create - OrderRequest와 함께 생성하는 팩토리 메서드")
-    void createWithOrderRequest() {
+    @DisplayName("create - OrderItemData로 생성하는 팩토리 메서드")
+    void createWithOrderItemData() {
         // given
-        OrderRequest.OrderItemRequest itemRequest = new OrderRequest.OrderItemRequest(
-                1L, 2, List.of(
-                        new OrderRequest.OrderItemOptionRequest("사이즈", "대", 2000)));
+        OrderItemData itemData = new OrderItemData(
+                1L, // menuId
+                2, // quantity
+                "치킨버거", // menuName
+                15000, // menuPrice
+                List.of(createOrderItemOptionData())
+        );
 
         // when
-        OrderItem createdItem = OrderItem.create(order, itemRequest);
+        OrderItem createdItem = OrderItem.create(order, itemData);
 
         // then
         assertThat(createdItem.getOrder()).isEqualTo(order);
         assertThat(createdItem.getMenuId()).isEqualTo(1L);
         assertThat(createdItem.getQuantity()).isEqualTo(2);
+        assertThat(createdItem.getMenuName()).isEqualTo("치킨버거");
+        assertThat(createdItem.getMenuPrice()).isEqualTo(15000);
         assertThat(createdItem.getOptions()).hasSize(1);
     }
 
     @Test
-    @DisplayName("create - OrderRequest에서 null 옵션 리스트")
-    void createWithOrderRequest_NullOptions() {
+    @DisplayName("create - null 옵션 리스트")
+    void createWithNullOptions() {
         // given
-        OrderRequest.OrderItemRequest itemRequest = new OrderRequest.OrderItemRequest(
-                1L, 2, null);
+        OrderItemData itemData = new OrderItemData(
+                1L, // menuId
+                2, // quantity
+                "치킨버거", // menuName
+                15000, // menuPrice
+                null // options
+        );
 
         // when
-        OrderItem createdItem = OrderItem.create(order, itemRequest);
+        OrderItem createdItem = OrderItem.create(order, itemData);
 
         // then
+        assertThat(createdItem.getOrder()).isEqualTo(order);
+        assertThat(createdItem.getMenuId()).isEqualTo(1L);
+        assertThat(createdItem.getQuantity()).isEqualTo(2);
+        assertThat(createdItem.getMenuName()).isEqualTo("치킨버거");
+        assertThat(createdItem.getMenuPrice()).isEqualTo(15000);
         assertThat(createdItem.getOptions()).isNull();
+    }
+
+    private OrderItemOptionData createOrderItemOptionData() {
+        return new OrderItemOptionData(
+                1L, // optionId
+                "사이즈", // optionName
+                "대", // optionItemName
+                2000 // additionalPrice
+        );
     }
 }
