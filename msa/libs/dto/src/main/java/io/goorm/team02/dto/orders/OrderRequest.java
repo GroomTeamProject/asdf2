@@ -36,14 +36,8 @@ public record OrderRequest(
 
 	@Schema(description = "주문 아이템 옵션 요청")
 	public record OrderItemOptionRequest(
-			@Schema(description = "옵션명", example = "사이즈") String optionName,
-
-			@Schema(description = "옵션 아이템명", example = "대") String optionItemName,
-
-			@Schema(description = "추가 가격", example = "2000", minimum = "0", maximum = "1000000")
-			@Min(value = 0, message = "추가 가격은 0 이상이어야 합니다")
-			@Max(value = 1_000_000, message = "추가 가격은 1,000,000 이하여야 합니다")
-			int additionalPrice) {
+			@Schema(description = "옵션 그룹 ID", example = "1") Long optionId,
+			@Schema(description = "옵션 아이템 ID", example = "3") Long optionItemId) {
 	}
 
 }
