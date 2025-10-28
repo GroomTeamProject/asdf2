@@ -53,7 +53,7 @@ public class OrderService {
     @Transactional
     public Order create(OrderRequest orderRequest, Long userId) {
         // 1. 가게 정보 조회
-        var storeInfo = storeServiceClient.getStoreById(orderRequest.storeId());
+        var storeInfo = storeServiceClient.getStoreById(orderRequest.storeId()).getBody();
         
         // 2. 메뉴 정보 조회 (주문 시점에서의 메뉴 정보 스냅샷)
         // TODO: 실제 메뉴 정보 사용 (스냅샷)
