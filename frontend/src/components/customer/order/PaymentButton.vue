@@ -93,27 +93,9 @@ export default {
     const handlePayment = async () => {
       if (!canSubmitOrder.value) return
 
-      console.log('orderItems:', orderItems.value) // 디버깅용
-      console.log('cartStore.items:', cartStore.items) // 디버깅용
-
       const confirmed = confirm(`총 ${finalAmount.value.toLocaleString()}원을 주문하시겠습니까?`)
       if (!confirmed) return
 
-      // Pinia store의 주문 정보를 활용하여 orderInfo 구성
-      const orderInfo = {
-        orderId: Date.now(), // 임시 ID
-        orderIdString: `order_${Date.now()}`,
-        totalAmount: finalAmount.value,
-        customerName: '고객', // 실제로는 사용자 정보에서 가져와야 함
-        phoneNumber: phoneNumber.value,
-        deliveryAddress: deliveryAddress.value,
-        deliveryDetailAddress: deliveryDetailAddress.value,
-        orderMemo: orderStore.finalOrderMemo,
-        paymentMethod: selectedPaymentMethod.value,
-        items: orderItems.value,
-      }
-
-      localStorage.setItem('orderInfo', JSON.stringify(orderInfo))
 
       await orderService.submitOrder({
         userId: localStorage.getItem('userId'),
@@ -125,10 +107,9 @@ export default {
         orderItems: (cartStore.items || []).map((item) => ({
           menuId: item.id,
           quantity: item.quantity,
-          options: Object.entries(item.selectedOptions || {}).map(([optionName, optionItemName]) => ({
-            optionName,
-            optionItemName,
-            additionalPrice: 0,
+          options: Object.entries(item.selectedOptions || {}).map(([optionGroupId, optionItemId]) => ({
+            optionId: parseInt(optionGroupId),
+            optionItemId: parseInt(optionItemId)
           })),
         })),
       })

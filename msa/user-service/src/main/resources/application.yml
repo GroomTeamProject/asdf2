@@ -14,6 +14,20 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
+# Actuator & Prometheus 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  metrics:
+    prometheus:
+      metrics:
+        export:
+          enabled: true
+    tags:
+      application: ${spring.application.name}
+
 ---
 
 spring:

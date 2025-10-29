@@ -1,7 +1,7 @@
 package io.goorm.team02.order.entity;
 
-import io.goorm.team02.dto.orders.OrderRequest;
 import io.goorm.team02.dto.orders.OrderResponse;
+import io.goorm.team02.order.service.dto.OrderItemOptionData;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -10,8 +10,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -36,18 +34,18 @@ public class OrderItemOption {
 	private String optionItemName;
 
 	@Column(nullable = false)
-	private int additionalPrice = 0;
+	private int additionalPrice;
 
 	/**
-	 * OrderRequest에서 OrderItemOption 생성 (도메인 로직)
+	 * OrderItemOptionData에서 OrderItemOption 생성
 	 */
-	public static OrderItemOption create(OrderItem orderItem,
-			OrderRequest.OrderItemOptionRequest optionRequest) {
+	public static OrderItemOption create(OrderItem orderItem, OrderItemOptionData optionData) {
 		OrderItemOption option = new OrderItemOption();
 		option.setOrderItem(orderItem);
-		option.setOptionName(optionRequest.optionName());
-		option.setOptionItemName(optionRequest.optionItemName());
-		option.setAdditionalPrice(optionRequest.additionalPrice());
+		option.setOptionName(optionData.optionName());
+		option.setOptionItemName(optionData.optionItemName());
+		option.setAdditionalPrice(optionData.additionalPrice());
+		
 		return option;
 	}
 
