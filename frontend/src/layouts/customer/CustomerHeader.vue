@@ -30,6 +30,14 @@ const markAsRead = (notificationId) => {
   notificationStore.markAsRead(notificationId)
 }
 
+// 알림 시간 포맷팅 (UTC + 9시간)
+const formatNotificationTime = (dateString) => {
+  const date = new Date(dateString)
+  // UTC 시간에 9시간(32400000ms) 추가
+  const kstDate = new Date(date.getTime() + 9 * 60 * 60 * 1000)
+  return kstDate.toLocaleString('ko-KR')
+}
+
 // SSE 연결
 onMounted(() => {
   if (userId) {
@@ -107,7 +115,7 @@ onUnmounted(() => {
                   <h4 class="text-sm font-medium text-gray-900">{{ notification.title }}</h4>
                   <p class="text-sm text-gray-600 mt-1">{{ notification.content }}</p>
                   <p class="text-xs text-gray-400 mt-1">
-                    {{ new Date(notification.createdAt).toLocaleString('ko-KR') }}
+                    {{ formatNotificationTime(notification.createdAt) }}
                   </p>
                 </div>
                 <div v-if="!notification.isRead" class="w-2 h-2 bg-blue-500 rounded-full ml-2"></div>

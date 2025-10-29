@@ -188,11 +188,13 @@ export default {
       return labels[type] || '알림'
     }
 
-    // 날짜 포맷팅
+    // 날짜 포맷팅 (UTC + 9시간)
     const formatDate = (dateString) => {
       const date = new Date(dateString)
+      // UTC 시간에 9시간(32400000ms) 추가
+      const kstDate = new Date(date.getTime() + 9 * 60 * 60 * 1000)
       const now = new Date()
-      const diff = now - date
+      const diff = now - kstDate
       
       if (diff < 60000) { // 1분 미만
         return '방금 전'
@@ -201,7 +203,7 @@ export default {
       } else if (diff < 86400000) { // 1일 미만
         return `${Math.floor(diff / 3600000)}시간 전`
       } else {
-        return date.toLocaleDateString('ko-KR')
+        return kstDate.toLocaleDateString('ko-KR')
       }
     }
 
