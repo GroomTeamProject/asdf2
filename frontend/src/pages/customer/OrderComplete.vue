@@ -177,36 +177,24 @@ export default {
       try {
         // route query에서 주문 정보 가져오기
         if (route.query.orderNumber) {
-          // 가게명 우선순위: 장바구니 > query (장바구니 비우기 전에 가져오기)
-          let storeNameFromCart = ''
-          if (cartStore.items.length > 0) {
-            storeNameFromCart = cartStore.items[0]?.storeName || cartStore.items[0]?.storeInfo?.name
-          }
+          // 서버로부터 받은 실제 데이터 사용
+          orderNumber.value = route.query.orderNumber
+          totalAmount.value = parseInt(route.query.totalAmount) || 0
+          storeName.value = route.query.storeName
+          deliveryAddress.value = route.query.deliveryAddress
+          phoneNumber.value = route.query.phoneNumber
           
-          // Service를 통해 주문 완료 정보 조회
-          const result = await orderService.getOrderCompleteInfo(
-            route.query.orderNumber,
-            route.query.totalAmount,
-            storeNameFromCart || route.query.storeName,
-            route.query.deliveryAddress,
-            route.query.phoneNumber
-          )
-          
-          const orderData = result.data
-          orderNumber.value = orderData.orderNumber
-          totalAmount.value = orderData.totalAmount
-          storeName.value = orderData.storeName
-          deliveryAddress.value = orderData.deliveryAddress
-          phoneNumber.value = orderData.phoneNumber
-          orderTime.value = orderData.orderTime
-          estimatedDeliveryTime.value = orderData.estimatedDeliveryTime
+          // 현재 시간으로 주문 시간 설정
+          orderTime.value = new Date().toLocaleString('ko-KR')
+          estimatedDeliveryTime.value = '약 30분 후'
+        } else {
+          // 주문 번호가 없으면 에러 처리
+          console.error('주문 번호가 없습니다.')
+          router.push('/customer/stores')
         }
       } catch (error) {
-        console.error('주문 완료 정보 조회 실패:', error)
-        throw error
-      } finally {
-        // 주문 완료 시 장바구니 비우기
-        cartStore.clearCart()
+        console.error('주문 완료 정보 처리 실패:', error)
+        router.push('/customer/stores')
       }
     })
 

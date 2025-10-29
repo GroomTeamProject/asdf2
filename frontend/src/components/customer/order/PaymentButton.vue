@@ -63,10 +63,12 @@ export default {
 
     // 배달비, 할인, 최종 금액 계산
     const deliveryFee = computed(() => {
-      const storeInfo = orderItems.value[0].storeInfo
+      if (orderItems.value.length === 0) return 0
+      
+      const storeInfo = orderItems.value[0]?.storeInfo
       const storeDeliveryFee = storeInfo?.deliveryFee
 
-      return storeDeliveryFee
+      return storeDeliveryFee || 0
     })
 
     const discountAmount = computed(() => 0)
@@ -97,28 +99,61 @@ export default {
       if (!confirmed) return
 
 
-      await orderService.submitOrder({
-        userId: localStorage.getItem('userId'),
-        storeId: orderItems.value[0].storeId,
-        deliveryAddress: deliveryAddress.value,
-        deliveryDetailAddress: deliveryDetailAddress.value,
-        phone: phoneNumber.value,
-        orderMemo: orderStore.finalOrderMemo,
-        orderItems: (cartStore.items || []).map((item) => ({
-          menuId: item.id,
-          quantity: item.quantity,
-          options: Object.entries(item.selectedOptions || {}).map(([optionGroupId, optionItemId]) => ({
-            optionId: parseInt(optionGroupId),
-            optionItemId: parseInt(optionItemId)
-          })),
-        })),
-      })
+      try {
+        orderStore.setSubmitting(true)
+        
+        if (orderItems.value.length === 0) {
+          throw new Error('장바구니가 비어있습니다.')
+        }
 
-      // 로컬 환경에서는 결제 팝업 띄우지 않고 바로 완료 페이지로
-      if (window.location.hostname === 'localhost') {
-        router.push('/customer/order-complete')
-      } else {
-        showPaymentPopup.value = true
+        const orderData = {
+          userId: localStorage.getItem('userId'),
+          storeId: orderItems.value[0]?.storeId,
+          deliveryAddress: deliveryAddress.value,
+          deliveryDetailAddress: deliveryDetailAddress.value,
+          phone: phoneNumber.value,
+          orderMemo: orderStore.finalOrderMemo,
+          orderItems: (cartStore.items || []).map((item) => ({
+            menuId: item.id,
+            quantity: item.quantity,
+            options: Object.entries(item.selectedOptions || {}).map(([optionGroupId, optionItemId]) => ({
+              optionId: parseInt(optionGroupId),
+              optionItemId: parseInt(optionItemId)
+            })),
+          })),
+        }
+
+        const result = await orderService.submitOrder(orderData)
+        
+        // 디버깅: 장바구니 데이터 구조 확인 (장바구니 비우기 전에)
+        console.log('=== 주문 완료 데이터 디버깅 ===')
+        console.log('orderItems.value[0]:', orderItems.value[0])
+        console.log('storeName:', orderItems.value[0]?.storeName)
+        console.log('storeInfo:', orderItems.value[0]?.storeInfo)
+        console.log('storeInfo.name:', orderItems.value[0]?.storeInfo?.name)
+        
+        // 서버 응답 데이터를 query parameter로 전달하여 완료 페이지로 이동
+        const orderCompleteData = {
+          orderNumber: result.orderNumber,
+          totalAmount: finalAmount.value,
+          storeName: orderItems.value[0]?.storeName || orderItems.value[0]?.storeInfo?.name || '알 수 없는 가게',
+          deliveryAddress: deliveryAddress.value,
+          phoneNumber: phoneNumber.value
+        }
+        
+        console.log('orderCompleteData:', orderCompleteData)
+        
+        // 주문 완료 후 장바구니 비우기 (데이터 사용 후)
+        orderService.clearCartAfterOrder()
+        
+        const queryParams = new URLSearchParams(orderCompleteData)
+        router.push(`/customer/order-complete?${queryParams.toString()}`)
+        
+      } catch (error) {
+        console.error('주문 제출 실패:', error)
+        alert('주문 처리 중 오류가 발생했습니다. 다시 시도해주세요.')
+      } finally {
+        orderStore.setSubmitting(false)
       }
     }
 
