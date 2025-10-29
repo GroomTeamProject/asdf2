@@ -3,10 +3,12 @@ package io.goorm.team02.notification.service;
 import io.goorm.team02.notification.entity.Notification;
 import io.goorm.team02.notification.entity.enums.NotificationType;
 import io.goorm.team02.notification.repository.NotificationRepository;
+import io.goorm.team02.notification.dto.NotificationStats;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.PageRequest;
 
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,64 @@ public class NotificationService {
      */
     public Page<Notification> getUserNotifications(Long userId, Pageable pageable) {
         return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+    }
+
+    /**
+     * 사용자의 읽지 않은 알림 개수 조회
+     */
+    public long getUnreadCount(Long userId) {
+        return notificationRepository.countByUserIdAndIsReadFalse(userId);
+    }
+
+    /**
+     * 사용자의 읽지 않은 알림 조회
+     */
+    public List<Notification> getUnreadNotifications(Long userId) {
+        return notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId);
+    }
+
+    /**
+     * 사용자의 읽지 않은 알림 페이징 조회
+     */
+    public Page<Notification> getUnreadNotifications(Long userId, Pageable pageable) {
+        return notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId, pageable);
+    }
+
+    /**
+     * 특정 알림을 읽음 상태로 변경
+     */
+    @Transactional
+    public boolean markAsRead(Long notificationId, Long userId) {
+        int updatedCount = notificationRepository.markAsRead(notificationId, userId);
+        if (updatedCount > 0) {
+            log.info("Notification {} marked as read for user {}", notificationId, userId);
+            return true;
+        } else {
+            log.warn("Failed to mark notification {} as read for user {} - notification not found or already read", 
+                    notificationId, userId);
+            return false;
+        }
+    }
+
+    /**
+     * 사용자의 모든 알림을 읽음 상태로 변경
+     */
+    @Transactional
+    public int markAllAsRead(Long userId) {
+        int updatedCount = notificationRepository.markAllAsRead(userId);
+        log.info("Marked {} notifications as read for user {}", updatedCount, userId);
+        return updatedCount;
+    }
+
+    /**
+     * 알림 통계 정보 조회
+     */
+    public NotificationStats getNotificationStats(Long userId) {
+        long totalCount = notificationRepository.countByUserId(userId);
+        long unreadCount = notificationRepository.countByUserIdAndIsReadFalse(userId);
+        long readCount = totalCount - unreadCount;
+        
+        return new NotificationStats(totalCount, readCount, unreadCount);
     }
 
     public void handleOrderEvent(String eventType, Map<String, Object> eventData) {
