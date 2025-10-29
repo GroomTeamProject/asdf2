@@ -141,6 +141,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/customer/cart'
+import { orderService } from '@/services/customer/orderService'
 import CustomerContainer from '@/components/customer/CustomerContainer.vue'
 
 export default {
@@ -172,32 +173,41 @@ export default {
     }
 
     // 페이지 로드 시 주문 정보 설정
-    onMounted(() => {
-      // route query에서 주문 정보 가져오기
-      if (route.query.orderNumber) {
-        orderNumber.value = route.query.orderNumber
-        totalAmount.value = parseInt(route.query.totalAmount) || 0
-        
-        // 가게명 우선순위: 장바구니 > query > fallback
-        if (cartStore.items.length > 0) {
-          storeName.value = cartStore.items[0]?.storeName || cartStore.items[0]?.storeInfo?.name || route.query.storeName || '알 수 없는 가게'
-        } else {
-          storeName.value = route.query.storeName || '알 수 없는 가게'
+    onMounted(async () => {
+      try {
+        // route query에서 주문 정보 가져오기
+        if (route.query.orderNumber) {
+          // 가게명 우선순위: 장바구니 > query (장바구니 비우기 전에 가져오기)
+          let storeNameFromCart = ''
+          if (cartStore.items.length > 0) {
+            storeNameFromCart = cartStore.items[0]?.storeName || cartStore.items[0]?.storeInfo?.name
+          }
+          
+          // Service를 통해 주문 완료 정보 조회
+          const result = await orderService.getOrderCompleteInfo(
+            route.query.orderNumber,
+            route.query.totalAmount,
+            storeNameFromCart || route.query.storeName,
+            route.query.deliveryAddress,
+            route.query.phoneNumber
+          )
+          
+          const orderData = result.data
+          orderNumber.value = orderData.orderNumber
+          totalAmount.value = orderData.totalAmount
+          storeName.value = orderData.storeName
+          deliveryAddress.value = orderData.deliveryAddress
+          phoneNumber.value = orderData.phoneNumber
+          orderTime.value = orderData.orderTime
+          estimatedDeliveryTime.value = orderData.estimatedDeliveryTime
         }
-        
-        deliveryAddress.value = route.query.deliveryAddress || '주소 정보 없음'
-        phoneNumber.value = route.query.phoneNumber || '연락처 정보 없음'
-      } else {
-        // fallback: 임시 데이터
-        orderNumber.value = 'ORD-' + Date.now().toString().slice(-6)
-        totalAmount.value = 25000
-        storeName.value = '맛있는 치킨집'
-        deliveryAddress.value = '서울시 강남구 테헤란로 123'
-        phoneNumber.value = '010-1234-5678'
+      } catch (error) {
+        console.error('주문 완료 정보 조회 실패:', error)
+        throw error
+      } finally {
+        // 주문 완료 시 장바구니 비우기
+        cartStore.clearCart()
       }
-      
-      orderTime.value = new Date().toLocaleString('ko-KR')
-      estimatedDeliveryTime.value = '약 30분 후'
     })
 
     return {
