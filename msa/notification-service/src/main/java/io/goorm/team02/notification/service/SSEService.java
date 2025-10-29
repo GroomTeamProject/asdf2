@@ -25,7 +25,7 @@ public class SSEService {
      * @param userId 사용자 ID
      * @param notificationMessage 알림 메시지
      */
-    public void sendNotificationToUser(Long userId, String notificationMessage, String notificationType) {
+    private void sendNotificationToUser(Long userId, String notificationMessage, String notificationType) {
         SseEmitter emitter = sseConnectionService.getConnection(userId);
         
         if (emitter != null) {
@@ -60,7 +60,7 @@ public class SSEService {
      * @param userId 사용자 ID
      * @param message 알림 메시지
      */
-    public void sendCustomerNotification(Long userId, String message) {
+    public void sendCustomerNotificationToUser(Long userId, String message) {
         sendNotificationToUser(userId, message, "customer-notification");
     }
 
