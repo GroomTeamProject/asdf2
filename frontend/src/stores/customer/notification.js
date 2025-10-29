@@ -9,6 +9,12 @@ export const useNotificationStore = defineStore('notification', () => {
   const isLoading = ref(false)
   const error = ref(null)
   const sseConnection = ref(null)
+  const paginationInfo = ref({
+    totalPages: 0,
+    totalElements: 0,
+    currentPage: 0,
+    hasNext: false
+  })
 
   // 계산된 속성
   const hasUnreadNotifications = computed(() => unreadCount.value > 0)
@@ -27,6 +33,14 @@ export const useNotificationStore = defineStore('notification', () => {
       } else {
         // 추가 페이지는 추가
         notifications.value = [...notifications.value, ...(response.content || [])]
+      }
+      
+      // 페이징 정보 업데이트
+      paginationInfo.value = {
+        totalPages: response.totalPages || 0,
+        totalElements: response.totalElements || 0,
+        currentPage: response.number || page,
+        hasNext: !response.last && (response.number || page) < (response.totalPages || 0) - 1
       }
       
       // 읽지 않은 알림 수 계산
@@ -96,6 +110,12 @@ export const useNotificationStore = defineStore('notification', () => {
     notifications.value = []
     unreadCount.value = 0
     error.value = null
+    paginationInfo.value = {
+      totalPages: 0,
+      totalElements: 0,
+      currentPage: 0,
+      hasNext: false
+    }
   }
 
   return {
@@ -105,6 +125,7 @@ export const useNotificationStore = defineStore('notification', () => {
     isLoading,
     error,
     sseConnection,
+    paginationInfo,
     
     // 계산된 속성
     hasUnreadNotifications,

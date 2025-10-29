@@ -9,14 +9,14 @@
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-gray-900">알림 관리</h2>
         <div class="flex gap-2">
-          <button 
+          <button
             @click="markAllAsRead"
             :disabled="notificationStore.unreadCount === 0"
             class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm"
           >
             모두 읽음
           </button>
-          <button 
+          <button
             @click="refreshNotifications"
             :disabled="notificationStore.isLoading"
             class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm"
@@ -25,22 +25,22 @@
           </button>
         </div>
       </div>
-      
+
       <!-- 필터 탭 -->
       <div class="flex gap-2">
-        <button 
-          @click="currentFilter = 'all'"
-          :class="currentFilter === 'all' ? 'bg-blue-100 text-blue-700 border-blue-300' : 'bg-gray-50 text-gray-700 border-gray-200'"
-          class="px-4 py-2 border rounded-lg text-sm font-medium transition-colors"
-        >
-          전체 ({{ notificationStore.notifications.length }})
-        </button>
-        <button 
+        <button
           @click="currentFilter = 'unread'"
           :class="currentFilter === 'unread' ? 'bg-blue-100 text-blue-700 border-blue-300' : 'bg-gray-50 text-gray-700 border-gray-200'"
           class="px-4 py-2 border rounded-lg text-sm font-medium transition-colors"
         >
           읽지 않음 ({{ notificationStore.unreadCount }})
+        </button>
+        <button
+          @click="currentFilter = 'all'"
+          :class="currentFilter === 'all' ? 'bg-blue-100 text-blue-700 border-blue-300' : 'bg-gray-50 text-gray-700 border-gray-200'"
+          class="px-4 py-2 border rounded-lg text-sm font-medium transition-colors"
+        >
+          전체 ({{ notificationStore.notifications.length }})
         </button>
       </div>
     </section>
@@ -56,12 +56,7 @@
       <!-- 에러 상태 -->
       <div v-else-if="notificationStore.error" class="p-8 text-center">
         <p class="text-red-500 mb-4">{{ notificationStore.error }}</p>
-        <button 
-          @click="refreshNotifications"
-          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          다시 시도
-        </button>
+        <button @click="refreshNotifications" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">다시 시도</button>
       </div>
 
       <!-- 빈 상태 -->
@@ -77,8 +72,8 @@
 
       <!-- 알림 목록 -->
       <div v-else class="divide-y divide-gray-200">
-        <div 
-          v-for="notification in filteredNotifications" 
+        <div
+          v-for="notification in filteredNotifications"
           :key="notification.id"
           @click="markAsRead(notification.id)"
           class="p-6 hover:bg-gray-50 cursor-pointer transition-colors"
@@ -88,14 +83,11 @@
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-2">
                 <h4 class="text-lg font-medium text-gray-900">{{ notification.title }}</h4>
-                <span 
-                  v-if="!notification.isRead" 
-                  class="inline-block w-2 h-2 bg-blue-500 rounded-full"
-                ></span>
+                <span v-if="!notification.isRead" class="inline-block w-2 h-2 bg-blue-500 rounded-full"></span>
               </div>
-              
+
               <p class="text-gray-600 mb-3">{{ notification.content }}</p>
-              
+
               <div class="flex items-center gap-4 text-sm text-gray-500">
                 <span class="flex items-center gap-1">
                   <span class="w-2 h-2 rounded-full" :class="getTypeColor(notification.type)"></span>
@@ -104,9 +96,9 @@
                 <span>{{ formatDate(notification.createdAt) }}</span>
               </div>
             </div>
-            
+
             <div class="ml-4">
-              <button 
+              <button
                 @click.stop="markAsRead(notification.id)"
                 v-if="!notification.isRead"
                 class="text-blue-600 hover:text-blue-800 text-sm font-medium"
@@ -125,8 +117,14 @@
           :disabled="notificationStore.isLoading"
           class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:bg-gray-50 disabled:cursor-not-allowed"
         >
-          더보기
+          {{ notificationStore.isLoading ? '로딩 중...' : '더보기' }}
         </button>
+        <!-- 디버깅 정보 (개발용) -->
+        <div class="mt-2 text-xs text-gray-400">
+          현재: {{ notificationStore.paginationInfo.currentPage + 1 }}페이지 / 
+          전체: {{ notificationStore.paginationInfo.totalPages }}페이지 
+          ({{ notificationStore.notifications.length }}/{{ notificationStore.paginationInfo.totalElements }}개)
+        </div>
       </div>
     </section>
   </CustomerContainer>
@@ -146,33 +144,33 @@ export default {
   },
   setup() {
     const notificationStore = useNotificationStore()
-    const currentFilter = ref('all')
+    const currentFilter = ref('unread')
     const currentPage = ref(0)
     const pageSize = 20
 
     // 필터된 알림 목록
     const filteredNotifications = computed(() => {
       let notifications = notificationStore.notifications
-      
+
       if (currentFilter.value === 'unread') {
-        notifications = notifications.filter(notification => !notification.isRead)
+        notifications = notifications.filter((notification) => !notification.isRead)
       }
-      
+
       return notifications
     })
 
-    // 더 많은 알림이 있는지 확인
+    // 더 많은 알림이 있는지 확인 (서버 페이징 정보 기반)
     const hasMoreNotifications = computed(() => {
-      return notificationStore.notifications.length >= (currentPage.value + 1) * pageSize
+      return notificationStore.paginationInfo.hasNext
     })
 
     // 알림 타입별 색상
     const getTypeColor = (type) => {
       const colors = {
-        'ORDER_STATUS': 'bg-green-500',
-        'PROMOTION': 'bg-purple-500',
-        'REVIEW_REQUEST': 'bg-yellow-500',
-        'DELIVERY_ARRIVAL': 'bg-blue-500'
+        ORDER_STATUS: 'bg-green-500',
+        PROMOTION: 'bg-purple-500',
+        REVIEW_REQUEST: 'bg-yellow-500',
+        DELIVERY_ARRIVAL: 'bg-blue-500',
       }
       return colors[type] || 'bg-gray-500'
     }
@@ -180,10 +178,10 @@ export default {
     // 알림 타입별 라벨
     const getTypeLabel = (type) => {
       const labels = {
-        'ORDER_STATUS': '주문 상태',
-        'PROMOTION': '프로모션',
-        'REVIEW_REQUEST': '리뷰 요청',
-        'DELIVERY_ARRIVAL': '배달 도착'
+        ORDER_STATUS: '주문 상태',
+        PROMOTION: '프로모션',
+        REVIEW_REQUEST: '리뷰 요청',
+        DELIVERY_ARRIVAL: '배달 도착',
       }
       return labels[type] || '알림'
     }
@@ -195,12 +193,15 @@ export default {
       const kstDate = new Date(date.getTime() + 9 * 60 * 60 * 1000)
       const now = new Date()
       const diff = now - kstDate
-      
-      if (diff < 60000) { // 1분 미만
+
+      if (diff < 60000) {
+        // 1분 미만
         return '방금 전'
-      } else if (diff < 3600000) { // 1시간 미만
+      } else if (diff < 3600000) {
+        // 1시간 미만
         return `${Math.floor(diff / 60000)}분 전`
-      } else if (diff < 86400000) { // 1일 미만
+      } else if (diff < 86400000) {
+        // 1일 미만
         return `${Math.floor(diff / 3600000)}시간 전`
       } else {
         return kstDate.toLocaleDateString('ko-KR')
