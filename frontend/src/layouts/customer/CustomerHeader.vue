@@ -26,8 +26,12 @@ const goToNotifications = () => {
 }
 
 // 알림 읽음 처리
-const markAsRead = (notificationId) => {
-  notificationStore.markAsRead(notificationId)
+const markAsRead = async (notificationId) => {
+  try {
+    await notificationStore.markAsRead(notificationId)
+  } catch (error) {
+    console.error('알림 읽음 처리 실패:', error)
+  }
 }
 
 // 알림 시간 포맷팅 (UTC + 9시간)

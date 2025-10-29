@@ -56,19 +56,47 @@ export const useNotificationStore = defineStore('notification', () => {
     }
   }
 
-  const markAsRead = (notificationId) => {
-    const notification = notifications.value.find(n => n.id === notificationId)
-    if (notification && !notification.isRead) {
-      notification.isRead = true
-      unreadCount.value = Math.max(0, unreadCount.value - 1)
+  const markAsRead = async (notificationId) => {
+    try {
+      const userId = localStorage.getItem('userId')
+      if (!userId) {
+        throw new Error('사용자 ID가 없습니다.')
+      }
+
+      // API 호출
+      await notificationApi.markAsRead(notificationId, userId)
+      
+      // 로컬 상태 업데이트
+      const notification = notifications.value.find(n => n.id === notificationId)
+      if (notification && !notification.isRead) {
+        notification.isRead = true
+        unreadCount.value = Math.max(0, unreadCount.value - 1)
+      }
+    } catch (error) {
+      console.error('알림 읽음 처리 실패:', error)
+      throw error
     }
   }
 
-  const markAllAsRead = () => {
-    notifications.value.forEach(notification => {
-      notification.isRead = true
-    })
-    unreadCount.value = 0
+  const markAllAsRead = async () => {
+    try {
+      const userId = localStorage.getItem('userId')
+      if (!userId) {
+        throw new Error('사용자 ID가 없습니다.')
+      }
+
+      // API 호출
+      await notificationApi.markAllAsRead(userId)
+      
+      // 로컬 상태 업데이트
+      notifications.value.forEach(notification => {
+        notification.isRead = true
+      })
+      unreadCount.value = 0
+    } catch (error) {
+      console.error('모든 알림 읽음 처리 실패:', error)
+      throw error
+    }
   }
 
   const addNotification = (notification) => {

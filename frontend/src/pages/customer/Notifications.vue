@@ -209,13 +209,24 @@ export default {
     }
 
     // 알림 읽음 처리
-    const markAsRead = (notificationId) => {
-      notificationStore.markAsRead(notificationId)
+    const markAsRead = async (notificationId) => {
+      try {
+        await notificationStore.markAsRead(notificationId)
+      } catch (error) {
+        console.error('알림 읽음 처리 실패:', error)
+        alert('알림 읽음 처리에 실패했습니다.')
+      }
     }
 
     // 모든 알림 읽음 처리
-    const markAllAsRead = () => {
-      notificationStore.markAllAsRead()
+    const markAllAsRead = async () => {
+      try {
+        await notificationStore.markAllAsRead()
+        alert('모든 알림을 읽음 처리했습니다.')
+      } catch (error) {
+        console.error('모든 알림 읽음 처리 실패:', error)
+        alert('모든 알림 읽음 처리에 실패했습니다.')
+      }
     }
 
     // 알림 새로고침
