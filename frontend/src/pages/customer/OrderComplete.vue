@@ -1,11 +1,8 @@
 <template>
   <!-- 헤더 배너 -->
-  <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
-    <div class="max-w-2xl mx-auto">
-      <h1 class="text-2xl font-bold mb-2">주문 완료</h1>
-      <p class="text-blue-100">주문이 성공적으로 접수되었습니다</p>
-    </div>
-  </div>
+  <HeaderBanner 
+    title="주문 완료"
+  />
 
   <!-- 페이지 컨테이너 -->
   <CustomerContainer max-width="2xl" padding="4" custom-class="space-y-6">
@@ -143,11 +140,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/customer/cart'
 import { orderService } from '@/services/customer/orderService'
 import CustomerContainer from '@/components/customer/CustomerContainer.vue'
+import HeaderBanner from '@/components/common/HeaderBanner.vue'
 
 export default {
   name: 'OrderComplete',
   components: {
     CustomerContainer,
+    HeaderBanner,
   },
   setup() {
     const route = useRoute()

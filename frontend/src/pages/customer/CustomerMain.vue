@@ -1,11 +1,9 @@
 <template>
   <!-- 메인 배너 -->
-  <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
-    <div class="max-w-2xl mx-auto">
-      <h1 class="text-2xl font-bold mb-2">Quick Deliver</h1>
-      <p class="text-blue-100">원하는 음식을 빠르고 안전하게 배달받으세요</p>
-    </div>
-  </div>
+  <HeaderBanner 
+    title="Quick Deliver" 
+    description="원하는 음식을 빠르고 안전하게 배달받으세요" 
+  />
 
   <!-- 페이지 컨테이너 -->
   <CustomerContainer max-width="2xl" padding="4" custom-class="space-y-6">
@@ -191,11 +189,13 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import CustomerContainer from '@/components/customer/CustomerContainer.vue'
+import HeaderBanner from '@/components/common/HeaderBanner.vue'
 
 export default {
   name: 'CustomerMain',
   components: {
     CustomerContainer,
+    HeaderBanner,
   },
   setup() {
     const router = useRouter()

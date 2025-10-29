@@ -1,11 +1,6 @@
 <template>
   <!-- 헤더 배너 -->
-  <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
-    <div class="max-w-6xl mx-auto">
-      <h1 class="text-2xl font-bold mb-2">{{ selectedStore?.name || '가게 정보' }}</h1>
-      <p class="text-blue-100">맛있는 메뉴를 확인하고 주문해보세요</p>
-    </div>
-  </div>
+  <HeaderBanner :title="selectedStore?.name || ''" />
 
   <!-- 페이지 컨테이너 -->
   <CustomerContainer max-width="6xl" padding="4" custom-class="pb-20">
@@ -28,6 +23,7 @@ import { useRouter, useRoute } from 'vue-router'
 import StoreInfo from '@/components/customer/storeDetail/StoreInfo.vue'
 import StoreMenuCard from '@/components/customer/storeDetail/StoreMenuCard.vue'
 import CustomerContainer from '@/components/customer/CustomerContainer.vue'
+import HeaderBanner from '@/components/common/HeaderBanner.vue'
 import { customerApi } from '@/api/customer/customerApi'
 
 export default {
@@ -36,6 +32,7 @@ export default {
     StoreInfo,
     StoreMenu: StoreMenuCard,
     CustomerContainer,
+    HeaderBanner,
   },
   setup() {
     const router = useRouter()
@@ -55,17 +52,8 @@ export default {
           return
         }
 
-        // 백엔드 응답에서 menuCategories를 menuItems로 변환
-        if (selectedStore.value.menuCategories && selectedStore.value.menuCategories.length > 0) {
-          // menuCategories에서 실제 메뉴 아이템들을 추출
-          // 엔티티 구조: Store -> MenuCategory -> Menu
-          menuItems.value = selectedStore.value.menuCategories.flatMap(category => 
-            category.menus || []
-          )
-        } else {
-          // menuCategories가 없으면 별도 API 호출
-          menuItems.value = await customerApi.getMenusByStoreId(storeId.value)
-        }
+        // 메뉴 목록 조회
+        menuItems.value = await customerApi.getMenusByStoreId(storeId.value)
         
         console.log('가게 정보:', selectedStore.value)
         console.log('메뉴 아이템들:', menuItems.value)

@@ -1,11 +1,9 @@
 <template>
   <!-- 헤더 배너 -->
-  <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
-    <div class="max-w-6xl mx-auto">
-      <h1 class="text-2xl font-bold mb-2">가게 둘러보기</h1>
-      <p class="text-blue-100">다양한 음식점을 확인하고 주문해보세요</p>
-    </div>
-  </div>
+  <HeaderBanner 
+    title="가게 둘러보기" 
+    description="다양한 음식점을 확인하고 주문해보세요" 
+  />
 
   <!-- 페이지 컨테이너 -->
   <CustomerContainer max-width="6xl" padding="4">
@@ -108,6 +106,7 @@ import { useRoute } from 'vue-router'
 import StoreSearchBar from '@/components/customer/storeList/StoreSearchBar.vue'
 import StoreCard from '@/components/customer/storeList/StoreCard.vue'
 import CustomerContainer from '@/components/customer/CustomerContainer.vue'
+import HeaderBanner from '@/components/common/HeaderBanner.vue'
 import { customerApi } from '@/api/customer/customerApi.js'
 
 export default {
@@ -116,6 +115,7 @@ export default {
     StoreSearchBar,
     StoreCard,
     CustomerContainer,
+    HeaderBanner,
   },
   setup() {
     const route = useRoute()
