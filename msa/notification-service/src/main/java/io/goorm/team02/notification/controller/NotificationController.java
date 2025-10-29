@@ -9,7 +9,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -18,17 +17,6 @@ import java.util.Map;
 public class NotificationController implements NotificationApiDocs {
 
     private final NotificationService notificationService;
-
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<Page<NotificationResponse>> getUserNotificationsPage(
-            @PathVariable Long userId,
-            Pageable pageable) {
-
-        Page<NotificationResponse> notifications = notificationService.getUserNotifications(userId, pageable)
-                .map(NotificationResponse::from);
-
-        return ResponseEntity.ok(notifications);
-    }
 
     /**
      * 사용자의 읽지 않은 알림 개수 조회
@@ -40,14 +28,16 @@ public class NotificationController implements NotificationApiDocs {
     }
 
     /**
-     * 사용자의 읽지 않은 알림 조회
+     * 사용자의 알림 페이징 조회
      */
-    @GetMapping("/user/{userId}/unread")
-    public ResponseEntity<List<NotificationResponse>> getUnreadNotifications(@PathVariable Long userId) {
-        List<NotificationResponse> notifications = notificationService.getUnreadNotifications(userId)
-                .stream()
-                .map(NotificationResponse::from)
-                .toList();
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<Page<NotificationResponse>> getUserNotificationsPage(
+            @PathVariable Long userId,
+            Pageable pageable) {
+
+        Page<NotificationResponse> notifications = notificationService.getUserNotifications(userId, pageable)
+                .map(NotificationResponse::from);
+
         return ResponseEntity.ok(notifications);
     }
 
@@ -70,14 +60,8 @@ public class NotificationController implements NotificationApiDocs {
     public ResponseEntity<Map<String, Object>> markAsRead(
             @PathVariable Long notificationId,
             @RequestParam Long userId) {
-        boolean success = notificationService.markAsRead(notificationId, userId);
-        
-        if (success) {
-            return ResponseEntity.ok(Map.of("success", true, "message", "알림을 읽음 상태로 변경했습니다."));
-        } else {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("success", false, "message", "알림을 찾을 수 없거나 이미 읽은 상태입니다."));
-        }
+        notificationService.markAsRead(notificationId, userId);
+        return ResponseEntity.ok(Map.of("success", true, "message", "알림을 읽음 상태로 변경했습니다."));
     }
 
     /**
@@ -85,12 +69,8 @@ public class NotificationController implements NotificationApiDocs {
      */
     @PutMapping("/user/{userId}/read-all")
     public ResponseEntity<Map<String, Object>> markAllAsRead(@PathVariable Long userId) {
-        int updatedCount = notificationService.markAllAsRead(userId);
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "모든 알림을 읽음 상태로 변경했습니다.",
-                "updatedCount", updatedCount
-        ));
+        notificationService.markAllAsRead(userId);
+        return ResponseEntity.ok(Map.of("success", true, "message", "모든 알림을 읽음 상태로 변경했습니다."));
     }
 
     /**

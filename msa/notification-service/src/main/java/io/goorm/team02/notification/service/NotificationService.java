@@ -24,13 +24,6 @@ public class NotificationService {
     private final SSEService sseService;
 
     /**
-     * 사용자 알림 조회 (전체)
-     */
-    public List<Notification> getUserNotifications(Long userId) {
-        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
-    }
-
-    /**
      * 사용자 알림 페이징 조회
      */
     public Page<Notification> getUserNotifications(Long userId, Pageable pageable) {
@@ -45,13 +38,6 @@ public class NotificationService {
     }
 
     /**
-     * 사용자의 읽지 않은 알림 조회
-     */
-    public List<Notification> getUnreadNotifications(Long userId) {
-        return notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId);
-    }
-
-    /**
      * 사용자의 읽지 않은 알림 페이징 조회
      */
     public Page<Notification> getUnreadNotifications(Long userId, Pageable pageable) {
@@ -62,26 +48,16 @@ public class NotificationService {
      * 특정 알림을 읽음 상태로 변경
      */
     @Transactional
-    public boolean markAsRead(Long notificationId, Long userId) {
-        int updatedCount = notificationRepository.markAsRead(notificationId, userId);
-        if (updatedCount > 0) {
-            log.info("Notification {} marked as read for user {}", notificationId, userId);
-            return true;
-        } else {
-            log.warn("Failed to mark notification {} as read for user {} - notification not found or already read", 
-                    notificationId, userId);
-            return false;
-        }
+    public void markAsRead(Long notificationId, Long userId) {
+        notificationRepository.markAsRead(notificationId, userId);
     }
 
     /**
      * 사용자의 모든 알림을 읽음 상태로 변경
      */
     @Transactional
-    public int markAllAsRead(Long userId) {
-        int updatedCount = notificationRepository.markAllAsRead(userId);
-        log.info("Marked {} notifications as read for user {}", updatedCount, userId);
-        return updatedCount;
+    public void markAllAsRead(Long userId) {
+        notificationRepository.markAllAsRead(userId);
     }
 
     /**

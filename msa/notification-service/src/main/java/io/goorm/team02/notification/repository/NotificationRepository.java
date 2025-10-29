@@ -15,9 +15,9 @@ import java.util.List;
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
     
     /**
-     * 사용자 알림 조회 (최신순)
+     * 사용자의 전체 알림 개수 조회
      */
-    List<Notification> findByUserIdOrderByCreatedAtDesc(Long userId);
+    long countByUserId(Long userId);
     
     /**
      * 사용자 알림 페이징 조회 (최신순)
@@ -25,19 +25,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     Page<Notification> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
     
     /**
-     * 사용자의 전체 알림 개수 조회
-     */
-    long countByUserId(Long userId);
-    
-    /**
      * 사용자의 읽지 않은 알림 개수 조회
      */
     long countByUserIdAndIsReadFalse(Long userId);
-    
-    /**
-     * 사용자의 읽지 않은 알림 조회 (최신순)
-     */
-    List<Notification> findByUserIdAndIsReadFalseOrderByCreatedAtDesc(Long userId);
     
     /**
      * 사용자의 읽지 않은 알림 페이징 조회 (최신순)
@@ -52,7 +42,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     int markAsRead(@Param("notificationId") Long notificationId, @Param("userId") Long userId);
     
     /**
-     * 사용자의 모든 알림을 읽음 상태로 변경
+     * 특정 사용자의 모든 알림을 읽음 상태로 변경
      */
     @Modifying
     @Query("UPDATE Notification n SET n.isRead = true WHERE n.userId = :userId AND n.isRead = false")
