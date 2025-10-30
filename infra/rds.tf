@@ -6,7 +6,7 @@ resource "aws_db_instance" "team02_mariadb" {
 
   instance_class    = "db.t3.micro"
   allocated_storage = 20
-  storage_type      = "gp3"
+  storage_type      = "gp2"
 
   username = var.db_username
   password = var.db_password
