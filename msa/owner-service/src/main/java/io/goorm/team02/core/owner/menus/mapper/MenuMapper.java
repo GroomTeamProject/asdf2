@@ -6,6 +6,7 @@ import io.goorm.team02.dto.owner.menus.menucreate.MenuResponse;
 import io.goorm.team02.dto.owner.menus.menucreate.MenuDetailResponse;
 import io.goorm.team02.dto.owner.menus.menucreate.MenuStatusRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -16,6 +17,12 @@ import java.util.stream.Collectors;
 public class MenuMapper {
 
     private final MenuOptionMapper menuOptionMapper;
+
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucketName;
+
+    @Value("${cloud.aws.region.static}")
+    private String region;
 
     // ================================
     // MenuStatus 변환 메서드들
@@ -201,11 +208,9 @@ public class MenuMapper {
             return null;
         }
 
-        // 허용된 도메인만 노출
         String[] allowedDomains = {
-                "s3.amazonaws.com",
-                "cloudfront.net",
-                "your-cdn-domain.com" // 실제 CDN 도메인으로 변경 필요
+                String.format("%s.s3.%s.amazonaws.com", bucketName, region), // 현재 버킷 도메인
+                "d1234abcd.cloudfront.net"  // 필요 시 CloudFront 도메인 추가
         };
 
         boolean isAllowed = false;

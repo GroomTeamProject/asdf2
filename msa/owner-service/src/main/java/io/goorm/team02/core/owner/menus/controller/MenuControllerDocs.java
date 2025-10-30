@@ -1,11 +1,11 @@
 package io.goorm.team02.core.owner.menus.controller;
 
-import io.goorm.team02.core.owner.auth.annotation.CurrentUser;
 import io.goorm.team02.dto.owner.menus.categorycreate.CategoryMoveRequest;
 import io.goorm.team02.dto.owner.menus.categorycreate.MenuCategoryCreateRequest;
 import io.goorm.team02.dto.owner.menus.categorycreate.MenuCategoryResponse;
 import io.goorm.team02.dto.owner.menus.categorycreate.MenuCategoryUpdateRequest;
 import io.goorm.team02.dto.owner.menus.menucreate.*;
+import io.goorm.team02.security.annotation.CurrentUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -37,7 +37,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
-    ResponseEntity<List<MenuCategoryResponse>> getMenuCategories(@Parameter(hidden = true) @CurrentUser Long currentUser);
+    ResponseEntity<List<MenuCategoryResponse>> getMenuCategories(@CurrentUser Long currentUser);
 
     @Operation(summary = "메뉴 카테고리 등록", description = "새로운 메뉴 카테고리를 등록합니다")
     @Tag(name = "Menu Category Management")
@@ -48,7 +48,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "409", description = "이미 존재하는 카테고리명")
     })
     ResponseEntity<MenuCategoryResponse> createCategory(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "카테고리 생성 요청 정보", required = true)
             @Valid @RequestBody MenuCategoryCreateRequest request);
 
@@ -61,7 +61,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음")
     })
     ResponseEntity<MenuCategoryResponse> updateCategory(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "카테고리 ID", required = true, example = "1")
             @PathVariable Long categoryId,
             @Parameter(description = "카테고리 수정 요청 정보", required = true)
@@ -76,7 +76,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음")
     })
     ResponseEntity<Void> deleteCategory(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "삭제할 카테고리 ID", required = true, example = "1")
             @PathVariable Long categoryId);
 
@@ -88,7 +88,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "401", description = "인증 실패")
     })
     ResponseEntity<List<MenuCategoryResponse>> updateCategoryOrder(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "카테고리 이동 요청", required = true)
             @Valid @RequestBody CategoryMoveRequest request);
 
@@ -104,7 +104,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "가게를 찾을 수 없음")
     })
     ResponseEntity<List<MenuResponse>> getMenus(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "카테고리 ID (선택사항)", example = "1")
             @RequestParam(required = false) Long categoryId);
 
@@ -116,7 +116,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "메뉴를 찾을 수 없음")
     })
     ResponseEntity<MenuDetailResponse> getMenu(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "메뉴 ID", required = true, example = "1")
             @PathVariable Long menuId);
 
@@ -129,7 +129,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음")
     })
     ResponseEntity<MenuResponse> createMenu(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "메뉴 생성 요청 정보", required = true)
             @Valid @RequestBody MenuCreateRequest request);
 
@@ -142,7 +142,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "메뉴를 찾을 수 없음")
     })
     ResponseEntity<MenuResponse> updateMenu(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "메뉴 ID", required = true, example = "1")
             @PathVariable Long menuId,
             @Parameter(description = "메뉴 수정 요청 정보", required = true)
@@ -156,7 +156,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "메뉴를 찾을 수 없음")
     })
     ResponseEntity<Void> deleteMenu(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "삭제할 메뉴 ID", required = true, example = "1")
             @PathVariable Long menuId);
 
@@ -169,7 +169,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "메뉴를 찾을 수 없음")
     })
     ResponseEntity<MenuResponse> updateMenuStatus(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "메뉴 ID", required = true, example = "1")
             @PathVariable Long menuId,
             @Parameter(description = "메뉴 상태 변경 요청", required = true)
@@ -183,7 +183,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "401", description = "인증 실패")
     })
     ResponseEntity<List<MenuResponse>> updateMenuOrder(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "메뉴 순서 변경 요청", required = true)
             @Valid @RequestBody MenuOrderUpdateRequest request);
 
@@ -201,7 +201,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "메뉴를 찾을 수 없음")
     })
     ResponseEntity<String> uploadMenuImage(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "메뉴 ID", required = true, example = "1")
             @PathVariable Long menuId,
             @Parameter(description = "업로드할 이미지 파일", required = true)
@@ -215,7 +215,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "메뉴를 찾을 수 없음")
     })
     ResponseEntity<Map<String, Object>> getMenuImageInfo(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "메뉴 ID", required = true, example = "1")
             @PathVariable Long menuId);
 
@@ -228,7 +228,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "이미지를 찾을 수 없음")
     })
     ResponseEntity<Void> deleteMenuImage(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "메뉴 ID", required = true, example = "1")
             @PathVariable Long menuId,
             @Parameter(description = "삭제할 이미지 ID", required = true, example = "1")
@@ -246,7 +246,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "메뉴를 찾을 수 없음")
     })
     ResponseEntity<List<MenuOptionGroupResponse>> getMenuOptionGroups(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "메뉴 ID", required = true, example = "1")
             @PathVariable Long menuId);
 
@@ -259,7 +259,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "메뉴를 찾을 수 없음")
     })
     ResponseEntity<MenuOptionGroupResponse> createOptionGroup(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "메뉴 ID", required = true, example = "1")
             @PathVariable Long menuId,
             @Parameter(description = "옵션 그룹 생성 요청 정보", required = true)
@@ -274,7 +274,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "옵션 그룹을 찾을 수 없음")
     })
     ResponseEntity<MenuOptionGroupResponse> updateOptionGroup(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "메뉴 ID", required = true, example = "1")
             @PathVariable Long menuId,
             @Parameter(description = "옵션 그룹 ID", required = true, example = "1")
@@ -290,7 +290,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "옵션 그룹을 찾을 수 없음")
     })
     ResponseEntity<Void> deleteOptionGroup(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "메뉴 ID", required = true, example = "1")
             @PathVariable Long menuId,
             @Parameter(description = "삭제할 옵션 그룹 ID", required = true, example = "1")
@@ -308,7 +308,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "옵션 그룹을 찾을 수 없음")
     })
     ResponseEntity<List<MenuOptionItemResponse>> getMenuOptions(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "메뉴 ID", required = true, example = "1")
             @PathVariable Long menuId,
             @Parameter(description = "옵션 그룹 ID", required = true, example = "1")
@@ -323,7 +323,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "옵션 그룹을 찾을 수 없음")
     })
     ResponseEntity<MenuOptionItemResponse> createOption(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "메뉴 ID", required = true, example = "1")
             @PathVariable Long menuId,
             @Parameter(description = "옵션 그룹 ID", required = true, example = "1")
@@ -340,7 +340,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "옵션을 찾을 수 없음")
     })
     ResponseEntity<MenuOptionItemResponse> updateOption(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "메뉴 ID", required = true, example = "1")
             @PathVariable Long menuId,
             @Parameter(description = "옵션 그룹 ID", required = true, example = "1")
@@ -358,7 +358,7 @@ public interface MenuControllerDocs {
             @ApiResponse(responseCode = "404", description = "옵션을 찾을 수 없음")
     })
     ResponseEntity<Void> deleteOption(
-            @Parameter(hidden = true) @CurrentUser Long currentUser,
+            @CurrentUser Long currentUser,
             @Parameter(description = "메뉴 ID", required = true, example = "1")
             @PathVariable Long menuId,
             @Parameter(description = "옵션 그룹 ID", required = true, example = "1")

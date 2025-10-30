@@ -5,16 +5,8 @@ import io.goorm.team02.common.config.BaseEntity;
 import io.goorm.team02.core.owner.menus.domain.MenuCategory;
 import io.goorm.team02.core.owner.stores.domain.enums.StoreCategory;
 import io.goorm.team02.core.owner.stores.domain.enums.StoreStatus;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.util.List;
 import lombok.Getter;
@@ -25,6 +17,7 @@ import lombok.Setter;
 @Getter
 @Table(name = "stores")
 public class Store extends BaseEntity {
+
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

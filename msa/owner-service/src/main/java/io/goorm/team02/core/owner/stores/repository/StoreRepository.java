@@ -1,6 +1,5 @@
 package io.goorm.team02.core.owner.stores.repository;
 
-//import io.goorm.team02.core.owner.orders.domain.Order;
 import io.goorm.team02.core.owner.stores.domain.Store;
 
 import java.math.BigDecimal;
