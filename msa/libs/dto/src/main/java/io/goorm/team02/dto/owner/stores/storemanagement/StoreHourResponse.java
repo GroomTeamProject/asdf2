@@ -30,5 +30,4 @@ public class StoreHourResponse {
     @Schema(description = "휴무 여부", example = "false")
     private Boolean isClosed;
 
-    // from 메서드 제거 - Entity 의존성 완전 제거!
 }
