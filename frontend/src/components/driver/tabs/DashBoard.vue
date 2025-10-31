@@ -38,7 +38,7 @@ export default{
     },
     async accept(d) {
       try{
-        const resp = await api.post(`/rider/${d.id}/accept`,
+        const resp = await api.post(`/deliveries/${d.id}/accept`,
             {riderId: this.riderInfo.riderId}
         );
       }catch (e) {

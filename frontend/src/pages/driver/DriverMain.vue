@@ -54,8 +54,8 @@ export default {
     async getAvg(){
       try{
         const resp = await api.get(`/deliveries/today-avg`);
-        console.log("[DriverMain] getAvg:",resp.data);
-        this.today.avg_time = resp.data;
+        console.log("[DriverMain] getAvg:",resp.data.data);
+        this.today.avg_time = resp.data.data;
       }catch(e){
         console.log("[DriverMain] getAvg:error",e);
       }
@@ -65,8 +65,8 @@ export default {
       try{
         const resp = await api.get(`/deliveries/today-income`);
 
-        console.log("[DriverMain] getEarnings: ",resp.data);
-        this.today.income = resp.data;
+        console.log("[DriverMain] getEarnings: ",resp.data.data);
+        this.today.income = resp.data.data;
       }catch (e){
         console.log("[DriverMain] getEarnings error: ",e);
       }
@@ -75,8 +75,8 @@ export default {
       try{
         const resp = await api.get(`/deliveries/today-count`);
 
-        console.log("[DriverMain] getCount: ",resp.data);
-        this.today.count = resp.data;
+        console.log("[DriverMain] getCount: ",resp.data.data);
+        this.today.count = resp.data.data;
       }catch (e){
         console.log("[DriverMain] getCount error: ",e);
       }
