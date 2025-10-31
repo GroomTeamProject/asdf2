@@ -69,6 +69,7 @@ dependencies {
 
 	implementation project(':libs:common')
 	implementation project(':libs:dto')
+	implementation project(':libs:security')
 }
 
 tasks.register("prepareKotlinBuildScriptModel"){}

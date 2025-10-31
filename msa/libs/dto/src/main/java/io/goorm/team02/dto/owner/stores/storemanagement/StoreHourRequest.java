@@ -24,5 +24,5 @@ public class StoreHourRequest {
     private LocalTime closeTime;
 
     @Schema(description = "휴무 여부", example = "false", defaultValue = "false")
-    private Boolean isClosed = false; // ✅ 기본값 설정
+    private Boolean isClosed = false; // 기본값 설정
 }
