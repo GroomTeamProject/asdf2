@@ -29,5 +29,4 @@ public class StoreHolidayResponse {
     @Schema(description = "매년 반복 여부", example = "true")
     private Boolean isRecurring;
 
-    // from 메서드 제거 - Entity 의존성 완전 제거!
 }

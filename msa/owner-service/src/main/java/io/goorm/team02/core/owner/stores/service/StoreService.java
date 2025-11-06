@@ -24,6 +24,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -56,12 +57,12 @@ public class StoreService {
      * 가게 등록 (최초 1회)
      */
     @Transactional
-    public StoreResponse createStore(Long currentUser, StoreCreateRequest request) {
-        log.info("=== 가게 등록 시작 - 사용자 ID: {} ===", currentUser);
+    public StoreResponse createStore(Long userId, StoreCreateRequest request) {
+        log.info("=== 가게 등록 시작 - 사용자 ID: {} ===", userId);
 
         // 사용자가 이미 가게를 가지고 있는지 확인
-        if (storeRepository.existsByOwnerIdAndIsActiveTrue(currentUser)) {
-            log.warn("이미 등록된 가게가 있습니다. 사용자 ID: {}", currentUser);
+        if (storeRepository.existsByOwnerIdAndIsActiveTrue(userId)) {
+            log.warn("이미 등록된 가게가 있습니다. 사용자 ID: {}", userId);
             throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 등록된 가게가 있습니다");
         }
 
@@ -73,7 +74,7 @@ public class StoreService {
             StoreCategory category = storeMapper.convertStringToStoreCategory(request.getCategory());
 
             Store store = new Store();
-            store.setOwnerId(currentUser);
+            store.setOwnerId(userId);
             store.setBusinessNumber(request.getBusinessNumber());
             store.setName(request.getName());
             store.setDescription(request.getDescription());
@@ -313,22 +314,28 @@ public class StoreService {
         try {
             // 1단계: 임시 위치에 업로드
             tempImageUrl = s3Service.uploadFileWithTransaction(file, store.getId());
+            log.info("S3 임시 업로드 성공: {}", tempImageUrl);
 
             // 2단계: DB 트랜잭션 내에서 파일 이동 및 저장
             finalImageUrl = s3Service.moveToFinalPath(tempImageUrl, store.getId());
+            log.info("S3 최종 이동 성공: {}", finalImageUrl);
             store.setImageUrl(finalImageUrl);
             storeRepository.save(store);
+            log.info("DB 저장 로직 실행됨 (커밋 대기 중): Store ID={}, store url = {},Final URL={}", store.getId(), store.getImageUrl(), finalImageUrl);
 
             // 3단계: 기존 파일 비동기 삭제 (트랜잭션 커밋 후)
             if (oldImageUrl != null && !oldImageUrl.isEmpty()) {
+                log.info("asd");
                 eventPublisher.publishEvent(new ImageCleanupEvent(oldImageUrl));
             }
+
 
             return finalImageUrl;
 
         } catch (Exception e) {
             // 보상 트랜잭션: 실패시 업로드된 파일들 정리
             cleanupFailedUpload(tempImageUrl, finalImageUrl);
+            log.error("이미지 업로드 및 DB 저장 트랜잭션 실패: Store ID={}, Error={}", store.getId(), e.getMessage(), e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드에 실패했습니다");
         }
     }
