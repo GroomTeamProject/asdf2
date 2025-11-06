@@ -3,6 +3,7 @@ package io.goorm.team02.payment.config;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -19,11 +20,15 @@ import java.util.Map;
 @Configuration
 public class PaymentKafkaConfig {
 
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
+
     @Bean
     public ConsumerFactory<String, JsonNode> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka:9092");
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "team02-backend-group");
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
         return new DefaultKafkaConsumerFactory<>(
                 props,
@@ -37,16 +42,13 @@ public class PaymentKafkaConfig {
         ConcurrentKafkaListenerContainerFactory<String, JsonNode> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
-
-        // 에러 발생 시 로그만 남기고 재시도 3번 후 포기
         factory.setCommonErrorHandler(new DefaultErrorHandler(
-                (record, exception) -> {
-                    System.err.println("Kafka listener error: " + exception.getMessage());
+                (record, ex) -> {
+                    System.err.println("[Kafka Error] " + ex.getMessage());
                     System.err.println("Failed record: " + record);
                 },
                 new FixedBackOff(1000L, 3)
         ));
-
         return factory;
     }
 }

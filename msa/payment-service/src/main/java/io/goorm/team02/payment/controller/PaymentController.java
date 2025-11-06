@@ -5,9 +5,12 @@ import io.goorm.team02.payment.dto.PaymentResponse;
 import io.goorm.team02.payment.service.PaymentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/payments")
+@CrossOrigin(origins = "*")
 public class PaymentController {
 
     private final PaymentService paymentService;
@@ -16,22 +19,17 @@ public class PaymentController {
         this.paymentService = paymentService;
     }
 
-    // 토스 결제 요청 처리
     @PostMapping("/confirm")
     public ResponseEntity<PaymentResponse> confirmPayment(@RequestBody PaymentConfirmRequest request) {
         try {
             PaymentResponse response = paymentService.confirmPayment(request);
             return ResponseEntity.ok(response);
         } catch (PaymentService.PaymentException e) {
-            PaymentResponse failResponse = new PaymentResponse(
-                    request.getOrderId(),
-                    request.getAmount(),
-                    "FAIL: " + e.getMessage(),
-                    null,
-                    null,
-                    null,
-                    null
-            );
+            log.error("Payment confirm failed for orderId={}", request.getOrderId(), e);
+            PaymentResponse failResponse = new PaymentResponse();
+            failResponse.setOrderId(request.getOrderId());
+            failResponse.setAmount(request.getAmount());
+            failResponse.setStatus("FAIL: Payment error");
             return ResponseEntity.status(500).body(failResponse);
         }
     }

@@ -1,49 +1,56 @@
 package io.goorm.team02.payment.handler;
 
-import io.goorm.team02.dto.orders.OrderRequest;
-import io.goorm.team02.payment.event.PaymentCompletedEvent;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.goorm.team02.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
+import java.math.BigDecimal;
 
-@Service
+
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentEventHandler {
 
-    private final KafkaTemplate<String, PaymentCompletedEvent> kafkaTemplate;
     private final PaymentService paymentService;
 
-    /**
-     * OrderEvent 수신 후 결제 처리
-     * OrderCreatedEvent에서 orderId와 amount를 전달받는다고 가정
-     */
-    @KafkaListener(topics = "order-events", groupId = "payment-service-group")
-    public void handleOrderEvent(OrderRequest orderRequest) {
+    @KafkaListener(
+            topics = "${order.events.topic}",
+            groupId = "payment-group",
+            containerFactory = "kafkaListenerContainerFactory"
+    )
+    public void handleOrderEvent(JsonNode eventJson) {
         try {
-            // 주문 ID와 총 금액 계산
-            Long orderId = orderRequest.storeId(); // 예시로 storeId 사용, 실제 orderId가 필요하면 event에 포함해야 함
-            Integer amount = orderRequest.orderItems().stream()
-                    .mapToInt(item -> item.quantity())
-                    .sum(); // 총 수량을 금액처럼 사용 (실제 금액 계산 로직에 맞게 수정)
+            log.info("[Kafka] received event: {}", eventJson);
 
-            paymentService.processPaymentFromEvent(orderId, amount, null);
+            String eventType = eventJson.path("eventType").asText("");
+            if (!"ORDER_CREATED".equals(eventType)) {
+                log.info("ignore eventType={}", eventType);
+                return;
+            }
 
-            PaymentCompletedEvent completedEvent = PaymentCompletedEvent.builder()
-                    .paymentKey("PAY_" + orderId)
-                    .orderId(String.valueOf(orderId))
-                    .amount(Long.valueOf(amount))
-                    .build();
+            JsonNode payload = eventJson.path("order");
+            if (payload.isMissingNode()) {
+                log.warn("order payload missing in event, skip: {}", eventJson);
+                return;
+            }
 
-            kafkaTemplate.send("payment-events", completedEvent.getOrderId(), completedEvent);
-            log.info("[PaymentEventHandler] 결제 완료 이벤트 발행: {}", completedEvent.getOrderId());
+            String orderId = payload.path("orderNumber").asText("");
+            int totalAmount = payload.path("totalAmount").asInt(0);
+            String userId = payload.path("userId").asText("");
 
-        } catch (Exception e) {
-            log.warn("[PaymentEventHandler] 결제 실패: {}", orderRequest.storeId(), e);
+            if (orderId.isEmpty()) {
+                log.warn("orderNumber not found in payload, skip: {}", payload);
+                return;
+            }
+
+            paymentService.processPaymentFromEvent(orderId, BigDecimal.valueOf(totalAmount), payload);
+            log.info("[Kafka] dispatched payment processing for orderId={}, amount={}", orderId, totalAmount);
+
+        } catch (Exception ex) {
+            log.error("[Kafka] failed to handle event", ex);
         }
     }
-
 }

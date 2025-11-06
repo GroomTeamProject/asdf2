@@ -16,14 +16,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // 개발환경: 필요하면 예외 경로만 허용
+                .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // SSE 엔드포인트 허용 (토큰 필요하면 검증 로직 추가 필요)
-                        .requestMatchers("/api/payments/sse/**", "/api/payments/sse/connect").permitAll()
+                        .requestMatchers(
+                                "/api/payments/confirm",
+                                "/api/payments/callback",
+                                "/api/payments/success",
+                                "/api/payments/fail",
+                                "/api/payments/sse/**",
+                                "/payment/**",
+                                "/payment/*"
+                        ).permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 );
-
         return http.build();
     }
 
@@ -31,10 +38,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:5173"));
-        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
-        config.setExposedHeaders(List.of("Content-Type"));
+        config.setExposedHeaders(List.of("Content-Type", "Authorization"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
