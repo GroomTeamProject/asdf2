@@ -1,4 +1,4 @@
-package io.goorm.team02.demo;
+/*package io.goorm.team02.demo;
 
 import io.goorm.team02.payment.client.PaymentServiceClient;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -18,3 +18,4 @@ public class PaymentClientMockConfig {
         return mock;
     }
 }
+*/
