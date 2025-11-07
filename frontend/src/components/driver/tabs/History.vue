@@ -31,10 +31,16 @@ export default{
     },
     async loadHistory(){
       try{
-        const resp = await api.get(`/rider/${this.rider_id}/history`)
+        const resp = await api.get(`/deliveries/history`)
         this.deliveries = resp.data;
       }catch(e){
-        console.log(`[${this.activeTab}] loadHistory 실패`,e);
+        if(e.response && e.response.status === 404)
+        {
+          console.log(`[${this.activeTab}] 내역 없음 `,e);
+          this.deliveries = [];
+        }else{
+          console.log(`[${this.activeTab}] 기계 오작동!`,e);
+        }
       }finally {
         console.log([`${this.activeTab} loadHistory: `],...this.deliveries)
       }

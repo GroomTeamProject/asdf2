@@ -1,8 +1,8 @@
 package io.goorm.team02.order.entity;
 
 import io.goorm.team02.common.config.BaseEntity;
-import io.goorm.team02.dto.orders.OrderRequest;
 import io.goorm.team02.dto.orders.OrderResponse;
+import io.goorm.team02.order.service.dto.OrderData;
 import io.goorm.team02.order.entity.enums.OrderStatus;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -120,8 +120,8 @@ public class Order extends BaseEntity {
 		}
 
 		return orderItems.stream()
-				.map(OrderItem::getTotalPrice)
-				.reduce(0, Integer::sum);
+				.mapToInt(OrderItem::getTotalPrice)
+				.sum();
 	}
 
 	/**
@@ -246,27 +246,29 @@ public class Order extends BaseEntity {
 	/**
 	 * 주문과 주문 아이템들을 함께 생성하는 팩토리 메서드
 	 */
-	public static Order create(OrderRequest orderRequest, Long userId, Long storeId, int deliveryFee) {
+	public static Order create(OrderData orderData) {
 		Order order = new Order();
-		order.setUserId(userId);
-		order.setStoreId(storeId);
-		order.setDeliveryAddress(orderRequest.deliveryAddress());
-		order.setDeliveryDetailAddress(orderRequest.deliveryDetailAddress());
-		// TODO: 가게 주소 추가
-		order.setStoreAddress("");
-		// TODO: 가게 상세 주소 추가
-		order.setStoreDetailAddress("");
-		order.setPhone(orderRequest.phone());
-		order.setOrderMemo(orderRequest.orderMemo());
-		order.setDeliveryFee(deliveryFee);
-		order.generateOrderNumber();
+		order.setUserId(orderData.userId());
+		order.setStoreId(orderData.storeId());
+		order.setDeliveryAddress(orderData.deliveryAddress());
+		order.setDeliveryDetailAddress(orderData.deliveryDetailAddress());
+		order.setPhone(orderData.phone());
+		order.setOrderMemo(orderData.orderMemo());
 
-		List<OrderItem> orderItems = orderRequest.orderItems().stream()
-				.map(request -> OrderItem.create(order, request))
+		// 가게 정보 설정
+		order.setStoreName(orderData.storeName());
+		order.setStorePhone(orderData.storePhone());
+		order.setStoreAddress(orderData.storeAddress());
+		order.setStoreDetailAddress(orderData.storeDetailAddress());
+		order.setDeliveryFee(orderData.deliveryFee());
+
+		List<OrderItem> orderItems = orderData.orderItems().stream()
+				.map(itemData -> OrderItem.create(order, itemData))
 				.toList();
 		order.setOrderItems(orderItems);
-
 		order.calculateTotalAmount();
+		order.generateOrderNumber();
+
 		return order;
 	}
 

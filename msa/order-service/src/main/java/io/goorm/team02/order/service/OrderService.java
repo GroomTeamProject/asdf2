@@ -3,15 +3,22 @@ package io.goorm.team02.order.service;
 import static io.goorm.team02.order.service.OrderStatusService.ORDER_EVENTS_TOPIC;
 
 import io.goorm.team02.dto.orders.*;
+import io.goorm.team02.dto.owner.stores.storemanagement.StoreResponse;
+import io.goorm.team02.dto.owner.menus.menucreate.MenuResponse;
 import io.goorm.team02.order.entity.Order;
 import io.goorm.team02.order.entity.enums.OrderStatus;
 import io.goorm.team02.order.repository.OrderRepository;
+import io.goorm.team02.order.service.dto.OrderData;
+import io.goorm.team02.order.service.dto.OrderItemData;
+import io.goorm.team02.order.service.dto.OrderItemOptionData;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,10 +27,12 @@ import org.springframework.transaction.annotation.Transactional;
 import io.goorm.team02.kafka.client.EventPublisher;
 import io.goorm.team02.order.client.StoreServiceClient;
 import io.goorm.team02.order.event.OrderCreatedEvent;
+import io.goorm.team02.dto.owner.menus.menucreate.MenuOptionItemResponse;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class OrderService {
 
     private final OrderRepository orderRepository;
@@ -53,19 +62,22 @@ public class OrderService {
     @Transactional
     public Order create(OrderRequest orderRequest, Long userId) {
         // 1. 가게 정보 조회
-        var storeInfo = storeServiceClient.getStoreById(orderRequest.storeId());
-        
-        // 2. 메뉴 정보 조회 (주문 시점에서의 메뉴 정보 스냅샷)
-        // TODO: 실제 메뉴 정보 사용 (스냅샷)
+        var storeInfo = storeServiceClient.getStoreById(orderRequest.storeId()).getBody();
+        if (storeInfo == null) {
+            throw new IllegalArgumentException("가게 정보를 찾을 수 없습니다: " + orderRequest.storeId());
+        }
 
-        // 3. Order 도메인에 생성 요청
-        Order order = Order.create(orderRequest, userId, orderRequest.storeId(), 0);
-        
-        // 4. 가게 정보 설정 (비정규화)
-        order.setStoreName(storeInfo.getName());
-        order.setStorePhone(storeInfo.getPhone());
-        order.setStoreAddress(storeInfo.getAddress());
-        order.setStoreDetailAddress(storeInfo.getDetailAddress());
+        // 2. 메뉴 정보 조회 (주문 시점에서의 메뉴 정보 스냅샷)
+        var menuList = storeServiceClient.getMenusByStoreId(orderRequest.storeId()).getBody();
+        if (menuList == null) {
+            throw new IllegalArgumentException("메뉴 정보를 찾을 수 없습니다: " + orderRequest.storeId());
+        }
+
+        // 3. OrderData 생성
+        OrderData orderData = createOrderData(orderRequest, userId, storeInfo, menuList);
+
+        // 4. Order 도메인에 생성 요청
+        Order order = Order.create(orderData);
 
         // 5. 저장
         Order savedOrder = orderRepository.save(order);
@@ -185,6 +197,103 @@ public class OrderService {
     }
 
     /**
+     * OrderData 생성 (OrderRequest + StoreResponse + MenuResponse 조합)
+     */
+    private OrderData createOrderData(OrderRequest orderRequest, Long userId, StoreResponse storeInfo,
+            List<MenuResponse> menuList) {
+        // 메뉴 정보를 Map으로 변환하여 빠른 조회 가능하도록 함
+        Map<Long, MenuResponse> menuMap = menuList.stream()
+                .collect(Collectors.toMap(MenuResponse::getId, menu -> menu));
+
+        // OrderItemData 목록 생성
+        List<OrderItemData> orderItemDataList = orderRequest.orderItems().stream()
+                .map(itemRequest -> createOrderItemData(itemRequest, menuMap))
+                .toList();
+
+        return new OrderData(
+                // 사용자 요청 정보
+                userId,
+                orderRequest.storeId(),
+                orderRequest.deliveryAddress(),
+                orderRequest.deliveryDetailAddress(),
+                orderRequest.phone(),
+                orderRequest.orderMemo(),
+
+                // 가게 정보
+                storeInfo.getName(),
+                storeInfo.getPhone(),
+                storeInfo.getAddress(),
+                storeInfo.getDetailAddress(),
+                storeInfo.getDeliveryFee().intValue(),
+
+                // 주문 아이템 목록
+                orderItemDataList);
+    }
+
+    /**
+     * OrderItemData 생성 (OrderItemRequest + MenuResponse 조합)
+     */
+    private OrderItemData createOrderItemData(OrderRequest.OrderItemRequest itemRequest,
+            Map<Long, MenuResponse> menuMap) {
+        MenuResponse menu = menuMap.get(itemRequest.menuId());
+
+        // OrderItemOptionData 목록 생성
+        List<OrderItemOptionData> optionDataList = List.of();
+        if (itemRequest.options() != null && !itemRequest.options().isEmpty()) {
+            optionDataList = itemRequest.options().stream()
+                    .map(optionRequest -> createOrderItemOptionData(optionRequest, menu))
+                    .toList();
+        }
+
+        return new OrderItemData(
+                // 사용자 요청 정보
+                itemRequest.menuId(),
+                itemRequest.quantity(),
+
+                // 메뉴 정보
+                menu != null ? menu.getName() : "메뉴 정보 없음",
+                menu != null ? menu.getPrice().intValue() : 0,
+
+                // 옵션 목록
+                optionDataList);
+    }
+
+    /**
+     * OrderItemOptionData 생성 (OrderItemOptionRequest + MenuOptionItemResponse 조합)
+     */
+    private OrderItemOptionData createOrderItemOptionData(OrderRequest.OrderItemOptionRequest optionRequest,
+            MenuResponse menu) {
+        // 메뉴에서 해당 옵션 찾기
+        MenuOptionItemResponse matchingOptionItem = null;
+        String optionGroupName = "옵션 정보 없음";
+        
+        if (menu != null && menu.getOptions() != null) {
+            for (var optionGroup : menu.getOptions()) {
+                // optionId로 옵션 그룹 찾기
+                if (optionGroup.getId().equals(optionRequest.optionId())) {
+                    optionGroupName = optionGroup.getName(); // 옵션 그룹명 (예: "사이즈")
+                    
+                    // optionItemId로 옵션 아이템 찾기
+                    matchingOptionItem = optionGroup.getItems().stream()
+                            .filter(item -> item.getId().equals(optionRequest.optionItemId()))
+                            .findFirst()
+                            .orElse(null);
+                    break;
+                }
+            }
+        }
+
+        return new OrderItemOptionData(
+                // 사용자 요청 정보
+                optionRequest.optionItemId(), // optionItemId를 ID로 사용
+
+                // 옵션 정보
+                optionGroupName, // 옵션 그룹명 (예: "사이즈")
+                matchingOptionItem != null ? matchingOptionItem.getName() : "옵션 정보 없음", // 옵션 아이템명 (예: "소")
+                matchingOptionItem != null ? matchingOptionItem.getAdditionalPrice().intValue() : 0);
+    }
+
+    /**
      * 가게별 오늘 주문 개수 조회
      */
     public Long getTodayOrderCount(Long storeId) {
@@ -218,7 +327,6 @@ public class OrderService {
                 .map(this::convertToRecentOrderDto)
                 .collect(Collectors.toList());
     }
-
 
     // ================================
     // Internal Methods

@@ -1,14 +1,12 @@
 package io.goorm.team02.payment.entity;
 
-import io.goorm.team02.payment.entity.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
-@Table(name = "payments", uniqueConstraints = @UniqueConstraint(columnNames = "paymentKey"))
+@Table(name = "payments")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,26 +17,27 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String paymentKey;      // PG사 고유 키
-    private Long orderId;           // Order Service ID
-    private Long userId;
+    @Column(nullable = false, unique = true)
+    private String orderId;
+
+    @Column(nullable = false)
+    private String userId;
+
+    @Column(nullable = false)
     private BigDecimal amount;
 
-    @Builder.Default
-    private String currency = "KRW";
+    @Column(nullable = false)
+    private String currency;
 
-    private String paymentMethod;
+    @Column(nullable = false)
+    private String paymentKey;
+
+    @Column(nullable = false)
     private String pgProvider;
 
-    @Enumerated(EnumType.STRING)
-    private PaymentStatus status;
+    @Column(nullable = false)
+    private String paymentMethod;
 
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-
-    @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL)
-    private List<PaymentTransaction> transactions;
-
-    @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL)
-    private List<Refund> refunds;
+    @Column(nullable = false)
+    private String pgTid;
 }

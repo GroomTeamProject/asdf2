@@ -1,24 +1,23 @@
 package io.goorm.team02.core.delivery.controller.dto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import org.springframework.http.HttpStatus;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public record ApiResponse<T>(
-        boolean success,
-        T data,
-        String message,
-        HttpStatus status
-) {
+@Getter
+@AllArgsConstructor
+public class ApiResponse<T> {
+    private String status;
+    private T data;
+
     public static <T> ApiResponse<T> ok(T data) {
-        return new ApiResponse<>(true, data, null, HttpStatus.OK);
+        return new ApiResponse<>("success", data);
     }
 
     public static <T> ApiResponse<T> created(T data) {
-        return new ApiResponse<>(true, data, "생성이 완료되었습니다.", HttpStatus.CREATED);
+        return new ApiResponse<>("created", data);
     }
 
-    public static <T> ApiResponse<T> fail(String msg) {
-        return new ApiResponse<>(false, null, msg, HttpStatus.BAD_REQUEST);
+    public static <T> ApiResponse<T> fail(T message) {
+        return new ApiResponse<>("fail", message);
     }
 }

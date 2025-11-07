@@ -38,5 +38,4 @@ public class StoreStatusResponse {
     @Schema(description = "상태 마지막 업데이트 시간")
     private LocalDateTime lastUpdated; // 상태 마지막 업데이트 시간
 
-    // from 메서드들 제거 - Entity 의존성 완전 제거!
 }

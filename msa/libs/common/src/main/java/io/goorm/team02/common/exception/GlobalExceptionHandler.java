@@ -6,11 +6,13 @@ import io.goorm.team02.common.exception.errors.ForbiddenException;
 import io.goorm.team02.common.exception.errors.UnauthorizedException;
 import io.goorm.team02.common.exception.errors.ConflictException;
 import io.swagger.v3.oas.annotations.Hidden;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+@Slf4j
 @Hidden
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -20,8 +22,9 @@ public class GlobalExceptionHandler {
      * Http Status 400
      * 잘못된 요청
      */
-    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
+    @ExceptionHandler({ IllegalArgumentException.class, IllegalStateException.class })
     public ResponseEntity<ErrorResponse> handleBadRequestException(Exception ex) {
+        log.error("Bad Request Exception: {}", ex.getMessage());
         return createErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
@@ -31,6 +34,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorResponse> handleUnauthorizedException(UnauthorizedException ex) {
+        log.error("Unauthorized Exception: {}", ex.getMessage());
         return createErrorResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
@@ -40,6 +44,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ErrorResponse> handleForbiddenException(ForbiddenException ex) {
+        log.error("Forbidden Exception: {}", ex.getMessage());
         return createErrorResponse(HttpStatus.FORBIDDEN, ex.getMessage());
     }
 
@@ -49,6 +54,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFoundException(NotFoundException ex) {
+        log.error("Not Found Exception: {}", ex.getMessage());
         return createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
@@ -58,6 +64,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponse> handleConflictException(ConflictException ex) {
+        log.error("Conflict Exception: {}", ex.getMessage());
         return createErrorResponse(HttpStatus.CONFLICT, ex.getMessage());
     }
 
@@ -67,6 +74,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex) {
+        log.error("Runtime Exception: {}", ex.getMessage());
         return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, DEFAULT_INTERNAL_SERVER_ERROR_MESSAGE);
     }
 
@@ -76,6 +84,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception ex) {
+        log.error("Exception: {}", ex.getMessage());
         return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, DEFAULT_INTERNAL_SERVER_ERROR_MESSAGE);
     }
 

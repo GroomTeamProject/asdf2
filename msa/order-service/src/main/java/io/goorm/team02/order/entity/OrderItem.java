@@ -1,7 +1,7 @@
 package io.goorm.team02.order.entity;
 
-import io.goorm.team02.dto.orders.OrderRequest;
 import io.goorm.team02.dto.orders.OrderResponse;
+import io.goorm.team02.order.service.dto.OrderItemData;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -55,7 +55,6 @@ public class OrderItem {
     public void calculateTotalPrice() {
         int basePrice = menuPrice * quantity;
         int optionPrice = calculateOptionPrice();
-
         this.totalPrice = basePrice + optionPrice;
     }
 
@@ -69,33 +68,31 @@ public class OrderItem {
 
         // 옵션 가격의 합계에 수량을 곱함
         int totalOptionPrice = options.stream()
-                .map(OrderItemOption::getAdditionalPrice)
-                .reduce(0, Integer::sum);
+                .mapToInt(OrderItemOption::getAdditionalPrice)
+                .sum();
 
         return totalOptionPrice * quantity;
     }
 
     /**
-     * 주문 요청 기반 주문 아이템 생성 (임시 스냅샷)
+     * 주문 아이템 생성 (OrderItemData 기반)
      */
-    public static OrderItem create(Order order, OrderRequest.OrderItemRequest itemRequest) {
+    public static OrderItem create(Order order, OrderItemData itemData) {
         OrderItem orderItem = new OrderItem();
         orderItem.setOrder(order);
-        orderItem.setMenuId(itemRequest.menuId());
-        // TODO: 메뉴 이름 추가
-        orderItem.setMenuName("");
-        // TODO: 메뉴 가격 추가
-        orderItem.setMenuPrice(0);
-        orderItem.setQuantity(itemRequest.quantity());
+        orderItem.setMenuId(itemData.menuId());
+        orderItem.setQuantity(itemData.quantity());
+        orderItem.setMenuName(itemData.menuName());
+        orderItem.setMenuPrice(itemData.menuPrice());
 
-        if (itemRequest.options() != null) {
-            List<OrderItemOption> options = itemRequest.options().stream()
-                    .map(optionRequest -> OrderItemOption.create(orderItem, optionRequest))
+        if (itemData.options() != null) {
+            List<OrderItemOption> options = itemData.options().stream()
+                    .map(optionData -> OrderItemOption.create(orderItem, optionData))
                     .toList();
             orderItem.setOptions(options);
         }
-
         orderItem.calculateTotalPrice();
+
         return orderItem;
     }
 

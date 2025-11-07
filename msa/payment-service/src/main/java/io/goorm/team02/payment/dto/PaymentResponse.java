@@ -1,16 +1,102 @@
 package io.goorm.team02.payment.dto;
 
-import lombok.Data;
-
 import java.math.BigDecimal;
 
-@Data
 public class PaymentResponse {
-    private String paymentKey;
-    private String orderId;      // 주문 이벤트에서 받은 문자열 ID
+
+    private String orderId;
     private BigDecimal amount;
-    private String method;       // 결제 수단
-    private String tid;          // PG 거래 번호
-    private String status;       // PENDING, COMPLETED, FAILED
-    private String pgProvider;   // 결제사
+    private String status;
+
+    private String paymentKey;
+    private String pgProvider;
+    private String paymentMethod;
+    private String pgTid;
+
+    public PaymentResponse() {
+    }
+
+    public PaymentResponse(String orderId, BigDecimal amount, String status,
+                           String paymentKey, String pgProvider,
+                           String paymentMethod, String pgTid) {
+        this.orderId = orderId;
+        this.amount = amount;
+        this.status = status;
+        this.paymentKey = paymentKey;
+        this.pgProvider = pgProvider;
+        this.paymentMethod = paymentMethod;
+        this.pgTid = pgTid;
+    }
+
+    // --- getters ---
+    public String getOrderId() {
+        return orderId;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public String getPaymentKey() {
+        return paymentKey;
+    }
+
+    public String getPgProvider() {
+        return pgProvider;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public String getPgTid() {
+        return pgTid;
+    }
+
+    // --- setters ---
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public void setPaymentKey(String paymentKey) {
+        this.paymentKey = paymentKey;
+    }
+
+    public void setPgProvider(String pgProvider) {
+        this.pgProvider = pgProvider;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public void setPgTid(String pgTid) {
+        this.pgTid = pgTid;
+    }
+
+    // --- convenience toString ---
+    @Override
+    public String toString() {
+        return "PaymentResponse{" +
+                "orderId='" + orderId + '\'' +
+                ", amount=" + amount +
+                ", status='" + status + '\'' +
+                ", paymentKey='" + paymentKey + '\'' +
+                ", pgProvider='" + pgProvider + '\'' +
+                ", paymentMethod='" + paymentMethod + '\'' +
+                ", pgTid='" + pgTid + '\'' +
+                '}';
+    }
 }

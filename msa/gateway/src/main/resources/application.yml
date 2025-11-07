@@ -9,10 +9,6 @@ spring:
       server:
         webflux:
           routes:
-            - id: demo-service
-              uri: ${DEMO_SERVICE_URL:http://demo-service:8090}
-              predicates:
-                - Path=/api/demo/**
             - id: order-service
               uri: ${ORDER_SERVICE_URL:http://order-service:8085}
               predicates:
@@ -45,11 +41,16 @@ spring:
               uri: ${USER_SERVICE_URL:http://user-service:8082}
               predicates:
                 - Path=/api/auth/**
+            - id: delivery-service
+              uri: ${DELIVERY_SERVICE_URL:http://delivery-service:8087}
+              predicates:
+                - Path=/api/deliveries/**
 
             - id: payment-service
               uri: ${PAYMENT_SERVICE_URL:http://payment-service:8084}
               predicates:
                 - Path=/api/payments/**
+
   data:
     redis:
       host: localhost

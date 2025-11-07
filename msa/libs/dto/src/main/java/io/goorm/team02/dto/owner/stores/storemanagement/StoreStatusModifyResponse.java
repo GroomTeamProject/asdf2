@@ -25,5 +25,4 @@ public class StoreStatusModifyResponse {
     @Schema(description = "상태 변경 메시지", example = "가게 상태가 성공적으로 변경되었습니다")
     private String message;
 
-    // of 메서드 제거 - Entity 의존성 완전 제거!
 }

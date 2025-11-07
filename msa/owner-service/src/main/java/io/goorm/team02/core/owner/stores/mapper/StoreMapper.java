@@ -6,6 +6,7 @@ import io.goorm.team02.core.owner.stores.domain.StoreHour;
 import io.goorm.team02.core.owner.stores.domain.enums.StoreCategory;
 import io.goorm.team02.core.owner.stores.domain.enums.StoreStatus;
 import io.goorm.team02.dto.owner.stores.storemanagement.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -14,6 +15,12 @@ import java.util.stream.Collectors;
 
 @Component
 public class StoreMapper {
+
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucketName;
+
+    @Value("${cloud.aws.region.static}")
+    private String region;
 
     // ================================
     // Store 변환 메서드들
@@ -321,9 +328,9 @@ public class StoreMapper {
             }
         }
 
-        if (storeHour.getDayOfWeek() < 1 || storeHour.getDayOfWeek() > 7) {
-            throw new IllegalArgumentException("요일은 1(월요일)부터 7(일요일)까지 입니다");
-        }
+//        if (storeHour.getDayOfWeek() < 1 || storeHour.getDayOfWeek() > 7) {
+//            throw new IllegalArgumentException("요일은 1(월요일)부터 7(일요일)까지 입니다");
+//        }
     }
 
     // ================================
@@ -356,13 +363,13 @@ public class StoreMapper {
         }
 
         // 허용된 도메인만 노출
+
         String[] allowedDomains = {
-                "s3.amazonaws.com",
-                "cloudfront.net",
-                "your-cdn-domain.com" // 실제 CDN 도메인으로 변경 필요
+                String.format("%s.s3.%s.amazonaws.com", bucketName, region), // 현재 버킷 도메인
+                "d1234abcd.cloudfront.net"  // 필요 시 CloudFront 도메인 추가
         };
 
-        boolean isAllowed = false;
+        boolean isAllowed = true;
         for (String domain : allowedDomains) {
             if (imageUrl.contains(domain)) {
                 isAllowed = true;

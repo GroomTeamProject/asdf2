@@ -1,10 +1,12 @@
 package io.goorm.team02.core.owner.stores.controller;
 
-import io.goorm.team02.core.owner.auth.annotation.CurrentUser;
+
+
 import io.goorm.team02.core.owner.stores.component.FileUploadValidator;
 import io.goorm.team02.core.owner.stores.service.StoreService;
 import io.goorm.team02.dto.owner.stores.dashboard.StoreDashboardResponse;
 import io.goorm.team02.dto.owner.stores.storemanagement.*;
+import io.goorm.team02.security.annotation.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
