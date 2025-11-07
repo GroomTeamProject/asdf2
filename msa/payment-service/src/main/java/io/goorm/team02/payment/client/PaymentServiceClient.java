@@ -1,29 +1,16 @@
 package io.goorm.team02.payment.client;
 
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import io.goorm.team02.dto.orders.OrderResponse;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
-// 실제 서비스 URL을 지정하거나, 테스트 환경에서는 MockBean으로 대체
-@FeignClient(name = "order-service", url = "${msa.gateway.url:http://localhost:8080}")
-public interface PaymentServiceClient {
+@Component
+public class PaymentServiceClient {
 
-    @GetMapping("/api/orders/events/{orderId}")
-    OrderEventResponse getOrderEvent(@PathVariable("orderId") String orderId);
+    private final RestTemplate restTemplate = new RestTemplate();
+    private final String ORDER_SERVICE_URL = "http://localhost:8080/api/orders/";
 
-    // DTO는 내부 클래스나 별도 파일로 분리 가능
-    class OrderEventResponse {
-        private String orderId;
-        private String status;
-
-        public OrderEventResponse(String orderId, String status) {
-            this.orderId = orderId;
-            this.status = status;
-        }
-
-        public String getOrderId() { return orderId; }
-        public String getStatus() { return status; }
-        public void setOrderId(String orderId) { this.orderId = orderId; }
-        public void setStatus(String status) { this.status = status; }
+    public OrderResponse getOrder(String orderId) {
+        return restTemplate.getForObject(ORDER_SERVICE_URL + "events/" + orderId, OrderResponse.class);
     }
 }

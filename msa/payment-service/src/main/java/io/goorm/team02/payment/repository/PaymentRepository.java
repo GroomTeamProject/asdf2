@@ -1,13 +1,20 @@
 package io.goorm.team02.payment.repository;
 
-import io.goorm.team02.payment.entity.Payment;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.Optional;
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 
 @Repository
-public interface PaymentRepository extends JpaRepository<Payment, Long> {
-    Optional<Payment> findByPaymentKey(String paymentKey);
-    boolean existsByPaymentKey(String paymentKey);
+public class PaymentRepository {
+
+    private final Map<String, String> paidOrders = new HashMap<>();
+
+    public boolean existsByOrderId(String orderId) {
+        return paidOrders.containsKey(orderId);
+    }
+
+    public void savePayment(String orderId, String userId, BigDecimal amount, String paymentKey, String pgProvider, String paymentMethod) {
+        paidOrders.put(orderId, userId);
+    }
 }

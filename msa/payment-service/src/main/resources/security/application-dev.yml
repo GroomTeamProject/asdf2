@@ -6,7 +6,7 @@ spring:
     password: ${PAYMENT_SERVICE_DB_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
       dialect: org.hibernate.dialect.MariaDBDialect
   flyway:
     enabled: false # 수동으로 Bean을 등록하기 위해 비활성화
@@ -19,3 +19,5 @@ msa:
 
 jwt:
   secret: ${JWT_SECRET}
+
+

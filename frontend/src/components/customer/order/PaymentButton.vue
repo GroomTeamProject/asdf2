@@ -147,7 +147,8 @@ export default {
         orderService.clearCartAfterOrder()
         
         const queryParams = new URLSearchParams(orderCompleteData)
-        router.push(`/customer/order-complete?${queryParams.toString()}`)
+        //router.push(`/customer/order-complete?${queryParams.toString()}`)
+        router.push(`/payment?${queryParams.toString()}`)
         
       } catch (error) {
         console.error('주문 제출 실패:', error)
