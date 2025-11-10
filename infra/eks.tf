@@ -105,8 +105,8 @@ resource "aws_eks_cluster" "team02_eks" {
 
   vpc_config {
     subnet_ids = [
-      aws_subnet.team02_public_subnet_a.id,
-      aws_subnet.team02_public_subnet_b.id
+      aws_subnet.team02_private_subnet_a.id,
+      aws_subnet.team02_private_subnet_b.id
     ]
     security_group_ids = [aws_security_group.eks_node_group.id]
     endpoint_public_access  = true
@@ -144,8 +144,8 @@ resource "aws_eks_node_group" "team02_node_group" {
   node_group_name = "team02-node-group"
   node_role_arn   = aws_iam_role.eks_node_group_role.arn
   subnet_ids = [
-    aws_subnet.team02_public_subnet_a.id,
-    aws_subnet.team02_public_subnet_b.id
+    aws_subnet.team02_private_subnet_a.id,
+    aws_subnet.team02_private_subnet_b.id
   ]
 
   scaling_config {
