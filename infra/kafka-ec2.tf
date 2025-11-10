@@ -6,38 +6,38 @@ resource "aws_security_group" "kafka_security_group" {
 
   # Kafka
   ingress {
-    from_port   = 9092
-    to_port     = 9092
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.team02_vpc.cidr_block]
-    description = "Kafka from VPC (ECS/EKS)"
+    from_port       = 9092
+    to_port         = 9092
+    protocol        = "tcp"
+    security_groups = [aws_security_group.eks_node_group.id]
+    description     = "Kafka from EKS nodes"
   }
 
   # Zookeeper
   ingress {
-    from_port   = 2181
-    to_port     = 2181
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.team02_vpc.cidr_block]
-    description = "Zookeeper from VPC (ECS/EKS)"
+    from_port       = 2181
+    to_port         = 2181
+    protocol        = "tcp"
+    security_groups = [aws_security_group.eks_node_group.id]
+    description     = "Zookeeper from EKS nodes"
   }
 
-  # Kafka UI
+  # Kafka UI (access via bastion)
   ingress {
-    from_port   = 9001
-    to_port     = 9001
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Kafka UI"
+    from_port       = 9001
+    to_port         = 9001
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion.id]
+    description     = "Kafka UI from bastion"
   }
 
-  # SSH
+  # SSH from bastion
   ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "SSH"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion.id]
+    description     = "SSH from bastion host"
   }
 
   egress {
@@ -54,8 +54,8 @@ resource "aws_security_group" "kafka_security_group" {
 
 # Kafka 고정 Private IP를 위한 ENI
 resource "aws_network_interface" "kafka_eni" {
-  subnet_id       = aws_subnet.team02_public_subnet_a.id
-  private_ips     = ["10.0.1.100"]  # 고정 IP
+  subnet_id       = aws_subnet.team02_private_subnet_a.id
+  private_ips     = ["10.0.3.100"]  # 고정 IP (Private Subnet A)
   security_groups = [aws_security_group.kafka_security_group.id]
 
   tags = {
@@ -96,7 +96,10 @@ resource "aws_instance" "kafka" {
       type        = "ssh"
       user        = "ubuntu"
       private_key = file("~/.ssh/ec2_key_kafka.pem")  # AWS에서 생성한 키
-      host        = self.public_ip
+      host        = self.private_ip
+      bastion_host        = aws_instance.bastion.public_ip
+      bastion_user        = "ubuntu"
+      bastion_private_key = file("~/.ssh/${var.bastion_key_name}.pem")
     }
   }
 
@@ -109,7 +112,10 @@ resource "aws_instance" "kafka" {
       type        = "ssh"
       user        = "ubuntu"
       private_key = file("~/.ssh/ec2_key_kafka.pem")
-      host        = self.public_ip
+      host        = self.private_ip
+      bastion_host        = aws_instance.bastion.public_ip
+      bastion_user        = "ubuntu"
+      bastion_private_key = file("~/.ssh/${var.bastion_key_name}.pem")
     }
   }
 }
@@ -140,7 +146,7 @@ resource "aws_service_discovery_instance" "kafka_instance" {
   service_id  = aws_service_discovery_service.kafka_service.id
 
   attributes = {
-    AWS_INSTANCE_IPV4 = "10.0.1.100"  # 고정 IP
+    AWS_INSTANCE_IPV4 = "10.0.3.100"  # 고정 IP (Private Subnet A)
   }
 }
 
