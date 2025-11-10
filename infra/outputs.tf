@@ -70,3 +70,14 @@ output "notification_service_discovery" {
   description = "Notification Service Discovery DNS"
   value       = "notification-service.team02.local:8088"
 }
+
+# Bastion Outputs
+output "bastion_public_ip" {
+  description = "Public IP of the bastion host"
+  value       = aws_instance.bastion.public_ip
+}
+
+output "bastion_ssh_command" {
+  description = "SSH command to connect to the bastion host"
+  value       = "ssh -i ~/.ssh/${var.bastion_key_name}.pem ubuntu@${aws_instance.bastion.public_ip}"
+}
