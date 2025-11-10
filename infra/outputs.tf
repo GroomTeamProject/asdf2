@@ -40,37 +40,6 @@ output "kafka_ssh_command" {
   value       = "ssh -i ~/.ssh/ec2_key_kafka.pem ubuntu@${aws_instance.kafka.public_ip}"
 }
 
-# ECS Services Outputs
-output "gateway_service_discovery" {
-  description = "Gateway Service Discovery DNS"
-  value       = "gateway.team02.local:8080"
-}
-
-output "order_service_discovery" {
-  description = "Order Service Discovery DNS"
-  value       = "order-service.team02.local:8085"
-}
-
-output "user_service_discovery" {
-  description = "User Service Discovery DNS"
-  value       = "user-service.team02.local:8082"
-}
-
-output "owner_service_discovery" {
-  description = "Owner Service Discovery DNS"
-  value       = "owner-service.team02.local:8081"
-}
-
-output "review_service_discovery" {
-  description = "Review Service Discovery DNS"
-  value       = "review-service.team02.local:8086"
-}
-
-output "notification_service_discovery" {
-  description = "Notification Service Discovery DNS"
-  value       = "notification-service.team02.local:8088"
-}
-
 # Bastion Outputs
 output "bastion_public_ip" {
   description = "Public IP of the bastion host"
