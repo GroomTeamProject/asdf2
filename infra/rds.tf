@@ -38,11 +38,15 @@ resource "aws_db_instance" "team02_mariadb" {
 
 # RDS Subnet Group
 resource "aws_db_subnet_group" "team02_db_subnet_group" {
-  name = "team02-db-subnet-group"
+  name = "team02-db-subnet-group-v2"
   subnet_ids = [
     aws_subnet.team02_private_subnet_a.id,
     aws_subnet.team02_private_subnet_b.id
   ]
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
   tags = {
     Name = "team02-db-subnet-group"
