@@ -10,9 +10,10 @@ resource "aws_security_group" "kafka_security_group" {
     to_port     = 9092
     protocol    = "tcp"
     security_groups = [
-      aws_security_group.team02_services_security_group.id
+      aws_security_group.team02_services_security_group.id,
+      aws_security_group.eks_node_group.id
     ]
-    description = "Kafka from ECS services"
+    description = "Kafka from ECS/EKS services"
   }
 
   # Zookeeper
@@ -21,9 +22,10 @@ resource "aws_security_group" "kafka_security_group" {
     to_port     = 2181
     protocol    = "tcp"
     security_groups = [
-      aws_security_group.team02_services_security_group.id
+      aws_security_group.team02_services_security_group.id,
+      aws_security_group.eks_node_group.id
     ]
-    description = "Zookeeper from ECS services"
+    description = "Zookeeper from ECS/EKS services"
   }
 
   # Kafka UI
