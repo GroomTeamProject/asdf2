@@ -12,6 +12,14 @@ provider "kubernetes" {
   token                  = data.aws_eks_cluster_auth.team02.token
 }
 
+provider "helm" {
+  kubernetes {
+    host                   = data.aws_eks_cluster.team02.endpoint
+    cluster_ca_certificate = base64decode(data.aws_eks_cluster.team02.certificate_authority[0].data)
+    token                  = data.aws_eks_cluster_auth.team02.token
+  }
+}
+
 resource "kubernetes_namespace" "team02" {
   metadata {
     name = "team02"
