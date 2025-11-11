@@ -19,6 +19,8 @@ spec:
         ports:
         - containerPort: 8088
         envFrom:
+          - configMapRef:
+              name: spring-config
           - secretRef:
               name: app-secrets
         resources:
