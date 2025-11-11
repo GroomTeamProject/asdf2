@@ -50,3 +50,19 @@ output "bastion_ssh_command" {
   description = "SSH command to connect to the bastion host"
   value       = "ssh -i ~/.ssh/${var.bastion_key_name}.pem ubuntu@${aws_instance.bastion.public_ip}"
 }
+
+# Gateway (API) Outputs
+output "gateway_url" {
+  description = "Gateway API external URL (LoadBalancer)"
+  value       = "http://a11ecfb907f63449f9b6ae72179e43fe-996841244.ap-northeast-2.elb.amazonaws.com:8080"
+}
+
+output "gateway_loadbalancer_hostname" {
+  description = "Gateway LoadBalancer hostname"
+  value       = "a11ecfb907f63449f9b6ae72179e43fe-996841244.ap-northeast-2.elb.amazonaws.com"
+}
+
+output "gateway_api_domain" {
+  description = "Gateway API domain name (if public_domain_name is set)"
+  value       = var.public_domain_name != "" ? "http://api.${var.public_domain_name}:8080" : null
+}

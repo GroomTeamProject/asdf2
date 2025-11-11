@@ -20,3 +20,9 @@ variable "bastion_allowed_cidrs" {
   type        = list(string)
   default     = ["0.0.0.0/0"]
 }
+
+variable "public_domain_name" {
+  description = "Public domain name for external API access (e.g., team02.com)"
+  type        = string
+  default     = ""
+}

@@ -120,33 +120,3 @@ resource "aws_instance" "kafka" {
   }
 }
 
-# Kafka DNS (Service Discovery 등록)
-resource "aws_service_discovery_service" "kafka_service" {
-  name = "kafka"
-
-  dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.team02_namespace.id
-
-    dns_records {
-      ttl  = 10
-      type = "A"
-    }
-
-    routing_policy = "MULTIVALUE"
-  }
-
-  health_check_custom_config {
-    failure_threshold = 1
-  }
-}
-
-# Kafka Instance를 Service Discovery에 수동 등록
-resource "aws_service_discovery_instance" "kafka_instance" {
-  instance_id = aws_instance.kafka.id
-  service_id  = aws_service_discovery_service.kafka_service.id
-
-  attributes = {
-    AWS_INSTANCE_IPV4 = "10.0.3.100"  # 고정 IP (Private Subnet A)
-  }
-}
-
