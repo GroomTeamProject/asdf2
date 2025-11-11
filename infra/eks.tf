@@ -149,9 +149,9 @@ resource "aws_eks_node_group" "team02_node_group" {
   ]
 
   scaling_config {
-    desired_size = 2
-    max_size     = 4
-    min_size     = 2
+    desired_size = 4
+    max_size     = 6
+    min_size     = 4
   }
 
   instance_types = ["t3.medium"]
