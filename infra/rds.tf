@@ -115,16 +115,24 @@ resource "aws_security_group" "team02_rds_security_group" {
   description = "Security group for RDS MariaDB"
   vpc_id      = aws_vpc.team02_vpc.id
 
-  # allow access only from VPC
+  # allow access
+  ingress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion.id]
+    description     = "Allow access from Bastion"
+  }
+
   ingress {
     from_port = 3306
     to_port   = 3306
     protocol  = "tcp"
-    security_groups = [
-      aws_security_group.eks_node_group.id,
-      aws_security_group.bastion.id
+    cidr_blocks = [
+      aws_subnet.team02_private_subnet_a.cidr_block,
+      aws_subnet.team02_private_subnet_b.cidr_block
     ]
-    description = "Allow access from EKS nodes and bastion"
+    description = "Allow access from Private Subnets"
   }
 
   egress {
