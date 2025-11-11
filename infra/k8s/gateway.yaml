@@ -35,7 +35,7 @@ metadata:
   name: gateway
   namespace: team02
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: gateway
   ports:
