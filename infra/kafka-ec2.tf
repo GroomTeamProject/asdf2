@@ -43,10 +43,10 @@ resource "aws_instance" "kafka" {
     destination = "/home/ubuntu/docker-compose.yml"
 
     connection {
-      type        = "ssh"
-      user        = "ubuntu"
-      private_key = file("~/.ssh/ec2_key_kafka.pem")
-      host        = self.private_ip
+      type                = "ssh"
+      user                = "ubuntu"
+      private_key         = file("~/.ssh/ec2_key_kafka.pem")
+      host                = self.private_ip
       bastion_host        = aws_instance.bastion.public_ip
       bastion_user        = "ubuntu"
       bastion_private_key = file("~/.ssh/${var.bastion_key_name}.pem")
@@ -59,10 +59,10 @@ resource "aws_instance" "kafka" {
     destination = "/home/ubuntu/kafka-compose.service"
 
     connection {
-      type        = "ssh"
-      user        = "ubuntu"
-      private_key = file("~/.ssh/ec2_key_kafka.pem")
-      host        = self.private_ip
+      type                = "ssh"
+      user                = "ubuntu"
+      private_key         = file("~/.ssh/ec2_key_kafka.pem")
+      host                = self.private_ip
       bastion_host        = aws_instance.bastion.public_ip
       bastion_user        = "ubuntu"
       bastion_private_key = file("~/.ssh/${var.bastion_key_name}.pem")
@@ -78,20 +78,26 @@ resource "aws_security_group" "kafka_security_group" {
 
   # allow Kafka
   ingress {
-    from_port       = 9092
-    to_port         = 9092
-    protocol        = "tcp"
-    security_groups = [aws_security_group.eks_node_group.id]
-    description     = "Kafka from EKS nodes"
+    from_port = 9092
+    to_port   = 9092
+    protocol  = "tcp"
+    cidr_blocks = [
+      aws_subnet.team02_private_subnet_a.cidr_block,
+      aws_subnet.team02_private_subnet_b.cidr_block
+    ]
+    description = "Kafka from Private Subnets"
   }
 
   # allow Zookeeper
   ingress {
-    from_port       = 2181
-    to_port         = 2181
-    protocol        = "tcp"
-    security_groups = [aws_security_group.eks_node_group.id]
-    description     = "Zookeeper from EKS nodes"
+    from_port = 2181
+    to_port   = 2181
+    protocol  = "tcp"
+    cidr_blocks = [
+      aws_subnet.team02_private_subnet_a.cidr_block,
+      aws_subnet.team02_private_subnet_b.cidr_block
+    ]
+    description = "Zookeeper from Private Subnets"
   }
 
   # allow Kafka UI (access via bastion)
