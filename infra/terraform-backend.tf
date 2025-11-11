@@ -1,7 +1,8 @@
+# ==========================================
 # Terraform Backend Infrastructure
-# S3 버킷과 DynamoDB 테이블을 Terraform으로 관리
+# ==========================================
 
-# S3 버킷 (Terraform State 저장용)
+# Create S3 Bucket - Terraform State
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "team02-terraform-state-bucket"
 
@@ -12,7 +13,7 @@ resource "aws_s3_bucket" "terraform_state" {
   }
 }
 
-# S3 버킷 버전 관리
+# Enable Versioning - Terraform State
 resource "aws_s3_bucket_versioning" "terraform_state" {
   bucket = aws_s3_bucket.terraform_state.id
   versioning_configuration {
@@ -20,7 +21,7 @@ resource "aws_s3_bucket_versioning" "terraform_state" {
   }
 }
 
-# S3 버킷 암호화
+# Enable Server Side Encryption - Terraform State
 resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" {
   bucket = aws_s3_bucket.terraform_state.id
 
@@ -31,7 +32,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" 
   }
 }
 
-# S3 버킷 공개 액세스 차단
+# Block Public Access - Terraform State
 resource "aws_s3_bucket_public_access_block" "terraform_state" {
   bucket = aws_s3_bucket.terraform_state.id
 
@@ -41,7 +42,7 @@ resource "aws_s3_bucket_public_access_block" "terraform_state" {
   restrict_public_buckets = true
 }
 
-# DynamoDB 테이블 (State 잠금용)
+# Create DynamoDB Table - Terraform State Lock
 resource "aws_dynamodb_table" "terraform_state_lock" {
   name           = "terraform-state-lock"
   billing_mode   = "PROVISIONED"

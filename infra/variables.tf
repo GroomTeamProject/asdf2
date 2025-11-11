@@ -10,6 +10,11 @@ variable "db_password" {
   sensitive   = true
 }
 
+variable "kafka_key_name" {
+  description = "EC2 key pair name for Kafka SSH access"
+  type        = string
+}
+
 variable "bastion_key_name" {
   description = "EC2 key pair name for bastion host SSH access"
   type        = string

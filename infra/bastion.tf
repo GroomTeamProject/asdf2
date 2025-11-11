@@ -1,25 +1,10 @@
-data "aws_ami" "bastion" {
-  most_recent = true
-  owners      = ["099720109477"] # Canonical (Ubuntu)
+# ==========================================
+# Bastion Host
+# ==========================================
 
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  filter {
-    name   = "architecture"
-    values = ["x86_64"]
-  }
-}
-
+# Create EC2 Instance - Bastion Host
 resource "aws_instance" "bastion" {
-  ami           = data.aws_ami.bastion.id
+  ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
 
   subnet_id              = aws_subnet.team02_public_subnet_a.id
@@ -33,3 +18,33 @@ resource "aws_instance" "bastion" {
   }
 }
 
+# ==========================================
+# Bastion Security Group
+# ==========================================
+
+# Create Security Group - Bastion Host
+resource "aws_security_group" "bastion" {
+  name        = "team02-bastion-sg"
+  description = "Bastion host SSH access"
+  vpc_id      = aws_vpc.team02_vpc.id
+
+  # allow SSH access
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = var.bastion_allowed_cidrs
+    description = "SSH access to bastion"
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "team02-bastion-sg"
+  }
+}
