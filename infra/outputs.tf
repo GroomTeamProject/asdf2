@@ -1,4 +1,7 @@
+# ==========================================
 # RDS Outputs
+# ==========================================
+
 output "rds_endpoint" {
   description = "RDS instance endpoint"
   value       = aws_db_instance.team02_mariadb.endpoint
@@ -14,7 +17,10 @@ output "rds_connection_string" {
   value       = "jdbc:mariadb://${aws_db_instance.team02_mariadb.endpoint}/{DB_NAME}?characterEncoding=UTF-8&useUnicode=true&serverTimezone=Asia/Seoul"
 }
 
-# Kafka Outputs  
+# ==========================================
+# Kafka Outputs
+# ==========================================
+
 output "kafka_public_ip" {
   description = "Kafka EC2 Public IP"
   value       = aws_instance.kafka.public_ip
@@ -37,36 +43,19 @@ output "kafka_bootstrap_servers" {
 
 output "kafka_ssh_command" {
   description = "SSH command to connect to Kafka EC2"
-  value       = "ssh -i ~/.ssh/ec2_key_kafka.pem ubuntu@${aws_instance.kafka.public_ip}"
+  value       = "ssh -i ~/.ssh/${var.kafka_key_name}.pem ubuntu@${aws_instance.kafka.public_ip}"
 }
 
-# ECS Services Outputs
-output "gateway_service_discovery" {
-  description = "Gateway Service Discovery DNS"
-  value       = "gateway.team02.local:8080"
+# ==========================================
+# Bastion Outputs
+# ==========================================
+
+output "bastion_public_ip" {
+  description = "Public IP of the bastion host"
+  value       = aws_instance.bastion.public_ip
 }
 
-output "order_service_discovery" {
-  description = "Order Service Discovery DNS"
-  value       = "order-service.team02.local:8085"
-}
-
-output "user_service_discovery" {
-  description = "User Service Discovery DNS"
-  value       = "user-service.team02.local:8082"
-}
-
-output "owner_service_discovery" {
-  description = "Owner Service Discovery DNS"
-  value       = "owner-service.team02.local:8081"
-}
-
-output "review_service_discovery" {
-  description = "Review Service Discovery DNS"
-  value       = "review-service.team02.local:8086"
-}
-
-output "notification_service_discovery" {
-  description = "Notification Service Discovery DNS"
-  value       = "notification-service.team02.local:8088"
+output "bastion_ssh_command" {
+  description = "SSH command to connect to the bastion host"
+  value       = "ssh -i ~/.ssh/${var.bastion_key_name}.pem ubuntu@${aws_instance.bastion.public_ip}"
 }
