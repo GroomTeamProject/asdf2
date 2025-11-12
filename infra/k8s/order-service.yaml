@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: order-service
-        image: docker.io/wsk221e/team02-order-service:latest
+        image: 093322228889.dkr.ecr.ap-northeast-2.amazonaws.com/team02-order-service:latest
         ports:
         - containerPort: 8085
         envFrom:

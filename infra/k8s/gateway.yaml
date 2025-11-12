@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: gateway
-        image: docker.io/wsk221e/team02-gateway:latest
+        image: 093322228889.dkr.ecr.ap-northeast-2.amazonaws.com/team02-gateway:latest
         ports:
         - containerPort: 8080
         envFrom:
