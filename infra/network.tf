@@ -52,13 +52,15 @@ resource "aws_route_table" "team02_public_route_table" {
 
 # Create Public Subnet A (AZ: AP-Northeast-2a)
 resource "aws_subnet" "team02_public_subnet_a" {
-  vpc_id            = aws_vpc.team02_vpc.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = "ap-northeast-2a"
+  vpc_id                  = aws_vpc.team02_vpc.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "ap-northeast-2a"
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "team02-public-a"
+    Name                                          = "team02-public-a"
+    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+    "kubernetes.io/role/elb"                      = "1"
   }
 }
 
@@ -80,7 +82,9 @@ resource "aws_subnet" "team02_public_subnet_b" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "team02-public-b"
+    Name                                          = "team02-public-b"
+    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+    "kubernetes.io/role/elb"                      = "1"
   }
 }
 
@@ -140,7 +144,9 @@ resource "aws_subnet" "team02_private_subnet_a" {
   map_public_ip_on_launch = false
 
   tags = {
-    Name = "team02-private-a"
+    Name                                          = "team02-private-a"
+    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+    "kubernetes.io/role/internal-elb"             = "1"
   }
 }
 
@@ -200,7 +206,9 @@ resource "aws_subnet" "team02_private_subnet_b" {
   map_public_ip_on_launch = false
 
   tags = {
-    Name = "team02-private-b"
+    Name                                          = "team02-private-b"
+    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+    "kubernetes.io/role/internal-elb"             = "1"
   }
 }
 
@@ -209,4 +217,3 @@ resource "aws_route_table_association" "team02_private_b_association" {
   subnet_id      = aws_subnet.team02_private_subnet_b.id
   route_table_id = aws_route_table.team02_private_route_table_b.id
 }
-

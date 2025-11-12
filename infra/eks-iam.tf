@@ -118,7 +118,7 @@ resource "aws_iam_role" "aws_lb_controller" {
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringEquals = {
-            "${local.aws_lb_controller_oidc_url}:sub" = "system:serviceaccount/${local.aws_lb_controller_sa_namespace}/${local.aws_lb_controller_sa_name}"
+            "${local.aws_lb_controller_oidc_url}:sub" = "system:serviceaccount:${local.aws_lb_controller_sa_namespace}:${local.aws_lb_controller_sa_name}"
             "${local.aws_lb_controller_oidc_url}:aud" = "sts.amazonaws.com"
           }
         }

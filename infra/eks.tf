@@ -2,9 +2,13 @@
 # EKS Cluster
 # ==========================================
 
+locals {
+  cluster_name = "team02-eks-cluster"
+}
+
 # Create EKS Cluster
 resource "aws_eks_cluster" "team02_eks" {
-  name     = "team02-eks-cluster"
+  name     = local.cluster_name
   version  = "1.33"
   role_arn = aws_iam_role.eks_cluster_role.arn
 
@@ -13,7 +17,7 @@ resource "aws_eks_cluster" "team02_eks" {
       aws_subnet.team02_private_subnet_a.id,
       aws_subnet.team02_private_subnet_b.id
     ]
-    security_group_ids = [aws_security_group.eks_node_group.id]
+    security_group_ids      = [aws_security_group.eks_node_group.id]
     endpoint_public_access  = true
     endpoint_private_access = true
   }
@@ -21,7 +25,7 @@ resource "aws_eks_cluster" "team02_eks" {
   enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
   tags = {
-    Name = "team02-eks-cluster"
+    Name = local.cluster_name
   }
 
   depends_on = [
