@@ -45,7 +45,7 @@ resource "aws_instance" "kafka" {
     connection {
       type                = "ssh"
       user                = "ubuntu"
-      private_key         = file("~/.ssh/ec2_key_kafka.pem")
+      private_key         = file("~/.ssh/${var.kafka_key_name}.pem")
       host                = self.private_ip
       bastion_host        = aws_instance.bastion.public_ip
       bastion_user        = "ubuntu"
@@ -61,7 +61,7 @@ resource "aws_instance" "kafka" {
     connection {
       type                = "ssh"
       user                = "ubuntu"
-      private_key         = file("~/.ssh/ec2_key_kafka.pem")
+      private_key         = file("~/.ssh/${var.kafka_key_name}.pem")
       host                = self.private_ip
       bastion_host        = aws_instance.bastion.public_ip
       bastion_user        = "ubuntu"

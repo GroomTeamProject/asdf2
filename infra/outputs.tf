@@ -43,7 +43,7 @@ output "kafka_bootstrap_servers" {
 
 output "kafka_ssh_command" {
   description = "SSH command to connect to Kafka EC2"
-  value       = "ssh -i ~/.ssh/ec2_key_kafka.pem ubuntu@${aws_instance.kafka.public_ip}"
+  value       = "ssh -i ~/.ssh/${var.kafka_key_name}.pem ubuntu@${aws_instance.kafka.public_ip}"
 }
 
 # ==========================================
