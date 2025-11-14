@@ -60,7 +60,7 @@ resource "aws_route53_record" "api" {
 
   alias {
     name                   = data.kubernetes_ingress_v1.gateway.status[0].load_balancer[0].ingress[0].hostname
-    zone_id                = "KRN7AUG232M4Y" # ALB zone_id for ap-northeast-2
+    zone_id                = "ZWKZPGTI48KDX"
     evaluate_target_health = true
   }
 
