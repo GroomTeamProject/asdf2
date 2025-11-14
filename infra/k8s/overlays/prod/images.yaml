@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: user-service
+          image: 093322228889.dkr.ecr.ap-northeast-2.amazonaws.com/team02-user-service:latest
+
+
