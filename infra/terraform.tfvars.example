@@ -1,4 +1,8 @@
-db_username = ""
-db_password = ""
-bastion_key_name = ""
+db_username           = ""
+db_password           = ""
+kafka_key_name        = ""
+bastion_key_name      = ""
 bastion_allowed_cidrs = ["0.0.0.0/0"]
+public_domain_name    = ""
+eks_account_id        = ""
+eks_dev_user_roles    = []
