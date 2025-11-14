@@ -2,19 +2,20 @@
 import api from '../index.js'  // JWT 설정된 axios 인스턴스 import
 import { jwtDecode } from 'jwt-decode'  // JWT 디코드용
 
-// ✅ JWT에서 userId 추출 함수
+
 function getUserIdFromJwt() {
   const token = localStorage.getItem('jwt')
   if (!token) return null
   try {
     const decoded = jwtDecode(token)
     console.log('📦 JWT Payload:', decoded)
-    return decoded.userId || null // ✅ 이메일(sub) 대신 userId 사용
+    return decoded.userId || null
   } catch (e) {
     console.error('❌ JWT 디코딩 실패:', e)
     return null
   }
 }
+
 class StoreApiManager {
   constructor() {
     this.requestQueue = []
