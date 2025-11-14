@@ -16,7 +16,7 @@ resource "aws_network_interface" "kafka_eni" {
 # Create EC2 Instance - Kafka
 resource "aws_instance" "kafka" {
   ami           = data.aws_ami.ubuntu.id
-  instance_type = "t3.small"
+  instance_type = "t3.medium"
   key_name      = var.kafka_key_name
 
   network_interface {
