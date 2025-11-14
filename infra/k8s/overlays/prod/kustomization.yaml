@@ -5,6 +5,3 @@ namespace: team02
 
 bases:
   - ../../base
-
-patchesStrategicMerge:
-  - images.yaml
