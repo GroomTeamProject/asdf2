@@ -104,6 +104,25 @@ resource "aws_iam_policy" "aws_lb_controller" {
   }
 }
 
+# 공식 정책에 누락된 DescribeListenerAttributes 권한을 별도 inline policy로 추가
+resource "aws_iam_role_policy" "aws_lb_controller_additional" {
+  name = "AWSLoadBalancerControllerAdditionalPolicy"
+  role = aws_iam_role.aws_lb_controller.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "elasticloadbalancing:DescribeListenerAttributes"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role" "aws_lb_controller" {
   name = "team02-aws-load-balancer-controller-role"
 
