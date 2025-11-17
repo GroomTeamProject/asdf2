@@ -104,5 +104,6 @@ jobs:
           git add ${{ env.KUSTOMIZE_PATH }}/kustomization.yaml
 
           git commit -m "chore(order-service): update image tag to $GIT_SHA" || echo "No changes to commit"
+          git pull origin manifest/service --rebase || true
 
           git push origin manifest/service || echo "No push needed"
