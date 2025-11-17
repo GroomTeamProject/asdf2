@@ -4,5 +4,5 @@ namespace: team02
 resources:
   - ../../../base/delivery-service
 images:
-  - name: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/team02-delivery-service
+  - name: 093322228889.dkr.ecr.ap-northeast-2.amazonaws.com/team02-delivery-service
     newTag: latest # Actions가 SHA로 자동 변경
