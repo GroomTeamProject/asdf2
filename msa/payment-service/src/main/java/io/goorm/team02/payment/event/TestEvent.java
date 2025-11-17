@@ -1,4 +1,4 @@
-package io.goorm.team02.demo.event;
+package io.goorm.team02.payment.event;
 
 import io.goorm.team02.kafka.model.BaseEvent;
 import lombok.Data;
