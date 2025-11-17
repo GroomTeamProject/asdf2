@@ -5,6 +5,7 @@ import io.goorm.team02.payment.dto.PaymentConfirmRequest;
 import io.goorm.team02.payment.dto.PaymentResponse;
 import io.goorm.team02.payment.event.PaymentEventPublisher;
 import io.goorm.team02.payment.repository.PaymentRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -14,6 +15,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class PaymentService {
 
@@ -32,27 +34,17 @@ public class PaymentService {
         this.restTemplate = restTemplate;
     }
 
-    public PaymentResponse confirmPayment(PaymentConfirmRequest request) throws PaymentException {
+    public PaymentResponse confirmPayment(PaymentConfirmRequest request, String userId) throws PaymentException {
         try {
-            // 기본 검증
-            if (request == null || request.getPaymentKey() == null || request.getOrderId() == null || request.getAmount() == null) {
-                throw new PaymentException("invalid request");
+            if (request == null || request.getPaymentKey() == null ||
+                    request.getOrderId() == null || request.getAmount() == null) {
+                throw new PaymentException("Invalid request");
             }
 
             String orderId = request.getOrderId();
             BigDecimal amount = request.getAmount();
-            String userId = null;
-            try {
-                // getUserId가 없을 수도 있으므로 안전하게 시도
-                userId = (String) (request.getClass().getMethod("getUserId") != null ?
-                        request.getClass().getMethod("getUserId").invoke(request) : null);
-            } catch (NoSuchMethodException ignored) {
-                userId = null;
-            } catch (Exception ignored) {
-                userId = null;
-            }
 
-            // Toss API 호출로 결제 검증 (paymentKey, orderId, amount)
+            // Toss API 호출
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             String basicAuth = Base64.getEncoder().encodeToString((TOSS_SECRET_KEY + ":").getBytes());
@@ -79,22 +71,23 @@ public class PaymentService {
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 JsonNode respBody = response.getBody();
 
+                // Validation
                 String respOrderId = respBody.has("orderId") ? respBody.get("orderId").asText() : orderId;
                 long respAmount = respBody.has("amount") ? respBody.get("amount").asLong() : amount.longValue();
 
                 if (!orderId.equals(respOrderId) || amount.longValue() != respAmount) {
-
                     paymentResponse.setStatus("FAIL: validation mismatch");
                     return paymentResponse;
                 }
 
+                // 성공 처리
                 paymentResponse.setStatus("SUCCESS");
-                if (respBody.has("paymentKey")) paymentResponse.setPaymentKey(respBody.get("paymentKey").asText());
-                if (respBody.has("method")) paymentResponse.setPgProvider(respBody.get("method").asText());
-                if (respBody.has("tid")) paymentResponse.setPgTid(respBody.get("tid").asText());
-
+                paymentResponse.setPaymentKey(respBody.has("paymentKey") ? respBody.get("paymentKey").asText() : null);
                 paymentResponse.setPaymentMethod(respBody.has("method") ? respBody.get("method").asText() : "CARD");
+                paymentResponse.setPgTid(respBody.has("tid") ? respBody.get("tid").asText() : null);
+                paymentResponse.setPgProvider(respBody.has("provider") ? respBody.get("provider").asText() : "CARD");
 
+                // DB 저장 (userId null 가능)
                 paymentRepository.savePayment(
                         orderId,
                         userId,
@@ -104,57 +97,44 @@ public class PaymentService {
                         paymentResponse.getPaymentMethod()
                 );
 
-                paymentEventPublisher.publishPaymentCompletedEvent(
-                        orderId,
-                        userId,
-                        amount
-                );
+                // 이벤트 발행
+                paymentEventPublisher.publishPaymentCompletedEvent(orderId, userId, amount);
 
+                log.info("Payment confirmed: orderId={}, userId={}", orderId, userId);
                 return paymentResponse;
+
             } else {
                 paymentResponse.setStatus("FAIL: Toss confirm failed");
+                log.warn("Toss confirm failed for orderId={}", orderId);
                 return paymentResponse;
             }
 
         } catch (PaymentException pe) {
             throw pe;
         } catch (Exception e) {
+            log.error("Payment processing failed for orderId={}", request.getOrderId(), e);
             throw new PaymentException("Payment processing failed: " + e.getMessage());
         }
     }
 
-    public void processPaymentFromEvent(String orderId, BigDecimal totalAmount, JsonNode eventNode) {
-        // 중복 결제 확인
-        if (paymentRepository.existsByOrderId(orderId)) return;
-
-        String userId = null;
-        try {
-            userId = eventNode.has("userId") ? eventNode.get("userId").asText() : null;
-        } catch (Exception ignored) {
-            userId = null;
+    /**
+     * 이벤트 처리용 메서드
+     * PaymentEventHandler에서 호출 가능
+     */
+    public void processPaymentFromEvent(String orderId, BigDecimal amount, JsonNode payload) throws PaymentException {
+        PaymentConfirmRequest request = new PaymentConfirmRequest();
+        request.setOrderId(orderId);
+        request.setAmount(amount);
+        if (payload != null && payload.has("paymentKey")) {
+            request.setPaymentKey(payload.get("paymentKey").asText());
         }
 
-        String paymentKey = "EVENT_" + orderId;
-        String pgProvider = "TEST_PG";
-        String paymentMethod = "CARD";
-
-        paymentRepository.savePayment(
-                orderId,
-                userId,
-                totalAmount,
-                paymentKey,
-                pgProvider,
-                paymentMethod
-        );
-
-        paymentEventPublisher.publishPaymentCompletedEvent(
-                orderId,
-                userId,
-                totalAmount
-        );
+        confirmPayment(request, null);
     }
 
     public static class PaymentException extends Exception {
-        public PaymentException(String message) { super(message); }
+        public PaymentException(String message) {
+            super(message);
+        }
     }
 }
