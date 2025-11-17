@@ -1,4 +1,4 @@
-package io.goorm.team02.demo.handler;
+package io.goorm.team02.payment.handler;
 
 import feign.Response;
 import feign.codec.ErrorDecoder;
