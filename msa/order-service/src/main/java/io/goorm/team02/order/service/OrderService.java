@@ -40,9 +40,9 @@ public class OrderService {
     private final StoreServiceClient storeServiceClient;
     private final OrderMapper orderMapper;
 
-    // ================================
+    // ==============================
     // API Methods
-    // ================================
+    // ==============================
     public Order getOrderById(Long orderId) {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
