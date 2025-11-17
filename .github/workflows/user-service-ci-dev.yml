@@ -9,6 +9,9 @@ on:
       - "msa/libs/**"
       - ".github/workflows/user-service-ci-dev.yml"
 
+env:
+  SERVICE_NAME: user-service
+
 jobs:
   build_and_test:
     runs-on: ubuntu-latest

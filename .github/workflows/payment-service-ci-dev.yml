@@ -1,19 +1,19 @@
-name: Notification Service CI - Build & Test
+name: Payment Service CI
 
 on:
   pull_request:
     branches:
-      - manifest/service       # 최종에는 develop 브랜치로 변경
+      - manifest/service          # 최종에는 develop 브랜치로 변경
     paths:
-      - "msa/notification-service/**"
+      - "msa/payment-service/**"
       - "msa/libs/**"
-      - ".github/workflows/notification-service-ci-dev.yml"
+      - ".github/workflows/payment-service-ci-dev.yml"
 
 env:
-  SERVICE_NAME: notification-service
+  SERVICE_NAME: payment-service
 
 jobs:
-  build_and_test:
+  ci:
     runs-on: ubuntu-latest
 
     steps:
@@ -35,7 +35,7 @@ jobs:
           key: gradle-${{ env.SERVICE_NAME }}-${{ hashFiles('**/*.gradle*') }}
           restore-keys: gradle-${{ env.SERVICE_NAME }}-
 
-      - name: Build & Test ${{ env.SERVICE_NAME }}
+      - name: Build & Test payment-service
         run: |
           cd msa/${{ env.SERVICE_NAME }}
           ../gradlew :${{ env.SERVICE_NAME }}:build
@@ -44,6 +44,5 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.SERVICE_NAME }}-test-report
+          name: payment-service-test-report
           path: msa/${{ env.SERVICE_NAME }}/build/reports/tests/test
-
