@@ -30,7 +30,7 @@ public class MenuValidationService {
         log.debug("강화된 권한 검증 시작 - 사용자 ID: {}", currentUserId);
 
         // 1. Rate Limiting 검사
-        validateRateLimit(currentUserId);
+        //validateRateLimit(currentUserId);
 
         // 2. 기본 사용자 ID 검증
         validateUserId(currentUserId);
@@ -51,6 +51,12 @@ public class MenuValidationService {
     private void validateRateLimit(Long userId) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime lastRequest = lastRequestTime.get(userId);
+
+        if (userId == null) {
+            log.warn("사용자 ID가 null입니다. Rate limiting을 건너뜁니다.");
+            return;
+            // 또는 예외 던지기: throw new IllegalArgumentException("사용자 ID가 필요합니다.");
+        }
 
         // 1분 단위로 요청 횟수 리셋
         if (lastRequest == null || lastRequest.isBefore(now.minusMinutes(1))) {
