@@ -1,13 +1,13 @@
-name: Review Service CD - Deploy
+name: Payment Service CD - Deploy
 
 on:
   push:
     branches:
       - manifest/service          # 최종에는 develop 브랜치로 변경
     paths:
-      - "msa/review-service/**"
+      - "msa/payment-service/**"
       - "msa/libs/**"
-      - ".github/workflows/review-service-cd-dev.yml"
+      - ".github/workflows/payment-service-cd-dev.yml"
 
 permissions:
   id-token: write       # OIDC → AWS AssumeRole
@@ -16,9 +16,9 @@ permissions:
 
 env:
   AWS_REGION: ap-northeast-2
-  SERVICE_NAME: review-service
-  ECR_REPO: team02-review-service
-  KUSTOMIZE_PATH: infra/k8s/overlays/prod/review-service
+  SERVICE_NAME: payment-service
+  ECR_REPO: team02-payment-service
+  KUSTOMIZE_PATH: infra/k8s/overlays/prod/payment-service
   IMAGE_REGISTRY: 093322228889.dkr.ecr.ap-northeast-2.amazonaws.com
 
 jobs:
@@ -47,7 +47,7 @@ jobs:
       - name: Set Git SHA
         run: echo "GIT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-      - name: Build & Test review-service
+      - name: Build & Test user-service
         run: |
           cd msa/${{ env.SERVICE_NAME }}
           ../gradlew :${{ env.SERVICE_NAME }}:build
@@ -56,7 +56,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: review-service-test-report
+          name: payment-service-test-report
           path: msa/${{ env.SERVICE_NAME }}/build/reports/tests/test
 
       - name: Configure AWS credentials
@@ -103,7 +103,7 @@ jobs:
 
           git add ${{ env.KUSTOMIZE_PATH }}/kustomization.yaml
 
-          git commit -m "chore(review-service): update image tag to $GIT_SHA" || echo "No changes to commit"
+          git commit -m "chore(payment-service): update image tag to $GIT_SHA" || echo "No changes to commit"
           
           # 안전한 반복 push (최대 5번)
           n=0
