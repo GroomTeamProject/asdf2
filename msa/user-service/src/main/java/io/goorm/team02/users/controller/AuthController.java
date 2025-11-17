@@ -40,7 +40,6 @@ public class AuthController {
     public ResponseEntity<?> signup(@RequestBody SignupRequest request) {
         // 실제 회원가입 처리 : 받은 데이터로 userservice에서 하는 회원가입처리
         //userService.registerUser(request); 
-        //return ResponseEntity.ok("User registered successfully");
         SignupResponse response = userService.registerUser(request);
         return ResponseEntity.ok(response);
     }
