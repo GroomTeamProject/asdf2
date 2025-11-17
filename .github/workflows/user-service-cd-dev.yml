@@ -1,9 +1,10 @@
 name: User Service CD - Deploy
 
 on:
-  push:
-    branches:
-      - manifest/service          # 최종에는 develop 브랜치로 변경
+  pull_request:
+    types: [closed]
+    bbranches:
+      - manifest/service        # 최종에는 develop 브랜치로 변경
     paths:
       - "msa/user-service/**"
       - "msa/libs/**"
@@ -22,7 +23,10 @@ env:
   IMAGE_REGISTRY: 093322228889.dkr.ecr.ap-northeast-2.amazonaws.com
 
 jobs:
-  build-test-push-pr:
+  deploy:
+    # Close만 된 PR은 무시하고, merge 된 경우만 실행
+    if: github.event.pull_request.merged == true
+
     runs-on: ubuntu-latest
 
     steps:
@@ -51,13 +55,6 @@ jobs:
         run: |
           cd msa/${{ env.SERVICE_NAME }}
           ../gradlew :${{ env.SERVICE_NAME }}:build
-
-      - name: Upload test reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: user-service-test-report
-          path: msa/${{ env.SERVICE_NAME }}/build/reports/tests/test
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
