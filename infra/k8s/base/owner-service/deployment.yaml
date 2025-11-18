@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: owner-service
-        image: docker.io/wsk221e/team02-owner-service:latest
+        image: 093322228889.dkr.ecr.ap-northeast-2.amazonaws.com/team02-owner-service:latest
         ports:
         - containerPort: 8081
         envFrom:
@@ -30,18 +30,5 @@ spec:
           limits:
             cpu: "500m"
             memory: "1024Mi"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: owner-service
-  namespace: team02
-spec:
-  type: ClusterIP
-  selector:
-    app: owner-service
-  ports:
-  - port: 8081
-    targetPort: 8081
-    protocol: TCP
+
 

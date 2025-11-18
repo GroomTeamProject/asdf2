@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 
+// gateway에도 jwtutils 구성
 @Component
 public class JwtUtils {
 

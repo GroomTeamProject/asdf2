@@ -119,7 +119,7 @@ public class NotificationService {
                 String.format("주문이 접수되었습니다.\n주문 번호: %d", orderId));
 
         // 가게에게 새 주문 알림
-        // TODO: storeId -> ownerId로 알림 발송
+        // TODO: storeId --> ownerId로 알림 발송
         // createNotification(
         // storeId,
         // NotificationType.ORDER_STATUS,

@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: delivery-service
+  name: notification-service
   namespace: team02
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: delivery-service
+      app: notification-service
   template:
     metadata:
       labels:
-        app: delivery-service
+        app: notification-service
     spec:
       containers:
-      - name: delivery-service
-        image: docker.io/wsk221e/team02-delivery-service:latest
+      - name: notification-service
+        image: 093322228889.dkr.ecr.ap-northeast-2.amazonaws.com/team02-notification-service:latest
         ports:
-        - containerPort: 8087
+        - containerPort: 8088
         envFrom:
           - configMapRef:
               name: spring-config
@@ -30,18 +30,5 @@ spec:
           limits:
             cpu: "500m"
             memory: "1024Mi"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: delivery-service
-  namespace: team02
-spec:
-  type: ClusterIP
-  selector:
-    app: delivery-service
-  ports:
-  - port: 8087
-    targetPort: 8087
-    protocol: TCP
+
 
