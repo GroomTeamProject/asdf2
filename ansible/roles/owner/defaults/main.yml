@@ -1,0 +1,54 @@
+---
+# 역할 기본값
+service_name: "owner"
+repo_url: "https://github.com/GroomTeamProject/asdf3.git"
+repo_branch: "develop"
+
+service_root: "/home/ec2-user/services"
+src_dir: "/home/ec2-user/services/owner-src"
+deploy_dir: "/home/ec2-user/services/owner"
+
+# 빌드 관련
+src_service_subpath: "msa/owner-service"
+build_command: "./gradlew build"
+jar_name: "owner-service.jar"
+jar_src_path: "/home/ec2-user/services/owner-src/msa/owner-service/build/libs/owner-service.jar"
+jar_dest_path: "/home/ec2-user/services/owner/owner-service.jar"
+
+# 배포 유저/권한
+deploy_user: "ec2-user"
+deploy_group: "ec2-user"
+file_mode: "0755"
+
+# 백업 관련
+backup_dir: "/home/ec2-user/services/owner/backup"
+backup_before_deploy: true
+timestamp_format: "%Y%m%dT%H%M%S"
+
+# DB (환경변수로 systemd에 넣을 예정)
+db_backup: false
+db_host: "localhost"
+db_port: 3306
+db_name: "owner"
+db_username: "root"
+db_password: "root"
+mysqldump_path: "/usr/bin/mysqldump"
+
+# 기타 환경변수들
+extra_env:
+  - "KAFKA_BOOTSTRAP_SERVERS=kafka:9092"
+  - "MSA_GATEWAY_URL=http://api-gateway:8080"
+  - "USER_SERVICE_URL=http://user-service:8082"
+  - "ORDER_SERVICE_URL=http://order-service:8085"
+  - "REVIEW_SERVICE_URL=http://review-service:8086"
+  - "DELIVERY_SERVICE_URL=http://delivery-service:8087"
+  - "NOTIFICATION_SERVICE_URL=http://notification-service:8088"
+  - "PAYMENT_SERVICE_URL=http://payment-service:8084"
+
+
+# JVM / 실행 관련 추가 옵션 (옵션)
+java_opts: "-Xms256m -Xmx512m"
+
+# systemd 설정 (타임아웃 등 필요하면 수정)
+restart_policy: "on-failure"
+restart_sec: 5
