@@ -3,7 +3,7 @@ name: Delivery Service CD - Deploy
 on:
   pull_request:
     types: [closed]
-    bbranches:
+    branches:
       - develop  
     paths:
       - "msa/delivery-service/**"
