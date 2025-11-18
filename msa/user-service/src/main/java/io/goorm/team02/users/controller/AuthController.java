@@ -34,7 +34,7 @@ public class AuthController {
     private final TokenBlacklistService blacklistService;
     private final JwtTokenProvider jwtTokenProvider;
 
-    // ✅ 회원가입 API
+    // 회원가입 API
     @PostMapping("/signup")
     //@RequestBody SignupRequest request→ 클라이언트에서 보낸 JSON 데이터를 SignupRequest 객체로 변환
     public ResponseEntity<?> signup(@RequestBody SignupRequest request) {
@@ -44,7 +44,7 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // ✅ 로그인 API
+    // 로그인 API
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletResponse response) {
         try {
