@@ -115,7 +115,7 @@ jobs:
           do
             echo "🔁 Attempt $((n+1)) to push changes..."
             git pull origin ${{ env.MANIFEST_BRANCH }} --rebase || true
-            git push origin ${{ env.MANIFEST_BRANCH }}e && break
+            git push origin ${{ env.MANIFEST_BRANCH }} && break
             n=$((n+1))
             echo "⏳ Push failed, retrying in 3 seconds..."
             sleep 3
