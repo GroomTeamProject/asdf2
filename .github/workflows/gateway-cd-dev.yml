@@ -107,8 +107,8 @@ jobs:
           until [ $n -ge 5 ]
           do
             echo "🔁 Attempt $((n+1)) to push changes..."
-            git pull origin develop --rebase || true
-            git push origin develop && break
+            git pull origin manifest/service --rebase || true
+            git push origin manifest/service && break
             n=$((n+1))
             echo "⏳ Push failed, retrying in 3 seconds..."
             sleep 3
