@@ -21,6 +21,7 @@ env:
   ECR_REPO: team02-gateway
   KUSTOMIZE_PATH: infra/k8s/overlays/prod/gateway
   IMAGE_REGISTRY: 093322228889.dkr.ecr.ap-northeast-2.amazonaws.com
+  MANIFEST_BRANCH: manifest/service
 
 jobs:
   deploy:
@@ -51,7 +52,7 @@ jobs:
       - name: Set Git SHA
         run: echo "GIT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-      - name: Build & Test gateway
+      - name: Build & Test ${{ env.SERVICE_NAME }}
         run: |
           cd msa/${{ env.SERVICE_NAME }}
           ../gradlew :${{ env.SERVICE_NAME }}:build
@@ -81,6 +82,12 @@ jobs:
           docker tag ${ECR_URI} ${{ env.IMAGE_REGISTRY }}/${{ env.ECR_REPO }}:latest
           docker push ${{ env.IMAGE_REGISTRY }}/${{ env.ECR_REPO }}:latest
 
+      # manifest 브랜치 체크아웃
+      - name: Checkout manifest branch
+        run: |
+          git fetch origin ${{ env.MANIFEST_BRANCH }}:${{ env.MANIFEST_BRANCH }}
+          git checkout ${{ env.MANIFEST_BRANCH }}
+
       # kustomization.yaml 이미지 태그 업데이트
       - name: Update kustomization.yaml with new image tag
         env:
@@ -100,15 +107,15 @@ jobs:
 
           git add ${{ env.KUSTOMIZE_PATH }}/kustomization.yaml
 
-          git commit -m "chore(gateway): update image tag to $GIT_SHA" || echo "No changes to commit"
+          git commit -m "chore(${{ env.SERVICE_NAME }}): update image tag to $GIT_SHA" || echo "No changes to commit"
           
           # 안전한 반복 push (최대 5번)
           n=0
           until [ $n -ge 5 ]
           do
             echo "🔁 Attempt $((n+1)) to push changes..."
-            git pull origin manifest/service --rebase || true
-            git push origin manifest/service && break
+            git pull origin ${{ env.MANIFEST_BRANCH }} --rebase || true
+            git push origin ${{ env.MANIFEST_BRANCH }} && break
             n=$((n+1))
             echo "⏳ Push failed, retrying in 3 seconds..."
             sleep 3
