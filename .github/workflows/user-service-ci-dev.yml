@@ -3,7 +3,7 @@ name: User Service CI - Build & Test
 on:
   pull_request:
     branches:
-      - manifest/service       # 최종에는 develop 브랜치로 변경
+      - develop       # 최종에는 develop 브랜치로 변경
     paths:
       - "msa/user-service/**"
       - "msa/libs/**"

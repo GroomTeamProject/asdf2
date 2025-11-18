@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/GroomTeamProject/asdf3.git
-    targetRevision: manifest/service
+    targetRevision: develop
     path: infra/k8s/overlays/prod/user-service
   destination:
     server: https://kubernetes.default.svc

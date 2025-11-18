@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [closed]
     bbranches:
-      - manifest/service        # 최종에는 develop 브랜치로 변경
+      - develop        # 최종에는 develop 브랜치로 변경
     paths:
       - "msa/order-service/**"
       - "msa/libs/**"
@@ -107,8 +107,8 @@ jobs:
           until [ $n -ge 5 ]
           do
             echo "🔁 Attempt $((n+1)) to push changes..."
-            git pull origin manifest/service --rebase || true
-            git push origin manifest/service && break
+            git pull origin develop --rebase || true
+            git push origin develop && break
             n=$((n+1))
             echo "⏳ Push failed, retrying in 3 seconds..."
             sleep 3
