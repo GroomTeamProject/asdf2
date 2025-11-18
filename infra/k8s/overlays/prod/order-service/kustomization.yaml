@@ -5,4 +5,4 @@ resources:
   - ../../../base/order-service
 images:
   - name: 093322228889.dkr.ecr.ap-northeast-2.amazonaws.com/team02-order-service
-    newTag: 23ae80d # Actions가 SHA로 자동 변경
+    newTag: 8242ead # Actions가 SHA로 자동 변경
