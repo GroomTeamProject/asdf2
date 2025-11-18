@@ -12,7 +12,7 @@ import java.util.List;
 
 /**
  * 고객용 가게 조회 API
- * 주문 도메인 구현을 위해 임시로 작성
+ * 주문 도메인 구현을 위해 임시로 작성 controller
  */
 @RestController
 @RequestMapping("/api/stores")
