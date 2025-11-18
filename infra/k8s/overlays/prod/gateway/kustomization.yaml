@@ -6,4 +6,4 @@ bases:
   - ingress.yaml
 images:
   - name: 093322228889.dkr.ecr.ap-northeast-2.amazonaws.com/team02-gateway
-    newTag: b70da07 # CD에서 SHA로 자동 변경됨
+    newTag: 22c3b00 # CD에서 SHA로 자동 변경됨
