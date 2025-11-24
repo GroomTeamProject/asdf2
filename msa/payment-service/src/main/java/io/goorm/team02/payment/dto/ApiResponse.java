@@ -1,4 +1,4 @@
-package io.goorm.team02.common.dto;
+package io.goorm.team02.payment.dto;
 
 public record ApiResponse<T>(boolean success, T data, String message) {
     public static <T> ApiResponse<T> ok(T data) {

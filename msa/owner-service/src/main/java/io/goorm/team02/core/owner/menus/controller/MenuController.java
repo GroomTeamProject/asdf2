@@ -37,9 +37,9 @@ public class MenuController implements MenuControllerDocs {
     private final MenuOptionMapper menuOptionMapper;
     private final MenuOptionItemMapper menuOptionItemMapper;
 
-    // ================================
+    // ==============================
     // 카테고리 관리
-    // ================================
+    // ==============================
 
     @Override
     @GetMapping("/categories")

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+// notification controller
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
