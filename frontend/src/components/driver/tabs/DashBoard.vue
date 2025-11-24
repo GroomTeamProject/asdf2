@@ -38,9 +38,9 @@ export default{
     },
     async accept(d) {
       try{
-        const resp = await api.post(`/deliveries/${d.id}/accept`,
-            {riderId: this.riderInfo.riderId}
-        );
+        const resp = await api.post(`/deliveries/${d.id}/accept`).data.data;
+        console.log(`${resp}] accept success`,resp)
+
       }catch (e) {
         console.log(`[${this.activeTab}] accept 실패`, e)
       }finally {

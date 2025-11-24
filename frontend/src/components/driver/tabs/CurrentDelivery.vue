@@ -26,7 +26,7 @@ export default {
       }
     },
     statusBadgeClass() {
-      return this.currentOrder?.pickedAt === null
+      return this.currentOrder?.pickedUpAt === null
           ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
           : 'bg-blue-50 text-blue-700 border-blue-200'
     },
@@ -48,9 +48,9 @@ export default {
     async getCurrentOrder() {
       this.loading = true;
       try{
-        const resp = await api.get(`/deliveries/current`);
-        console.log(`[${this.activeTab}]: getCurrentOrder->data: `, resp.data)
-        this.currentOrder = resp.data;
+        this.currentOrder = await api.get(`/deliveries/current`).data.data;
+        console.log(`[${this.activeTab}]: getCurrentOrder->data: `, this.currentOrder)
+
       }catch(e){
         if(e.response && e.response.status === 404){
           console.log("[${this.activeTab}]: (배달 없음)");
