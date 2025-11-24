@@ -8,6 +8,7 @@ import io.goorm.team02.dto.deliveries.DeliveryResponse;
 import io.goorm.team02.security.annotation.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +23,8 @@ import java.util.Optional;
 @RequestMapping("/api/deliveries")
 @RequiredArgsConstructor
 public class DeliveryController {
-
+    @Value("${jwt.secret}")
+    private String jwtSecret;
     private final DeliveryService deliveryService;
     private final DeliveryMapper deliveryMapper;
 
@@ -31,7 +33,9 @@ public class DeliveryController {
             @PathVariable Long orderId,
             @CurrentUser Long userId
     ) {
+
         log.info("[accept] request for orderId={}, riderId={}", orderId, userId);
+        log.info("jwt_secret = {}", jwtSecret);
         Delivery delivery = deliveryService.accept(userId, orderId);
         DeliveryResponse response = deliveryMapper.toResponse(delivery);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -44,6 +48,7 @@ public class DeliveryController {
             @CurrentUser Long userId
     ) {
         log.info("[pickup] request for orderId={}, riderId={}", orderId, userId);
+        log.info("jwt_secret = {}", jwtSecret);
         Delivery delivery = deliveryService.pickup(userId, orderId);
         DeliveryResponse response = deliveryMapper.toResponse(delivery);
         return ResponseEntity.ok(ApiResponse.ok(response));
@@ -55,6 +60,7 @@ public class DeliveryController {
             @CurrentUser Long userId
     ) {
         log.info("[complete] request for orderId={}, riderId={}", orderId, userId);
+        log.info("jwt_secret = {}", jwtSecret);
         Delivery delivery = deliveryService.complete(userId, orderId);
         DeliveryResponse response = deliveryMapper.toResponse(delivery);
         return ResponseEntity.ok(ApiResponse.ok(response));
@@ -63,6 +69,7 @@ public class DeliveryController {
     @GetMapping("/history")
     public ResponseEntity<ApiResponse<?>> history(@CurrentUser Long userId) {
         log.info("[history] request for riderId={}", userId);
+        log.info("jwt_secret = {}", jwtSecret);
         List<DeliveryResponse> deliveries = deliveryService.getDeliveries(userId);
         if (deliveries.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -74,6 +81,7 @@ public class DeliveryController {
     @GetMapping("/current")
     public ResponseEntity<ApiResponse<?>> currentDelivery(@CurrentUser Long userId) {
         log.info("[current] request for riderId={}", userId);
+        log.info("jwt_secret = {}", jwtSecret);
         Optional<Delivery> deliveryOpt = deliveryService.getCurrentDelivery(userId);
         if (deliveryOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -87,24 +95,28 @@ public class DeliveryController {
     @GetMapping("/today-count")
     public ResponseEntity<ApiResponse<BigDecimal>> todayCount(@CurrentUser Long userId) {
         log.info("[today-count] request for riderId={}", userId);
+        log.info("jwt_secret = {}", jwtSecret);
         return ResponseEntity.ok(ApiResponse.ok(deliveryService.getTodayCount(userId)));
     }
 
     @GetMapping("/today-income")
     public ResponseEntity<ApiResponse<BigDecimal>> todayIncome(@CurrentUser Long userId) {
         log.info("[today-income] request for riderId={}", userId);
+        log.info("jwt_secret = {}", jwtSecret);
         return ResponseEntity.ok(ApiResponse.ok(deliveryService.getTodayIncome(userId)));
     }
 
     @GetMapping("/today-avg")
     public ResponseEntity<ApiResponse<Long>> todayAvg(@CurrentUser Long userId) {
         log.info("[today-avg] request for riderId={}", userId);
+        log.info("jwt_secret = {}", jwtSecret);
         return ResponseEntity.ok(ApiResponse.ok(deliveryService.getTodayAvg(userId)));
     }
 
     @GetMapping("/rider-status")
     public ResponseEntity<ApiResponse<String>> riderStatus(@CurrentUser Long userId) {
         log.info("[rider-status] request for riderId={}", userId);
+        log.info("jwt_secret = {}", jwtSecret);
         return ResponseEntity.ok(ApiResponse.ok(deliveryService.getRiderStatus(userId)));
     }
 }
