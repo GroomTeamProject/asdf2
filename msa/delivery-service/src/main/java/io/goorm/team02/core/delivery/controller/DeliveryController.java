@@ -29,10 +29,10 @@ public class DeliveryController {
     @PostMapping("/{orderId}/accept")
     public ResponseEntity<ApiResponse<DeliveryResponse>> accept(
             @PathVariable Long orderId,
-            @CurrentUser Long riderId
+            @CurrentUser Long userId
     ) {
-        log.info("[accept] request for orderId={}, riderId={}", orderId, riderId);
-        Delivery delivery = deliveryService.accept(riderId, orderId);
+        log.info("[accept] request for orderId={}, riderId={}", orderId, userId);
+        Delivery delivery = deliveryService.accept(userId, orderId);
         DeliveryResponse response = deliveryMapper.toResponse(delivery);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(response));
@@ -41,10 +41,10 @@ public class DeliveryController {
     @PutMapping("/{orderId}/pickup")
     public ResponseEntity<ApiResponse<DeliveryResponse>> pickup(
             @PathVariable Long orderId,
-            @CurrentUser Long riderId
+            @CurrentUser Long userId
     ) {
-        log.info("[pickup] request for orderId={}, riderId={}", orderId, riderId);
-        Delivery delivery = deliveryService.pickup(riderId, orderId);
+        log.info("[pickup] request for orderId={}, riderId={}", orderId, userId);
+        Delivery delivery = deliveryService.pickup(userId, orderId);
         DeliveryResponse response = deliveryMapper.toResponse(delivery);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
@@ -52,18 +52,18 @@ public class DeliveryController {
     @PutMapping("/{orderId}/complete")
     public ResponseEntity<ApiResponse<DeliveryResponse>> complete(
             @PathVariable Long orderId,
-            @CurrentUser Long riderId
+            @CurrentUser Long userId
     ) {
-        log.info("[complete] request for orderId={}, riderId={}", orderId, riderId);
-        Delivery delivery = deliveryService.complete(riderId, orderId);
+        log.info("[complete] request for orderId={}, riderId={}", orderId, userId);
+        Delivery delivery = deliveryService.complete(userId, orderId);
         DeliveryResponse response = deliveryMapper.toResponse(delivery);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     @GetMapping("/history")
-    public ResponseEntity<ApiResponse<?>> history(@CurrentUser Long riderId) {
-        log.info("[history] request for riderId={}", riderId);
-        List<DeliveryResponse> deliveries = deliveryService.getDeliveries(riderId);
+    public ResponseEntity<ApiResponse<?>> history(@CurrentUser Long userId) {
+        log.info("[history] request for riderId={}", userId);
+        List<DeliveryResponse> deliveries = deliveryService.getDeliveries(userId);
         if (deliveries.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.fail("[history]: 조회 결과가 없습니다."));
@@ -72,9 +72,9 @@ public class DeliveryController {
     }
 
     @GetMapping("/current")
-    public ResponseEntity<ApiResponse<?>> currentDelivery(@CurrentUser Long riderId) {
-        log.info("[current] request for riderId={}", riderId);
-        Optional<Delivery> deliveryOpt = deliveryService.getCurrentDelivery(riderId);
+    public ResponseEntity<ApiResponse<?>> currentDelivery(@CurrentUser Long userId) {
+        log.info("[current] request for riderId={}", userId);
+        Optional<Delivery> deliveryOpt = deliveryService.getCurrentDelivery(userId);
         if (deliveryOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.fail("[currentDelivery]: 현재 진행 중인 배달이 없습니다."));
@@ -85,26 +85,26 @@ public class DeliveryController {
     }
 
     @GetMapping("/today-count")
-    public ResponseEntity<ApiResponse<BigDecimal>> todayCount(@CurrentUser Long riderId) {
-        log.info("[today-count] request for riderId={}", riderId);
-        return ResponseEntity.ok(ApiResponse.ok(deliveryService.getTodayCount(riderId)));
+    public ResponseEntity<ApiResponse<BigDecimal>> todayCount(@CurrentUser Long userId) {
+        log.info("[today-count] request for riderId={}", userId);
+        return ResponseEntity.ok(ApiResponse.ok(deliveryService.getTodayCount(userId)));
     }
 
     @GetMapping("/today-income")
-    public ResponseEntity<ApiResponse<BigDecimal>> todayIncome(@CurrentUser Long riderId) {
-        log.info("[today-income] request for riderId={}", riderId);
-        return ResponseEntity.ok(ApiResponse.ok(deliveryService.getTodayIncome(riderId)));
+    public ResponseEntity<ApiResponse<BigDecimal>> todayIncome(@CurrentUser Long userId) {
+        log.info("[today-income] request for riderId={}", userId);
+        return ResponseEntity.ok(ApiResponse.ok(deliveryService.getTodayIncome(userId)));
     }
 
     @GetMapping("/today-avg")
-    public ResponseEntity<ApiResponse<Long>> todayAvg(@CurrentUser Long riderId) {
-        log.info("[today-avg] request for riderId={}", riderId);
-        return ResponseEntity.ok(ApiResponse.ok(deliveryService.getTodayAvg(riderId)));
+    public ResponseEntity<ApiResponse<Long>> todayAvg(@CurrentUser Long userId) {
+        log.info("[today-avg] request for riderId={}", userId);
+        return ResponseEntity.ok(ApiResponse.ok(deliveryService.getTodayAvg(userId)));
     }
 
     @GetMapping("/rider-status")
-    public ResponseEntity<ApiResponse<String>> riderStatus(@CurrentUser Long riderId) {
-        log.info("[rider-status] request for riderId={}", riderId);
-        return ResponseEntity.ok(ApiResponse.ok(deliveryService.getRiderStatus(riderId)));
+    public ResponseEntity<ApiResponse<String>> riderStatus(@CurrentUser Long userId) {
+        log.info("[rider-status] request for riderId={}", userId);
+        return ResponseEntity.ok(ApiResponse.ok(deliveryService.getRiderStatus(userId)));
     }
 }
