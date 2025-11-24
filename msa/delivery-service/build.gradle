@@ -76,8 +76,6 @@ dependencies {
     testRuntimeOnly 'com.h2database:h2'
 
 
-    // Spring Boot Starter Security
-    implementation 'org.springframework.boot:spring-boot-starter-security'
 }
 
 dependencyManagement {
