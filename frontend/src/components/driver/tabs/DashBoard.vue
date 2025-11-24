@@ -7,7 +7,7 @@ export default{
     activeTab: {
       type: String,
       required: true
-    },
+    },ㄴ
     riderInfo:{
       type: Object,
       required: true

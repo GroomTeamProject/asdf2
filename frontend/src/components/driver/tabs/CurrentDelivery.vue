@@ -47,19 +47,33 @@ export default {
     },
     async getCurrentOrder() {
       this.loading = true;
-      try{
-        this.currentOrder = await api.get(`/deliveries/current`).data.data;
-        console.log(`[${this.activeTab}]: getCurrentOrder->data: `, this.currentOrder)
 
-      }catch(e){
-        if(e.response && e.response.status === 404){
-          console.log("[${this.activeTab}]: (배달 없음)");
+      let resp = null;  // ← try 바깥에서 선언해야 finally에서 접근 가능
+
+      try {
+        resp = await api.get(`/deliveries/current`);
+        console.log(`[${this.activeTab}]: getCurrentOrder->data: `, resp);
+
+        // 정상 응답일 때 currentOrder 설정
+        this.currentOrder = resp.data.data;
+
+      } catch (e) {
+        if (e.response && e.response.status === 404) {
+          console.log(`[${this.activeTab}]: (배달 없음)`);
           this.currentOrder = null;
-        }else{
-          console.log(`[${this.activeTab}]: 기계오작동!: `,e)
+        } else {
+          console.log(`[${this.activeTab}]: 기계오작동!: `, e);
         }
-      }finally {
+
+      } finally {
         this.loading = false;
+
+        // resp가 null인 경우 처리
+        if (resp === null) {
+          console.log(`[${this.activeTab}] 응답 없음 → currentOrder 유지 또는 null`);
+        } else {
+          console.log(`[${this.activeTab}] currentOrder=`, this.currentOrder);
+        }
       }
     },
     async onPrimary() {
