@@ -6,6 +6,7 @@ import io.goorm.team02.core.delivery.entity.enums.DeliveryStatus;
 import io.goorm.team02.core.delivery.mapper.DeliveryMapper;
 import io.goorm.team02.core.delivery.repository.DeliveryRepository;
 import io.goorm.team02.dto.deliveries.DeliveryResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+@Transactional
 @Service
 @RequiredArgsConstructor
 public class DeliveryService {
