@@ -21,7 +21,7 @@ public interface OrderServiceClient {
     OrderResponseForDelivery getOrderDetailForDelivery(@PathVariable("orderId") Long orderId);
 
     // pickup
-    @PutMapping("/api/orders//{orderId}/start-delivery")
+    @PutMapping("/api/orders/{orderId}/start-delivery")
     OrderResponse startDelivery(@PathVariable Long orderId);
 
     // complete
