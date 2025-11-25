@@ -47,19 +47,26 @@ export default {
     },
     async getCurrentOrder() {
       this.loading = true;
-      try{
-        this.currentOrder = await api.get(`/deliveries/current`).data.data;
-        console.log(`[${this.activeTab}]: getCurrentOrder->data: `, this.currentOrder)
+      let resp = null;
 
-      }catch(e){
-        if(e.response && e.response.status === 404){
-          console.log("[${this.activeTab}]: (배달 없음)");
+      try {
+        resp = await api.get(`/deliveries/current`);
+        console.log(`[${this.activeTab}]: getCurrentOrder->data: `, resp);
+      } catch (e) {
+        if (e.response && e.response.status === 404) {
+          console.log(`[${this.activeTab}]: (배달 없음)`);
           this.currentOrder = null;
-        }else{
-          console.log(`[${this.activeTab}]: 기계오작동!: `,e)
+        } else {
+          console.log(`[${this.activeTab}]: 기계오작동!: `, e);
         }
-      }finally {
+      } finally {
         this.loading = false;
+
+        if (resp && resp.data) {
+          this.currentOrder = resp.data.data;
+        }
+
+        console.log(`[${this.activeTab}]:`, this.currentOrder);
       }
     },
     async onPrimary() {
