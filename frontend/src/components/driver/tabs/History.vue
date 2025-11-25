@@ -41,8 +41,6 @@ export default{
         }else{
           console.log(`[${this.activeTab}] 기계 오작동!`,e);
         }
-      }finally {
-        console.log([`${this.activeTab} loadHistory: `],...this.deliveries)
       }
     }
   },
