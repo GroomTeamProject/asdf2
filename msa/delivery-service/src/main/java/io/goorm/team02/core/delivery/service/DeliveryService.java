@@ -52,6 +52,8 @@ public class DeliveryService {
 
         delivery.setStatus(DeliveryStatus.PICKED_UP);
         delivery.setPickedUpAt(LocalDateTime.now());
+
+        orderServiceClient.startDelivery(orderId);
         return deliveryRepository.save(delivery);
     }
 
@@ -67,6 +69,7 @@ public class DeliveryService {
 
         delivery.setStatus(DeliveryStatus.DELIVERED);
         delivery.setDeliveredAt(LocalDateTime.now());
+        orderServiceClient.deliverOrder(orderId);
         return deliveryRepository.save(delivery);
     }
 
