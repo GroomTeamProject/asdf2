@@ -80,7 +80,7 @@ public class DeliveryService {
                 riderId,
                 start,
                 end,
-                DeliveryStatus.ACCEPTED
+                DeliveryStatus.DELIVERED
         );
 
         return count != null ? count : BigDecimal.ZERO;
