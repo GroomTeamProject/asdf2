@@ -57,7 +57,7 @@ export default{
     async getRiderStatus() {
       try{
         const resp = await api.get(`/deliveries/rider-status`);
-        this.riderStatus = await resp.data;
+        this.riderStatus = resp.data.data;  // 여기가 정답
       }catch(e){
         console.log(`[${this.activeTab} getRiderStatus: error`,e);
       }finally {
