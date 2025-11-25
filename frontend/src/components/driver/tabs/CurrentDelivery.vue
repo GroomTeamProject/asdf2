@@ -62,7 +62,8 @@ export default {
           console.log(`[${this.activeTab}]: (배달 없음)`);
           this.currentOrder = null;
         } else {
-          console.log(`[${this.activeTab}]: 기계오작동!: `, e);
+          console.log(`[${this.activeTab}]: 기계오작동!: getCurrentOrder->data:${resp}`);
+
         }
 
       } finally {
