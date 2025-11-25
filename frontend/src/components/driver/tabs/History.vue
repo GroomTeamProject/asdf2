@@ -32,7 +32,7 @@ export default{
     async loadHistory(){
       try{
         const resp = await api.get(`/deliveries/history`)
-        this.deliveries = resp.data;
+        this.deliveries = resp.data.data;
       }catch(e){
         if(e.response && e.response.status === 404)
         {
