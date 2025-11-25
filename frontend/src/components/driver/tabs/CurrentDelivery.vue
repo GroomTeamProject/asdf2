@@ -75,7 +75,7 @@ export default {
       if (this.currentOrder?.pickedUpAt === null) {
         // TODO: 픽업 도착 처리
         try {
-          const resp = await api.put(`${API_BASE}/deliveries/${currentOrder?.orderId}/pickup`);
+          const resp = await api.put(`${API_BASE}/deliveries/${this.currentOrder?.orderId}/pickup`);
           console.log(`[${this.activeTab} onPrimary->data:`, resp.data);
           await this.getCurrentOrder();
         } catch (e){
@@ -84,7 +84,7 @@ export default {
       } else if (this.currentOrder?.pickedUpAt !== null) {
         // TODO: 배달 도착 처리
         try{
-          const resp = await api.put(`${API_BASE}/deliveries/${currentOrder?.orderId}/complete`);
+          const resp = await api.put(`${API_BASE}/deliveries/${this.currentOrder?.orderId}/complete`);
           console.log(`[${this.activeTab} onPrimary: complete ${resp.data}`);
           await this.getCurrentOrder();
           this.$emit('refresh-parent')
