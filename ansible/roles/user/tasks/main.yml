@@ -1,65 +1,10 @@
 ---
-- name: Ensure service directories exist
-  file:
-    path: "{{ item }}"
-    state: directory
-    mode: '0755'
-  loop:
-    - "{{ src_dir }}"
-    - "{{ deploy_dir }}"
-    - "{{ backup_dir }}"
+# 전체 배포 흐름
+- name: Backup current version
+  include_tasks: backup.yml
 
-- name: Backup current jar before deploy
-  copy:
-    src: "{{ jar_dest_path }}"
-    dest: "{{ backup_dir }}/{{ jar_name }}-{{ lookup('pipe','date +%Y%m%dT%H%M%S') }}"
-  when: backup_before_deploy and ansible.builtin.stat(path=jar_dest_path).stat.exists
-  ignore_errors: yes
+- name: Build service
+  include_tasks: build.yml
 
-- name: Clone service from GitHub
-  git:
-    repo: "{{ repo_url }}"
-    dest: "{{ src_dir }}"
-    version: "{{ repo_branch }}"
-    force: yes
-
-- name: Build service on server
-  shell: "{{ build_command }}"
-  args:
-    chdir: "{{ src_dir }}/{{ src_service_subpath }}"
-
-- name: Copy built jar to deployment folder
-  copy:
-    src: "{{ jar_src_path }}"
-    dest: "{{ jar_dest_path }}"
-    mode: "{{ file_mode }}"
-  notify: restart service
-
-- name: Create systemd service file
-  copy:
-    dest: "/etc/systemd/system/{{ service_name }}.service"
-    content: |
-      [Unit]
-      Description={{ service_name }} Service
-      After=network.target
-
-      [Service]
-      User={{ deploy_user }}
-      ExecStart=/usr/bin/java {{ java_opts }} -jar {{ jar_dest_path }}{% for item in extra_env %}
-      Environment="{{ item }}"{% endfor %}
-      Restart={{ restart_policy }}
-      RestartSec={{ restart_sec }}
-      
-      [Install]
-      WantedBy=multi-user.target
-    mode: '0644'
-
-- name: Reload systemd
-  systemd:
-    daemon_reload: yes
-
-- name: Start and enable service
-  systemd:
-    name: "{{ service_name }}"
-    state: started
-    enabled: yes
+- name: Deploy service
+  include_tasks: deploy.yml

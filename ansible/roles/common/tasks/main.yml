@@ -1,5 +1,8 @@
 ---
-- name: Install basic packages
+# OS별 기본 패키지 설치 및 MSA 공통 디렉토리 생성
+
+# Debian/Ubuntu
+- name: Install basic packages on Debian/Ubuntu
   apt:
     name:
       - git
@@ -8,12 +11,73 @@
       - openjdk-17-jdk
     state: present
     update_cache: yes
+  when:
+    - ansible_facts['os_family'] == 'Debian'
+    - not ansible_check_mode
+  become: true
 
-- name: Ensure MSA directories exist
+# RedHat (RHEL/CentOS)
+- name: Install basic packages on RedHat (non-Amazon)
+  yum:
+    name:
+      - git
+      - unzip
+      - curl
+      - java-17-openjdk-devel
+    state: present
+  when:
+    - ansible_facts['os_family'] == 'RedHat'
+    - ansible_facts['distribution'] != 'Amazon'
+  become: true
+
+# Amazon Linux
+- name: Ensure curl-minimal is removed on Amazon Linux
+  dnf:
+    name: curl-minimal
+    state: absent
+  when: ansible_facts['os_family'] == 'Amazon'
+  become: true
+
+- name: Ensure curl is installed on Amazon Linux
+  dnf:
+    name: curl
+    state: present
+    update_cache: yes
+  when: ansible_facts['os_family'] == 'Amazon'
+  become: true
+
+- name: Check if Java is installed
+  shell: java -version
+  register: java_version
+  ignore_errors: yes
+  when: ansible_facts['os_family'] == 'Amazon'
+  become: true
+
+- name: Enable corretto17 and install Corretto 17
+  block:
+    - name: Enable corretto17
+      shell: amazon-linux-extras enable corretto17
+      args:
+        warn: false
+      changed_when: false
+    - name: Install Amazon Corretto 17
+      dnf:
+        name: java-17-amazon-corretto
+        state: present
+  when:
+    - ansible_facts['os_family'] == 'Amazon'
+    - java_version.rc != 0
+  become: true
+
+# MSA 디렉토리 생성
+- name: Ensure MSA directories exist (all OSes)
   file:
     path: "{{ item }}"
     state: directory
     mode: '0755'
+    owner: ec2-user
+    group: ec2-user
   loop:
     - /home/ec2-user/services
     - /home/ec2-user/backups
+  become: true

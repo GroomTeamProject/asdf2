@@ -1,27 +1,28 @@
----
-# 역할 기본값
+# 서비스 정보
 service_name: "payment"
 repo_url: "https://github.com/GroomTeamProject/asdf3.git"
 repo_branch: "develop"
 
-service_root: "/home/ec2-user/services"
-src_dir: "/home/ec2-user/services/payment-src"
+service_root: "/home/ec2-user/project"
+src_dir: "/home/ec2-user/project/asdf3"
 deploy_dir: "/home/ec2-user/services/payment"
 
 # 빌드 관련
 src_service_subpath: "msa/payment-service"
 build_command: "./gradlew build"
-jar_name: "payment-service.jar"
-jar_src_path: "/home/ec2-user/services/payment-src/msa/payment-service/build/libs/payment-service.jar"
-jar_dest_path: "/home/ec2-user/services/payment/payment-service.jar"
 
-# 배포 유저/권한
+# JAR 파일은 최신 빌드를 자동으로 잡도록 패턴 사용
+jar_pattern: "payment-service-*.jar"
+jar_src_path: "{{ src_dir }}/{{ src_service_subpath }}/build/libs/{{ jar_pattern }}"
+jar_dest_path: "{{ deploy_dir }}/{{ service_name }}.jar"
+
+# 배포 유저/그룹
 deploy_user: "ec2-user"
 deploy_group: "ec2-user"
 file_mode: "0755"
 
 # 백업 관련
-backup_dir: "/home/ec2-user/services/payment/backup"
+backup_dir: "{{ deploy_dir }}/backup"
 backup_before_deploy: true
 timestamp_format: "%Y%m%dT%H%M%S"
 
@@ -34,7 +35,7 @@ db_username: "root"
 db_password: "root"
 mysqldump_path: "/usr/bin/mysqldump"
 
-# 기타 환경변수들
+# 환경변수
 extra_env:
   - "KAFKA_BOOTSTRAP_SERVERS=kafka:9092"
   - "MSA_GATEWAY_URL=http://api-gateway:8080"
@@ -45,10 +46,9 @@ extra_env:
   - "NOTIFICATION_SERVICE_URL=http://notification-service:8088"
   - "PAYMENT_SERVICE_URL=http://payment-service:8084"
 
-
-# JVM / 실행 관련 추가 옵션 (옵션)
+# JVM 옵션
 java_opts: "-Xms256m -Xmx512m"
 
-# systemd 설정 (타임아웃 등 필요하면 수정)
+# systemd 설정
 restart_policy: "on-failure"
 restart_sec: 5

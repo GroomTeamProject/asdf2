@@ -1,6 +1,6 @@
 ---
 - name: Deploy MSA Services (GitHub build & systemd)
-  hosts: msa_servers
+  hosts: all
   become: true
   vars_files:
     - group_vars/all.yml
