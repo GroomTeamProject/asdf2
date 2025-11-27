@@ -1,9 +1,43 @@
 ---
-- name: Backup K8s resources for all services
+- name: Backup all deployments and databases
   hosts: localhost
   gather_facts: false
-  vars_files:
-    - ../roles/k8s-backup/defaults/main.yml
 
-  roles:
-    - k8s-backup
+  vars_files:
+    - ../vars/aws.yml
+
+  tasks:
+    - name: Create local backup directory
+      file:
+        path: "{{ backup_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Backup Kubernetes deployments
+      shell: |
+        kubectl get deployment {{ item }} -n prod -o yaml > {{ backup_dir }}/{{ item }}-deployment-$(date +%Y%m%dT%H%M%S).yaml
+      loop:
+        - delivery-service
+        - gateway
+        - monitoring
+        - notification
+        - order-service
+        - owner-service
+        - payment-service
+        - review-service
+        - user-service
+
+    - name: Backup databases from Pods (optional)
+      shell: |
+        POD_NAME=$(kubectl get pod -n prod -l app={{ item }} -o jsonpath='{.items[0].metadata.name}')
+        kubectl exec -n prod $POD_NAME -- mysqldump -u{{ db_username }} -p'{{ db_password }}' {{ db_name }} \
+          > {{ backup_dir }}/{{ item }}-db-$(date +%Y%m%dT%H%M%S).sql
+      loop:
+        - delivery-service
+        - notification
+        - order-service
+        - owner-service
+        - payment-service
+        - review-service
+        - user-service
+      when: db_backup | bool

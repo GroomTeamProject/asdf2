@@ -1,9 +1,26 @@
 ---
-- name: Build all services Docker images
+- name: Build all service Docker images
   hosts: localhost
   gather_facts: false
-  vars_files:
-    - ../roles/k8s-build/defaults/main.yml
 
-  roles:
-    - k8s-build
+  vars_files:
+    - ../vars/aws.yml
+
+  tasks:
+    - name: Build Docker image for each service
+      shell: |
+        IMAGE_URI={{ IMAGE_REGISTRY }}/{{ item }}:${GITHUB_SHA}
+        docker build -t $IMAGE_URI ./msa/{{ item }}
+        docker push $IMAGE_URI
+        docker tag $IMAGE_URI {{ IMAGE_REGISTRY }}/{{ item }}:latest
+        docker push {{ IMAGE_REGISTRY }}/{{ item }}:latest
+      loop:
+        - delivery-service
+        - gateway
+        - monitoring
+        - notification
+        - order-service
+        - owner-service
+        - payment-service
+        - review-service
+        - user-service

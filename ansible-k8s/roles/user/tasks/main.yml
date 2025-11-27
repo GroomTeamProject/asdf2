@@ -1,0 +1,10 @@
+---
+# 전체 배포 흐름
+- name: Backup current version
+  include_tasks: backup.yml
+
+- name: Build service
+  include_tasks: build.yml
+
+- name: Deploy service
+  include_tasks: deploy.yml
