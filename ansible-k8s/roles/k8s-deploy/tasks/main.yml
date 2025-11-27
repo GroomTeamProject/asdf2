@@ -1,0 +1,24 @@
+---
+- name: Checkout manifest branch
+  command: >
+    git fetch origin {{ manifest_branch }}:{{ manifest_branch }} &&
+    git checkout {{ manifest_branch }}
+  args:
+    chdir: "../"
+
+- name: Deploy each service
+  vars:
+    kustomize_path: "infra/k8s/overlays/prod/{{ item }}"
+    ecr_repo: "team02-{{ item }}-service"
+  loop: "{{ services }}"
+  block:
+    - name: Update kustomization.yaml with new image tag
+      command: >
+        yq -i ".images[] |= select(.name==\"{{ image_registry }}/{{ ecr_repo }}\").newTag=\"{{ image_tag }}\""
+        {{ kustomize_path }}/kustomization.yaml
+      vars:
+        image_tag: "{{ lookup('env','GIT_SHA') | default('latest') }}"
+
+    - name: Apply manifest to K8s
+      command: >
+        kubectl apply -k {{ kustomize_path }}

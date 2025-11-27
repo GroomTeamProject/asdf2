@@ -1,0 +1,20 @@
+---
+# Service 기본 정보
+service_name: monitoring-service
+service_path: "msa/monitoring-service"
+
+# Docker / ECR
+image_registry: "093322228889.dkr.ecr.ap-northeast-2.amazonaws.com"
+ecr_repo: "team02-monitoring-service"
+image_tag: "{{ lookup('env','GIT_SHA') | default('latest') }}"
+
+# 배포 관련
+namespace: "prod"
+kustomize_path: "infra/k8s/overlays/prod/monitoring-service"
+
+# 백업 관련
+backup_dir: "/tmp/monitoring-backup"
+db_backup: true
+db_user: "root"
+db_pass: "password"
+db_name: "monitoring_db"

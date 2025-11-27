@@ -1,0 +1,53 @@
+---
+# roles/payment/tasks/build.yml
+
+- name: Ensure gradlew is executable
+  file:
+    path: "{{ src_dir }}/{{ src_service_subpath }}/gradlew"
+    mode: "0755"
+    state: file
+
+- name: Build payment service and show progress every 10s
+  shell: |
+    ./gradlew clean build -x test --console=plain &
+    GRADLE_PID=$!
+    while kill -0 $GRADLE_PID 2>/dev/null; do
+      tail -n 10 build/build.log || true
+      sleep 10
+    done
+    wait $GRADLE_PID
+  args:
+    chdir: "{{ src_dir }}/{{ src_service_subpath }}"
+  register: build_output
+  ignore_errors: true
+
+- name: Detect produced JAR file
+  find:
+    paths: "{{ src_dir }}/{{ src_service_subpath }}/build/libs"
+    patterns: "*.jar"
+    recurse: no
+  register: jar_files
+
+- name: Fail if no JAR was produced
+  fail:
+    msg: "No JAR found in {{ src_dir }}/{{ src_service_subpath }}/build/libs. Check Gradle output."
+  when: jar_files.matched == 0
+
+- name: Set jar_name variable to first found JAR
+  set_fact:
+    jar_name: "{{ jar_files.files[0].path | basename }}"
+
+- name: Update jar_src_path dynamically
+  set_fact:
+    jar_src_path: "{{ src_dir }}/{{ src_service_subpath }}/build/libs/{{ jar_name }}"
+    jar_dest_path: "{{ deploy_dir }}/{{ jar_name }}"
+
+- name: Show last 20 lines of Gradle build log
+  shell: tail -n 20 build/build.log || echo "No build log found"
+  args:
+    chdir: "{{ src_dir }}/{{ src_service_subpath }}"
+  register: tail_log
+  ignore_errors: true
+
+- debug:
+    var: tail_log.stdout_lines

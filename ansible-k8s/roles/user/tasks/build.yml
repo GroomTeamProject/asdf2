@@ -1,0 +1,11 @@
+---
+- name: Login to AWS ECR
+  command: aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin {{ image_registry }}
+
+- name: Build Docker image
+  docker_image:
+    build:
+      path: "{{ service_path }}"
+    name: "{{ image_registry }}/{{ ecr_repo }}"
+    tag: "{{ image_tag }}"
+    push: yes

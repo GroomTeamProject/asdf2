@@ -38,9 +38,9 @@ export default{
     },
     async accept(d) {
       try{
-        const resp = await api.post(`/deliveries/${d.id}/accept`,
-            {riderId: this.riderInfo.riderId}
-        );
+        const resp = await api.post(`/deliveries/${d.id}/accept`).data.data;
+        console.log(`${resp}] accept success`,resp)
+
       }catch (e) {
         console.log(`[${this.activeTab}] accept 실패`, e)
       }finally {
@@ -57,7 +57,7 @@ export default{
     async getRiderStatus() {
       try{
         const resp = await api.get(`/deliveries/rider-status`);
-        this.riderStatus = await resp.data;
+        this.riderStatus = resp.data.data;  // 여기가 정답
       }catch(e){
         console.log(`[${this.activeTab} getRiderStatus: error`,e);
       }finally {

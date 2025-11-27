@@ -1,0 +1,20 @@
+---
+# Service 기본 정보
+service_name: gateway-service
+service_path: "msa/gateway-service"
+
+# Docker / ECR
+image_registry: "093322228889.dkr.ecr.ap-northeast-2.amazonaws.com"
+ecr_repo: "team02-gateway-service"
+image_tag: "{{ lookup('env','GIT_SHA') | default('latest') }}"
+
+# 배포 관련
+namespace: "prod"
+kustomize_path: "infra/k8s/overlays/prod/gateway-service"
+
+# 백업 관련
+backup_dir: "/tmp/gateway-backup"
+db_backup: true
+db_user: "root"
+db_pass: "password"
+db_name: "gateway_db"

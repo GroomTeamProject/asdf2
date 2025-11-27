@@ -22,7 +22,7 @@ export const reviewApi = {
   getReviewsByStore: (storeId) =>
     apiManager.queueRequest(async () => {
       console.log('🔄 가게 리뷰 목록 조회 중...')
-      const response = await api.get(`/reviews/store?storeId=${storeId}`)
+      const response = await api.get(`/reviews/store/${storeId}`)
       console.log('✅ 가게 리뷰 목록 조회 성공')
       return response.data
     }),
@@ -33,7 +33,7 @@ export const reviewApi = {
   getReviewsByUser: (userId) =>
     apiManager.queueRequest(async () => {
       console.log('🔄 사용자 리뷰 목록 조회 중...')
-      const response = await api.get(`/reviews/user?userId=${userId}`)
+      const response = await api.get(`/reviews/user/${userId}`)
       console.log('✅ 사용자 리뷰 목록 조회 성공')
       return response.data
     }),
@@ -99,7 +99,7 @@ export const reviewApi = {
   getStoreAverageRating: (storeId) =>
     apiManager.queueRequest(async () => {
       console.log('🔄 가게 평균 평점 조회 중...')
-      const response = await api.get(`/reviews/store/rating?storeId=${storeId}`)
+      const response = await api.get(`/reviews/store/${storeId}/rating`)
       console.log('✅ 가게 평균 평점 조회 성공')
       return response.data
     }),
@@ -110,7 +110,7 @@ export const reviewApi = {
   getStoreReviewCount: (storeId) =>
     apiManager.queueRequest(async () => {
       console.log('🔄 가게 리뷰 개수 조회 중...')
-      const response = await api.get(`/reviews/store/count?storeId=${storeId}`)
+      const response = await api.get(`/reviews/store/${storeId}/count`)
       console.log('✅ 가게 리뷰 개수 조회 성공')
       return response.data
     })

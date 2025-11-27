@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Date;
 import java.util.Map;
 
+// 회원가입 controller
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -34,17 +35,14 @@ public class AuthController {
     private final TokenBlacklistService blacklistService;
     private final JwtTokenProvider jwtTokenProvider;
 
-    // ✅ 회원가입 API
+    // 회원가입 API
     @PostMapping("/signup")
-    //@RequestBody SignupRequest request→ 클라이언트에서 보낸 JSON 데이터를 SignupRequest 객체로 변환
     public ResponseEntity<?> signup(@RequestBody SignupRequest request) {
-        // 실제 회원가입 처리 : 받은 데이터로 userservice에서 하는 회원가입처리
-        //userService.registerUser(request); 
         SignupResponse response = userService.registerUser(request);
         return ResponseEntity.ok(response);
     }
 
-    // ✅ 로그인 API
+    // 로그인 API
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletResponse response) {
         try {

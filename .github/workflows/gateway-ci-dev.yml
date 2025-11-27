@@ -3,7 +3,7 @@ name: Gateway CI
 on:
   pull_request:
     branches:
-      - manifest/service
+      - develop
     paths:
       - "msa/gateway/**"
       - "msa/libs/**"

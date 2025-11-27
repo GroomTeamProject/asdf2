@@ -2,7 +2,7 @@ name: Order Service CI - Build & Test
 
 on:
   pull_request:
-    branches: [manifest/service]
+    branches: [develop]
     paths:
       - "msa/order-service/**"
       - "msa/libs/**"

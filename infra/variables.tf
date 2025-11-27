@@ -31,3 +31,26 @@ variable "public_domain_name" {
   type        = string
   default     = ""
 }
+
+# ==========================================
+# EKS Variables
+# ==========================================
+
+variable "aws_account_id" {
+  description = "AWS account ID for EKS"
+  type        = string
+  default     = ""
+}
+# Deprecated
+# variable "eks_admin_user_arn" {
+#   description = "IAM User ARN for EKS admin access"
+#   type        = string
+#   sensitive   = false
+# }
+
+variable "eks_dev_user_roles" {
+  description = "List of role names for EKS dev users (e.g., ['auth', 'user', 'store'])"
+  type        = list(string)
+  default     = []
+}
+

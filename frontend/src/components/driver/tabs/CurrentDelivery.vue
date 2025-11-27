@@ -26,7 +26,7 @@ export default {
       }
     },
     statusBadgeClass() {
-      return this.currentOrder?.pickedAt === null
+      return this.currentOrder?.pickedUpAt === null
           ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
           : 'bg-blue-50 text-blue-700 border-blue-200'
     },
@@ -47,19 +47,26 @@ export default {
     },
     async getCurrentOrder() {
       this.loading = true;
-      try{
-        const resp = await api.get(`/deliveries/current`);
-        console.log(`[${this.activeTab}]: getCurrentOrder->data: `, resp.data)
-        this.currentOrder = resp.data;
-      }catch(e){
-        if(e.response && e.response.status === 404){
-          console.log("[${this.activeTab}]: (배달 없음)");
+      let resp = null;
+
+      try {
+        resp = await api.get(`/deliveries/current`);
+        console.log(`[${this.activeTab}]: getCurrentOrder->data: `, resp);
+      } catch (e) {
+        if (e.response && e.response.status === 404) {
+          console.log(`[${this.activeTab}]: (배달 없음)`);
           this.currentOrder = null;
-        }else{
-          console.log(`[${this.activeTab}]: 기계오작동!: `,e)
+        } else {
+          console.log(`[${this.activeTab}]: 기계오작동!: `, e);
         }
-      }finally {
+      } finally {
         this.loading = false;
+
+        if (resp && resp.data) {
+          this.currentOrder = resp.data.data;
+        }
+
+        console.log(`[${this.activeTab}]:`, this.currentOrder);
       }
     },
     async onPrimary() {
@@ -68,7 +75,7 @@ export default {
       if (this.currentOrder?.pickedUpAt === null) {
         // TODO: 픽업 도착 처리
         try {
-          const resp = await api.put(`${API_BASE}/deliveries/${this.riderInfo.riderId}/pickup`);
+          const resp = await api.put(`${API_BASE}/deliveries/${this.currentOrder?.orderId}/pickup`);
           console.log(`[${this.activeTab} onPrimary->data:`, resp.data);
           await this.getCurrentOrder();
         } catch (e){
@@ -77,7 +84,7 @@ export default {
       } else if (this.currentOrder?.pickedUpAt !== null) {
         // TODO: 배달 도착 처리
         try{
-          const resp = await api.put(`${API_BASE}/deliveries/${this.riderInfo.riderId}/complete`);
+          const resp = await api.put(`${API_BASE}/deliveries/${this.currentOrder?.orderId}/complete`);
           console.log(`[${this.activeTab} onPrimary: complete ${resp.data}`);
           await this.getCurrentOrder();
           this.$emit('refresh-parent')

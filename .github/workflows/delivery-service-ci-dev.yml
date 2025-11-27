@@ -3,7 +3,7 @@ name: Delivery Service CI - Build & Test
 on:
   pull_request:
     branches:
-      - manifest/service       # 최종에는 develop 브랜치로 변경
+      - develop      
     paths:
       - "msa/delivery-service/**"
       - "msa/libs/**"

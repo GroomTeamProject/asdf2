@@ -1,0 +1,21 @@
+---
+- name: Deploy all services to Kubernetes
+  hosts: localhost
+  gather_facts: false
+
+  vars_files:
+    - ../vars/aws.yml
+
+  tasks:
+    - name: Update kustomization.yaml with new image tags
+      shell: |
+        IMAGE_TAG=${GITHUB_SHA}
+        for svc in delivery-service gateway monitoring notification order-service owner-service payment-service review-service user-service; do
+          yq -i ".images[] |= select(.name == \"${IMAGE_REGISTRY}/$svc\").newTag = \"${IMAGE_TAG}\"" ./infra/k8s/overlays/prod/$svc/kustomization.yaml
+        done
+
+    - name: Apply Kubernetes manifests
+      shell: |
+        for svc in delivery-service gateway monitoring notification order-service owner-service payment-service review-service user-service; do
+          kubectl apply -k ./infra/k8s/overlays/prod/$svc
+        done
