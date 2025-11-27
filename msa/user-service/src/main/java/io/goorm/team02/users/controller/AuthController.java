@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Date;
 import java.util.Map;
 
+// 회원가입 controller
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
