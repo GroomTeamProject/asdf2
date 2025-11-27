@@ -1,0 +1,23 @@
+---
+- name: Ensure backup directory exists
+  file:
+    path: "{{ backup_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Backup current Deployment YAML
+  shell: |
+    kubectl get deployment {{ service_name }} -n {{ namespace }} -o yaml \
+    > {{ backup_dir }}/{{ service_name }}-deployment-$(date +%Y%m%dT%H%M%S).yaml
+
+- name: Backup ConfigMap (optional)
+  shell: |
+    kubectl get configmap {{ service_name }} -n {{ namespace }} -o yaml \
+    > {{ backup_dir }}/{{ service_name }}-configmap-$(date +%Y%m%dT%H%M%S).yaml
+
+- name: Backup database (optional)
+  shell: |
+    POD_NAME=$(kubectl get pod -n {{ namespace }} -l app={{ service_name }} -o jsonpath='{.items[0].metadata.name}')
+    kubectl exec -n {{ namespace }} $POD_NAME -- mysqldump -u{{ db_user }} -p'{{ db_pass }}' {{ db_name }} \
+    > {{ backup_dir }}/{{ service_name }}-db-$(date +%Y%m%dT%H%M%S).sql
+  when: db_backup | bool

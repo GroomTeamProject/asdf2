@@ -1,4 +1,4 @@
-package io.goorm.team02.payment.event.dto;
+package io.goorm.team02.payment.dto;
 
 import lombok.Data;
 import java.math.BigDecimal;

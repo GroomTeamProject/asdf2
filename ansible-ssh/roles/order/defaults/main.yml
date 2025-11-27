@@ -1,0 +1,54 @@
+# 서비스 정보
+service_name: "order"
+repo_url: "https://github.com/GroomTeamProject/asdf3.git"
+repo_branch: "develop"
+
+service_root: "/home/ec2-user/project"
+src_dir: "/home/ec2-user/project/asdf3"
+deploy_dir: "/home/ec2-user/services/order"
+
+# 빌드 관련
+src_service_subpath: "msa/order-service"
+build_command: "./gradlew build"
+
+# JAR 파일은 최신 빌드를 자동으로 잡도록 패턴 사용
+jar_pattern: "order-service-*.jar"
+jar_src_path: "{{ src_dir }}/{{ src_service_subpath }}/build/libs/{{ jar_pattern }}"
+jar_dest_path: "{{ deploy_dir }}/{{ service_name }}.jar"
+
+# 배포 유저/그룹
+deploy_user: "ec2-user"
+deploy_group: "ec2-user"
+file_mode: "0755"
+
+# 백업 관련
+backup_dir: "{{ deploy_dir }}/backup"
+backup_before_deploy: true
+timestamp_format: "%Y%m%dT%H%M%S"
+
+# DB (환경변수로 systemd에 넣을 예정)
+db_backup: false
+db_host: "localhost"
+db_port: 3306
+db_name: "order"
+db_username: "root"
+db_password: "root"
+mysqldump_path: "/usr/bin/mysqldump"
+
+# 환경변수
+extra_env:
+  - "KAFKA_BOOTSTRAP_SERVERS=kafka:9092"
+  - "MSA_GATEWAY_URL=http://api-gateway:8080"
+  - "USER_SERVICE_URL=http://user-service:8082"
+  - "ORDER_SERVICE_URL=http://order-service:8085"
+  - "REVIEW_SERVICE_URL=http://review-service:8086"
+  - "DELIVERY_SERVICE_URL=http://delivery-service:8087"
+  - "NOTIFICATION_SERVICE_URL=http://notification-service:8088"
+  - "PAYMENT_SERVICE_URL=http://payment-service:8084"
+
+# JVM 옵션
+java_opts: "-Xms256m -Xmx512m"
+
+# systemd 설정
+restart_policy: "on-failure"
+restart_sec: 5

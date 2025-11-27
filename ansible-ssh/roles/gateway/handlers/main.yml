@@ -1,0 +1,11 @@
+---
+- name: Reload systemd and restart service
+  block:
+    - name: Reload systemd daemon
+      command: systemctl daemon-reload
+      become: true
+
+    - name: Restart {{ service_name }} service
+      systemd:
+        name: "{{ service_name }}"
+        state: restarted

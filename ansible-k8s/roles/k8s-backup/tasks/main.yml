@@ -1,0 +1,19 @@
+---
+- name: Ensure backup directory exists
+  file:
+    path: "{{ backup_dir }}"
+    state: directory
+
+- name: Backup each service manifests
+  loop: "{{ services }}"
+  vars:
+    service_backup_dir: "{{ backup_dir }}/{{ item }}"
+  block:
+    - name: Ensure service backup directory
+      file:
+        path: "{{ service_backup_dir }}"
+        state: directory
+
+    - name: Dump K8s resources
+      command: >
+        kubectl get all -n {{ item }} -o yaml > {{ service_backup_dir }}/resources.yaml

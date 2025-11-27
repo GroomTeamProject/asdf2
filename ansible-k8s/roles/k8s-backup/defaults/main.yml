@@ -1,0 +1,13 @@
+---
+services:
+  - delivery
+  - gateway
+  - monitoring
+  - notification
+  - order
+  - owner
+  - payment
+  - review
+  - user
+
+backup_dir: "./backup"

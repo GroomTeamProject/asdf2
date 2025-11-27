@@ -1,0 +1,14 @@
+---
+services:
+  - delivery
+  - gateway
+  - monitoring
+  - notification
+  - order
+  - owner
+  - payment
+  - review
+  - user
+
+manifest_branch: "manifest/service"
+image_registry: "093322228889.dkr.ecr.ap-northeast-2.amazonaws.com"

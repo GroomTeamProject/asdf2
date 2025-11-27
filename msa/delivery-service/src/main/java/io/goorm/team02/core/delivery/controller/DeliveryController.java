@@ -1,12 +1,16 @@
 package io.goorm.team02.core.delivery.controller;
 
+import io.goorm.team02.core.delivery.security.jwt.JwtUtils;
 import io.goorm.team02.core.delivery.controller.dto.ApiResponse;
 import io.goorm.team02.core.delivery.entity.Delivery;
 import io.goorm.team02.core.delivery.mapper.DeliveryMapper;
 import io.goorm.team02.core.delivery.service.DeliveryService;
 import io.goorm.team02.dto.deliveries.DeliveryResponse;
-import io.goorm.team02.security.annotation.CurrentUser;
+import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,20 +19,34 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+// delivery controller
+@Slf4j
 @RestController
 @RequestMapping("/api/deliveries")
 @RequiredArgsConstructor
 public class DeliveryController {
-
+    @Value("${jwt.secret}")
+    private String jwtSecret;
     private final DeliveryService deliveryService;
     private final DeliveryMapper deliveryMapper;
+    private final JwtUtils jwtUtils;
 
     @PostMapping("/{orderId}/accept")
     public ResponseEntity<ApiResponse<DeliveryResponse>> accept(
             @PathVariable Long orderId,
-            @CurrentUser Long riderId
+            HttpServletRequest request
     ) {
-        Delivery delivery = deliveryService.accept(riderId, orderId);
+        // JWT 추출
+        String token = jwtUtils.extractToken(request);
+
+        // Claims 파싱 (검증까지 자동 포함)
+        Claims claims = jwtUtils.parse(token);
+
+        // userId 추출
+        Long userId = jwtUtils.getUserId(claims);
+        log.info("[accept] request for orderId={}, riderId={}", orderId, userId);
+        log.info("jwt_secret = {}", jwtSecret);
+        Delivery delivery = deliveryService.accept(userId, orderId);
         DeliveryResponse response = deliveryMapper.toResponse(delivery);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(response));
@@ -37,9 +55,19 @@ public class DeliveryController {
     @PutMapping("/{orderId}/pickup")
     public ResponseEntity<ApiResponse<DeliveryResponse>> pickup(
             @PathVariable Long orderId,
-            @CurrentUser Long riderId
+            HttpServletRequest request
     ) {
-        Delivery delivery = deliveryService.pickup(riderId, orderId);
+        // JWT 추출
+        String token = jwtUtils.extractToken(request);
+
+        // Claims 파싱 (검증까지 자동 포함)
+        Claims claims = jwtUtils.parse(token);
+
+        // userId 추출
+        Long userId = jwtUtils.getUserId(claims);
+        log.info("[pickup] request for orderId={}, riderId={}", orderId, userId);
+        log.info("jwt_secret = {}", jwtSecret);
+        Delivery delivery = deliveryService.pickup(userId, orderId);
         DeliveryResponse response = deliveryMapper.toResponse(delivery);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
@@ -47,16 +75,36 @@ public class DeliveryController {
     @PutMapping("/{orderId}/complete")
     public ResponseEntity<ApiResponse<DeliveryResponse>> complete(
             @PathVariable Long orderId,
-            @CurrentUser Long riderId
+            HttpServletRequest request
     ) {
-        Delivery delivery = deliveryService.complete(riderId, orderId);
+        // JWT 추출
+        String token = jwtUtils.extractToken(request);
+
+        // Claims 파싱 (검증까지 자동 포함)
+        Claims claims = jwtUtils.parse(token);
+
+        // userId 추출
+        Long userId = jwtUtils.getUserId(claims);
+        log.info("[complete] request for orderId={}, riderId={}", orderId, userId);
+        log.info("jwt_secret = {}", jwtSecret);
+        Delivery delivery = deliveryService.complete(userId, orderId);
         DeliveryResponse response = deliveryMapper.toResponse(delivery);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     @GetMapping("/history")
-    public ResponseEntity<ApiResponse<?>> history(@CurrentUser Long riderId) {
-        List<DeliveryResponse> deliveries = deliveryService.getDeliveries(riderId);
+    public ResponseEntity<ApiResponse<?>> history(HttpServletRequest request) {
+        // JWT 추출
+        String token = jwtUtils.extractToken(request);
+
+        // Claims 파싱 (검증까지 자동 포함)
+        Claims claims = jwtUtils.parse(token);
+
+        // userId 추출
+        Long userId = jwtUtils.getUserId(claims);
+        log.info("[history] request for riderId={}", userId);
+        log.info("jwt_secret = {}", jwtSecret);
+        List<DeliveryResponse> deliveries = deliveryService.getDeliveries(userId);
         if (deliveries.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.fail("[history]: 조회 결과가 없습니다."));
@@ -65,8 +113,18 @@ public class DeliveryController {
     }
 
     @GetMapping("/current")
-    public ResponseEntity<ApiResponse<?>> currentDelivery(@CurrentUser Long riderId) {
-        Optional<Delivery> deliveryOpt = deliveryService.getCurrentDelivery(riderId);
+    public ResponseEntity<ApiResponse<?>> currentDelivery(HttpServletRequest request) {
+        // JWT 추출
+        String token = jwtUtils.extractToken(request);
+
+        // Claims 파싱 (검증까지 자동 포함)
+        Claims claims = jwtUtils.parse(token);
+
+        // userId 추출
+        Long userId = jwtUtils.getUserId(claims);
+        log.info("[current] request for riderId={}", userId);
+        log.info("jwt_secret = {}", jwtSecret);
+        Optional<Delivery> deliveryOpt = deliveryService.getCurrentDelivery(userId);
         if (deliveryOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.fail("[currentDelivery]: 현재 진행 중인 배달이 없습니다."));
@@ -77,22 +135,62 @@ public class DeliveryController {
     }
 
     @GetMapping("/today-count")
-    public ResponseEntity<ApiResponse<BigDecimal>> todayCount(@CurrentUser Long riderId) {
-        return ResponseEntity.ok(ApiResponse.ok(deliveryService.getTodayCount(riderId)));
+    public ResponseEntity<ApiResponse<BigDecimal>> todayCount(HttpServletRequest request) {
+        // JWT 추출
+        String token = jwtUtils.extractToken(request);
+
+        // Claims 파싱 (검증까지 자동 포함)
+        Claims claims = jwtUtils.parse(token);
+
+        // userId 추출
+        Long userId = jwtUtils.getUserId(claims);
+        log.info("[today-count] request for riderId={}", userId);
+        log.info("jwt_secret = {}", jwtSecret);
+        return ResponseEntity.ok(ApiResponse.ok(deliveryService.getTodayCount(userId)));
     }
 
     @GetMapping("/today-income")
-    public ResponseEntity<ApiResponse<BigDecimal>> todayIncome(@CurrentUser Long riderId) {
-        return ResponseEntity.ok(ApiResponse.ok(deliveryService.getTodayIncome(riderId)));
+    public ResponseEntity<ApiResponse<BigDecimal>> todayIncome(HttpServletRequest request) {
+        // JWT 추출
+        String token = jwtUtils.extractToken(request);
+
+        // Claims 파싱 (검증까지 자동 포함)
+        Claims claims = jwtUtils.parse(token);
+
+        // userId 추출
+        Long userId = jwtUtils.getUserId(claims);
+        log.info("[today-income] request for riderId={}", userId);
+        log.info("jwt_secret = {}", jwtSecret);
+        return ResponseEntity.ok(ApiResponse.ok(deliveryService.getTodayIncome(userId)));
     }
 
     @GetMapping("/today-avg")
-    public ResponseEntity<ApiResponse<Long>> todayAvg(@CurrentUser Long riderId) {
-        return ResponseEntity.ok(ApiResponse.ok(deliveryService.getTodayAvg(riderId)));
+    public ResponseEntity<ApiResponse<Long>> todayAvg(HttpServletRequest request) {
+        // JWT 추출
+        String token = jwtUtils.extractToken(request);
+
+        // Claims 파싱 (검증까지 자동 포함)
+        Claims claims = jwtUtils.parse(token);
+
+        // userId 추출
+        Long userId = jwtUtils.getUserId(claims);
+        log.info("[today-avg] request for riderId={}", userId);
+        log.info("jwt_secret = {}", jwtSecret);
+        return ResponseEntity.ok(ApiResponse.ok(deliveryService.getTodayAvg(userId)));
     }
 
     @GetMapping("/rider-status")
-    public ResponseEntity<ApiResponse<String>> riderStatus(@CurrentUser Long riderId) {
-        return ResponseEntity.ok(ApiResponse.ok(deliveryService.getRiderStatus(riderId)));
+    public ResponseEntity<ApiResponse<String>> riderStatus(HttpServletRequest request) {
+        // JWT 추출
+        String token = jwtUtils.extractToken(request);
+
+        // Claims 파싱 (검증까지 자동 포함)
+        Claims claims = jwtUtils.parse(token);
+
+        // userId 추출
+        Long userId = jwtUtils.getUserId(claims);
+        log.info("[rider-status] request for riderId={}", userId);
+        log.info("jwt_secret = {}", jwtSecret);
+        return ResponseEntity.ok(ApiResponse.ok(deliveryService.getRiderStatus(userId)));
     }
 }

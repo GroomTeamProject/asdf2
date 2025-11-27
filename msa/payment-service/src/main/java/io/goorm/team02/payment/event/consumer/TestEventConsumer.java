@@ -1,4 +1,4 @@
-package io.goorm.team02.demo.event.consumer;
+package io.goorm.team02.payment.event.consumer;
 
 import io.goorm.team02.kafka.client.BaseEventSubscriber;
 import lombok.extern.slf4j.Slf4j;

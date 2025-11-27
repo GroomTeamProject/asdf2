@@ -1,0 +1,53 @@
+---
+# roles/payment/tasks/deploy.yml
+
+- name: Ensure deploy directory exists
+  file:
+    path: "{{ deploy_dir }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: "{{ file_mode }}"
+  become: true
+
+- name: Copy built jar to deploy directory (from remote build)
+  copy:
+    src: "{{ jar_src_path }}"
+    dest: "{{ jar_dest_path }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: "{{ file_mode }}"
+    remote_src: yes   # remote 서버에서 이미 빌드된 파일을 사용
+  become: true
+
+- name: Create systemd service unit file
+  copy:
+    dest: "/etc/systemd/system/{{ service_name }}.service"
+    content: |
+      [Unit]
+      Description={{ service_name }} service
+      After=network.target
+
+      [Service]
+      User={{ deploy_user }}
+      Group={{ deploy_group }}
+      ExecStart=/usr/bin/java {{ java_opts }} -jar {{ jar_dest_path }}
+      Restart={{ restart_policy }}
+      RestartSec={{ restart_sec }}{% if extra_env is defined %}{% for env_var in extra_env %}
+      Environment={{ env_var }}{% endfor %}{% endif %}
+  
+      [Install]
+      WantedBy=multi-user.target
+  become: true
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+  become: true
+
+- name: Enable and start the service
+  systemd:
+    name: "{{ service_name }}"
+    state: restarted
+    enabled: yes
+  become: true

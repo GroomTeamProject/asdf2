@@ -1,0 +1,13 @@
+---
+services:
+  - delivery
+  - gateway
+  - monitoring
+  - notification
+  - order
+  - owner
+  - payment
+  - review
+  - user
+
+image_registry: "093322228889.dkr.ecr.ap-northeast-2.amazonaws.com"
