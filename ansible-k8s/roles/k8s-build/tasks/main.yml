@@ -1,0 +1,15 @@
+---
+- name: Build and push Docker images
+  loop: "{{ services }}"
+  vars:
+    ecr_repo: "team02-{{ item }}-service"
+    service_path: "msa/{{ item }}"
+    image_tag: "{{ lookup('env','GIT_SHA') | default('latest') }}"
+  block:
+    - name: Build Docker image
+      command: >
+        docker build -t {{ image_registry }}/{{ ecr_repo }}:{{ image_tag }} {{ service_path }}
+
+    - name: Push Docker image to ECR
+      command: >
+        docker push {{ image_registry }}/{{ ecr_repo }}:{{ image_tag }}

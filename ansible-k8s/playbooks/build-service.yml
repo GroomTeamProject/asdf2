@@ -1,0 +1,9 @@
+---
+- name: Build all services Docker images
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../roles/k8s-build/defaults/main.yml
+
+  roles:
+    - k8s-build

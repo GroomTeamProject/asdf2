@@ -1,0 +1,9 @@
+---
+- name: Backup K8s resources for all services
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../roles/k8s-backup/defaults/main.yml
+
+  roles:
+    - k8s-backup

@@ -1,0 +1,9 @@
+---
+- name: Deploy all services to K8s
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../roles/k8s-deploy/defaults/main.yml
+
+  roles:
+    - k8s-deploy
