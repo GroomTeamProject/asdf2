@@ -1,0 +1,35 @@
+---
+# 백업 디렉토리 생성
+- name: Ensure backup directory exists
+  file:
+    path: "{{ backup_dir }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
+    mode: "{{ file_mode }}"
+  become: true
+
+# JAR 존재 여부 체크
+- name: Check if target jar exists
+  stat:
+    path: "{{ jar_dest_path }}"
+  register: jar_stat
+
+# 기존 JAR 백업
+- name: Backup current jar before deploy
+  copy:
+    src: "{{ jar_dest_path }}"
+    dest: "{{ backup_dir }}/{{ jar_name }}-{{ lookup('pipe','date +%Y%m%dT%H%M%S') }}"
+  when: backup_before_deploy and jar_stat.stat.exists
+  ignore_errors: yes
+  become: true
+
+# DB 백업 (선택)
+- name: DB backup (optional)
+  command: >
+    "{{ mysqldump_path }} -u{{ db_username }} -p'{{ db_password }}' {{ db_name }}
+    > {{ backup_dir }}/db-{{ lookup('pipe','date +%Y%m%dT%H%M%S') }}.sql"
+  when: db_backup | bool
+  args:
+    warn: false
+  become: true

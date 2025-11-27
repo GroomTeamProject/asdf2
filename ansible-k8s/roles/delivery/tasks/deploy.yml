@@ -1,0 +1,17 @@
+---
+- name: Update kustomization.yaml with new image tag
+  shell: |
+    sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+    sudo chmod +x /usr/local/bin/yq
+
+    yq -i ".images[] |= select(.name == \"{{ image_registry }}/{{ ecr_repo }}\").newTag = \"{{ image_tag }}\"" \
+        {{ kustomize_path }}/kustomization.yaml
+
+- name: Apply deployment via kustomize
+  command: kubectl apply -k {{ kustomize_path }}
+
+- name: Wait for rollout to complete
+  command: kubectl rollout status deployment/{{ service_name }} -n {{ namespace }}
+
+- name: Notify handlers if deployment changed
+  meta: flush_handlers
